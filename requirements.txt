@@ -1,0 +1,16 @@
+# Core RL / experiments
+gymnasium[atari]>=1.0
+ale-py>=0.10
+numpy>=1.24
+matplotlib>=3.7
+tqdm>=4.66
+
+# Deep RL — PyTorch.
+# RTX 5060 (Blackwell) requires the CUDA 12.8 build. Install with:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128
+# (kept unpinned here so the cu128 index can resolve the right wheel)
+torch>=2.7
+
+# Optional
+# pandas>=2.0            # convenience for aggregating multi-seed results
+# stable-baselines3      # ATARI BASELINE ONLY (bonus). Forbidden for Env 1/2.
