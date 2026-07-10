@@ -1,13 +1,25 @@
-"""DQN training loop — from scratch in PyTorch.
+"""DQN training loop — from scratch in PyTorch (Mnih et al. 2015).
 
-Implements the Deep Q-Network algorithm (Mnih et al. 2015) with:
-  1. Experience Replay — random mini-batch sampling (breaks correlations)
-  2. Target Network — separate, slowly-updated copy of Q-net (stabilises targets)
+Origin: NEW. This is the most complex and entirely original part of the project.
+The course only provided SB3-based DQN (forbidden for the core implementation).
+The training loop is written from scratch following the Nature DQN paper.
+
+Implements Deep Q-Network with:
+  1. Experience Replay — random mini-batch sampling (breaks temporal correlations)
+  2. Target Network — separate, slowly-updated copy of Q-net (stabilizes targets)
 
 Ablation flags allow disabling each component independently (required by
-the assignment) and enabling Double DQN (bonus).
+the assignment: "confrontare DQN con vs senza target network / replay").
 
-The training loop is step-based (standard for Atari) with episode tracking.
+Double DQN (bonus, van Hasselt et al. 2016):
+  Standard DQN: target = R + γ max_a' Q_target(S', a')
+  Double DQN:   target = R + γ Q_target(S', argmax_a' Q_online(S', a'))
+  This decouples action SELECTION (online net) from action EVALUATION (target net),
+  reducing the maximization bias of standard Q-Learning (S&B §6.7).
+
+The training loop is STEP-BASED (not episode-based), which is standard for
+Atari: a fixed number of environment steps, with episodes starting and
+ending naturally within that budget.
 """
 
 import copy
@@ -26,6 +38,7 @@ from rl_lab.algorithms.deep.networks import MLP, NatureCNN
 def _obs_to_tensor(obs, device):
     """Convert a single observation to a batched float tensor.
 
+<<<<<<< Updated upstream
     For images (C,H,W uint8): normalise to [0,1] → (1,C,H,W).
     For vectors (float): just wrap and add batch dim → (1,D).
 
@@ -37,13 +50,26 @@ def _obs_to_tensor(obs, device):
         # Image observation (C, H, W) uint8 → normalise
         obs = obs.astype(np.float32) / 255.0
     else:
+=======
+    For images (H,W,C uint8): normalize to [0,1] and transpose to (1,C,H,W).
+    PyTorch Conv2d expects channels-first format (B,C,H,W).
+    For vectors (float): just wrap and add batch dimension.
+    """
+    obs = np.array(obs)
+    if obs.ndim >= 3:  # image observation (H, W, C) — e.g. Atari frame
+        obs = obs.astype(np.float32) / 255.0  # normalize pixels from [0,255] → [0,1]
+        obs = np.transpose(obs, (2, 0, 1))    # HWC → CHW (PyTorch Conv2d expects channels-first)
+    else:  # vector observation (D,) — e.g. CartPole state
+>>>>>>> Stashed changes
         obs = obs.astype(np.float32)
+    # unsqueeze(0) adds batch dimension: (C,H,W) → (1,C,H,W) for a single-sample forward pass
     return torch.from_numpy(obs).unsqueeze(0).to(device)
 
 
 def _batch_to_tensor(batch, device):
     """Convert a batch of observations to a float tensor.
 
+<<<<<<< Updated upstream
     For images (B,C,H,W uint8): normalise → (B,C,H,W).
     For vectors (B,D): just convert.
 
@@ -53,45 +79,73 @@ def _batch_to_tensor(batch, device):
     if arr.ndim >= 4:
         arr = arr.astype(np.float32) / 255.0
     else:
+=======
+    For images (B,H,W,C uint8): normalize and transpose to (B,C,H,W).
+    For vectors (B,D): just convert dtype.
+    """
+    arr = np.array(batch)
+    if arr.ndim >= 4:  # batch of images: (B, H, W, C)
+        arr = arr.astype(np.float32) / 255.0       # normalize uint8 → [0, 1]
+        arr = np.transpose(arr, (0, 3, 1, 2))      # BHWC → BCHW for PyTorch Conv2d
+    else:  # batch of vectors: (B, D)
+>>>>>>> Stashed changes
         arr = arr.astype(np.float32)
-    return torch.from_numpy(arr).to(device)
+    return torch.from_numpy(arr).to(device)  # move to CPU or GPU
 
 
 # ---------------------------------------------------------------------------
-# Core update
+# Core update step
 # ---------------------------------------------------------------------------
 
 def _update_network(online_net, target_net, buffer, optimizer, batch_size,
                     gamma, device, use_double_dqn):
-    """One gradient step on a mini-batch from the replay buffer."""
+    """One gradient step on a mini-batch from the replay buffer.
+
+    This is the neural-network equivalent of the tabular Q-Learning update:
+      Tabular:  Q[s][a] += α * (target - Q[s][a])
+      DQN:      minimize MSE( Q_online(s,a) - target )  via backprop
+    """
+    # Sample a random mini-batch from the replay buffer
     states, actions, rewards, next_states, dones = buffer.sample(batch_size)
 
+    # Convert numpy arrays to PyTorch tensors on the correct device (CPU/GPU)
     states_t = _batch_to_tensor(states, device)
     next_states_t = _batch_to_tensor(next_states, device)
-    actions_t = torch.from_numpy(actions).to(device)
-    rewards_t = torch.from_numpy(rewards).to(device)
-    dones_t = torch.from_numpy(dones).to(device)
+    actions_t = torch.from_numpy(actions).to(device)   # (batch,) — action indices
+    rewards_t = torch.from_numpy(rewards).to(device)   # (batch,) — scalar rewards
+    dones_t = torch.from_numpy(dones).to(device)       # (batch,) — 0.0 or 1.0
 
-    # Current Q(s, a)
+    # --- Compute current Q(s, a) ---
+    # Forward pass gives Q-values for ALL actions: shape (batch, n_actions)
     q_values = online_net(states_t)
-    q_value = q_values.gather(1, actions_t.unsqueeze(1)).squeeze(1)
+    # gather picks the Q-value of the action that was actually taken
+    # unsqueeze/squeeze: gather needs 2D index → result back to 1D
+    q_value = q_values.gather(1, actions_t.unsqueeze(1)).squeeze(1)  # (batch,)
 
-    # Target: r + γ max_a' Q_target(s', a')  (or Double DQN variant)
-    with torch.no_grad():
+    # --- Compute target: r + γ * max_a' Q_target(s', a') ---
+    with torch.no_grad():  # no gradients through the target (it's a fixed reference)
         if use_double_dqn:
-            # Double DQN: select action with ONLINE net, evaluate with TARGET
+            # Double DQN (van Hasselt 2016): decouples selection from evaluation
+            # Step 1: ONLINE net selects the best action in S'
             best_actions = online_net(next_states_t).argmax(dim=1, keepdim=True)
+            # Step 2: TARGET net evaluates Q at that action
+            # This prevents the overestimation caused by using max on noisy Q-values
             next_q = target_net(next_states_t).gather(1, best_actions).squeeze(1)
         else:
+            # Standard DQN: target net does both selection AND evaluation
+            # max(dim=1)[0] returns the maximum Q-value across actions (the [0] gets values, [1] would get indices)
             next_q = target_net(next_states_t).max(dim=1)[0]
 
+        # (1 - done) zeros out future value at terminal states (no future after done)
         td_target = rewards_t + gamma * next_q * (1.0 - dones_t)
 
+    # --- Gradient descent step ---
+    # MSE loss: (Q_predicted - Q_target)² — same idea as the tabular TD error²
     loss = F.mse_loss(q_value, td_target)
 
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+    optimizer.zero_grad()  # clear old gradients from previous step
+    loss.backward()        # compute gradients via backpropagation
+    optimizer.step()       # update network weights (Adam optimizer)
 
     return loss.item()
 
@@ -122,16 +176,18 @@ def train_dqn(
 
     Args:
         env: Gymnasium environment.
-        total_steps: total environment steps to train for.
+        total_steps: total environment steps (not episodes). Standard for Atari.
         gamma: discount factor.
-        lr: learning rate for Adam.
+        lr: learning rate for Adam optimizer.
         buffer_capacity: replay buffer size (ignored if use_replay=False).
-        batch_size: mini-batch size.
-        target_update_freq: steps between target-net hard updates.
+        batch_size: mini-batch size for gradient updates.
+        target_update_freq: steps between target-net hard updates (θ⁻ ← θ).
         epsilon_start/end/decay_steps: linear ε-decay schedule.
-        learning_starts: fill buffer this many steps before first update.
+            Starts at epsilon_start (full exploration), decays linearly to
+            epsilon_end over decay_steps, then stays at epsilon_end.
+        learning_starts: fill buffer with this many transitions before updating.
         use_target_network: if False, target net = online net (ablation).
-        use_replay: if False, update on each transition (batch_size=1).
+        use_replay: if False, update on each transition (no buffer).
         use_double_dqn: if True, use Double DQN action selection (bonus).
         device: "cpu" or "cuda".
         log_interval: print progress every N episodes.
@@ -139,86 +195,110 @@ def train_dqn(
     Returns:
         episode_returns: list of per-episode total rewards.
         episode_lengths: list of per-episode lengths.
-        online_net: trained Q-network.
+        online_net: trained Q-network (can be saved with torch.save).
     """
-    n_actions = env.action_space.n
-    obs_shape = env.observation_space.shape
+    n_actions = env.action_space.n  # e.g. 6 for Pong, 2 for CartPole
+    obs_shape = env.observation_space.shape  # e.g. (84, 84, 4) for Atari, (4,) for CartPole
 
     # --- Build networks ---
+    # Automatically choose CNN (for images) or MLP (for vectors) based on obs shape
     if len(obs_shape) == 1:
+        # Vector obs (e.g. CartPole): use simple MLP
         online_net = MLP(obs_shape[0], n_actions).to(device)
     else:
+        # Image obs (e.g. Atari 84×84×4): use the Nature CNN architecture
         online_net = NatureCNN(n_actions).to(device)
 
     if use_target_network:
+        # Deep copy creates a SEPARATE network with the same initial weights.
+        # The target net's weights are frozen and only updated periodically (hard update).
+        # This prevents the "moving target" problem: without it, every gradient step
+        # changes both the prediction AND the target simultaneously → instability.
         target_net = copy.deepcopy(online_net)
-        target_net.eval()
+        target_net.eval()  # eval mode: disables dropout/batchnorm (not used here, but good practice)
     else:
-        target_net = online_net  # same object — no separate target
+        # Ablation: target net IS the online net (same Python object → same weights)
+        # Every gradient step changes the target too → the "moving target" problem
+        target_net = online_net
 
+    # Adam optimizer: adaptive learning rate per parameter (better than plain SGD for RL)
     optimizer = torch.optim.Adam(online_net.parameters(), lr=lr)
 
     # --- Replay buffer ---
     if use_replay:
         buffer = ReplayBuffer(buffer_capacity)
+        # Don't start learning until buffer has enough transitions for diverse batches
         min_buffer = max(learning_starts, batch_size)
     else:
-        # Without replay: store 1 transition and "sample" it immediately
+        # Without replay: buffer holds only batch_size transitions (essentially online learning).
+        # Each update uses the most recent transitions → correlated data, less stable.
         buffer = ReplayBuffer(batch_size)
-        min_buffer = batch_size
+        min_buffer = batch_size  # start learning as soon as one batch is available
 
-    # --- Training loop (step-based) ---
-    episode_returns = []
-    episode_lengths = []
-    step = 0
+    # --- Training loop (STEP-BASED, standard for Atari) ---
+    # Unlike tabular algorithms which loop over episodes, DQN counts total env steps.
+    # Episodes start and end naturally within the step budget.
+    episode_returns = []  # per-episode total reward (for learning curves)
+    episode_lengths = []  # per-episode step count
+    step = 0  # global step counter across all episodes
 
     while step < total_steps:
-        state, _ = env.reset()
-        ep_return = 0.0
+        state, _ = env.reset()  # start a new episode
+        ep_return = 0.0  # accumulate reward for this episode
         ep_steps = 0
 
         while True:
-            # ε-greedy action selection
+            # Linear ε-decay: ε decreases linearly from epsilon_start to epsilon_end
+            # over epsilon_decay_steps, then stays at epsilon_end forever.
+            # Early training → high ε → mostly random (exploration)
+            # Late training  → low ε  → mostly greedy (exploitation)
             epsilon = max(
                 epsilon_end,
                 epsilon_start - step * (epsilon_start - epsilon_end)
                 / epsilon_decay_steps,
             )
 
+            # ε-greedy action selection using the ONLINE network
             if np.random.rand() < epsilon:
-                action = env.action_space.sample()
+                action = env.action_space.sample()  # random action (exploration)
             else:
-                with torch.no_grad():
+                # Greedy action: forward pass through online net, pick argmax
+                with torch.no_grad():  # no gradient needed for action selection
                     q_vals = online_net(_obs_to_tensor(state, device))
-                    action = q_vals.argmax(dim=1).item()
+                    action = q_vals.argmax(dim=1).item()  # .item() extracts scalar from tensor
 
+            # Execute action in the environment
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             ep_return += reward
             ep_steps += 1
 
+            # Store transition in replay buffer (even before learning starts)
             buffer.push(state, action, reward, next_state, float(done))
 
-            # Gradient update
+            # Gradient update (only after buffer has enough transitions for a diverse batch)
             if len(buffer) >= min_buffer:
                 _update_network(
                     online_net, target_net, buffer, optimizer,
                     batch_size, gamma, device, use_double_dqn,
                 )
 
-            # Target network sync
+            # Periodically sync target network: θ⁻ ← θ (hard update)
+            # This copies ALL weights from online net to target net at once.
+            # Between syncs, the target net is frozen → stable TD targets.
             if use_target_network and step % target_update_freq == 0:
                 target_net.load_state_dict(online_net.state_dict())
 
-            state = next_state
-            step += 1
+            state = next_state  # advance to the next state
+            step += 1  # count global steps (across episodes)
 
             if done or step >= total_steps:
-                break
+                break  # episode ended naturally or step budget exhausted
 
         episode_returns.append(ep_return)
         episode_lengths.append(ep_steps)
 
+        # Progress logging: print mean return of recent episodes
         if log_interval and len(episode_returns) % log_interval == 0:
             recent = episode_returns[-log_interval:]
             print(f"  ep {len(episode_returns):>5d} | "
