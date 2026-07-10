@@ -70,7 +70,7 @@ def exp_control_comparison():
         save_path=f"{FIG_DIR}/control_comparison.png",
     )
     # Save raw data so plots can be regenerated without re-training
-    np.savez(f"results/cartpole/control_comparison.npz",
+    np.savez("results/cartpole/control_comparison.npz",
              ql=ql_ret, sarsa=sa_ret)
 
 

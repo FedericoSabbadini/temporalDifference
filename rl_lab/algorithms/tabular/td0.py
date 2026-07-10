@@ -31,7 +31,6 @@ is the difference between two successive time estimates of the value.
 This is also the origin of the project name: TemporalDifference.
 """
 
-import numpy as np
 from collections import defaultdict
 
 

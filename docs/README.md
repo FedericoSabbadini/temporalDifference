@@ -17,8 +17,11 @@ fianco**: ogni guida è un tour commentato dei file corrispondenti.
 | **1 ora** | [`walkthrough_1_ora.md`](walkthrough_1_ora.md) — tour guidato guide+codice |
 | **poco, prima dell'orale** | [`ripasso_orale.md`](ripasso_orale.md) — Q&A e punti scomodi |
 | **una fase intera da studiare** | la `guida_fase*` corrispondente (sotto) |
-| **un termine da ritrovare** | [`glossario.md`](glossario.md) |
+| **un termine RL da ritrovare** | [`glossario.md`](glossario.md) |
+| **una classe/funzione/file da ritrovare** | [`mappa_codice.md`](mappa_codice.md) |
 | **un parametro/variabile da capire** | [`simboli_e_parametri.md`](simboli_e_parametri.md) |
+| **un comando o il workflow** | [`comandi.md`](comandi.md) |
+| **una libreria/dipendenza** | [`librerie.md`](librerie.md) |
 
 ---
 
@@ -43,9 +46,13 @@ file da aprire e guida precedente.
 ### Documenti di supporto
 - [`origine_codice.md`](origine_codice.md) — cosa è adattato dal corso, cosa è
   nuovo, cosa è standard da paper.
-- [`glossario.md`](glossario.md) — ogni termine RL → dove vive nel codice.
+- [`glossario.md`](glossario.md) — ogni **termine RL** → dove vive nel codice.
+- [`mappa_codice.md`](mappa_codice.md) — glossario del **codice**: classi,
+  funzioni e file con firme e chiamate.
 - [`simboli_e_parametri.md`](simboli_e_parametri.md) — variabili, tensori,
   iperparametri, strutture dati, forme.
+- [`librerie.md`](librerie.md) — ogni dipendenza: cos'è, perché, e le API usate.
+- [`comandi.md`](comandi.md) — cheat sheet dei comandi + workflow completo.
 - [`panoramica_10_minuti.md`](panoramica_10_minuti.md),
   [`walkthrough_1_ora.md`](walkthrough_1_ora.md),
   [`ripasso_orale.md`](ripasso_orale.md) — i tre "livelli di zoom".

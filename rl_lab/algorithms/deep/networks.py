@@ -17,7 +17,6 @@ To select an action: action = argmax Q(s, :).
 This is more efficient than computing Q(s,a) for each action separately.
 """
 
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 

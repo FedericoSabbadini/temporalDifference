@@ -26,7 +26,6 @@ Key properties vs TD(0) (S&B §6.1):
   - MC does NOT bootstrap (does not use its own estimates in the target)
 """
 
-import numpy as np
 from collections import defaultdict
 
 

@@ -15,11 +15,10 @@ CARTPOLE = {
     # CartPole-v1: balance a pole on a cart by moving left/right (2 actions)
     # Reward: +1 every step the pole stays upright; episode ends on failure
     "env_name": "CartPole-v1",
-    # 4D continuous state → 10^4 = 10,000 discrete states (manageable)
-    #    why 4 dimensions? CartPole obs: [cart_pos=the position of the cart, cart_vel=the velocity of the cart, pole_angle=the angle of the pole, pole_ang_vel=the angular velocity of the pole]
-    #    why 10 bins for each dimension? 10 bins is a reasonable trade-off between resolution and state space size. More bins would increase the state space exponentially, making learning slower and more difficult.
+    # Obs (4D continuous): [cart_pos, cart_vel, pole_angle, pole_ang_vel].
+    # 10 bins/dim → 10^4 = 10,000 discrete states: a reasonable resolution/size
+    # trade-off (more bins grow the state space exponentially).
     "n_bins": [10, 10, 10, 10],
-    # CartPole obs: [cart_pos, cart_vel, pole_angle, pole_ang_vel]
     #
     # IMPORTANT design choice: the clip range should match the range the agent
     # ACTUALLY visits, not the full observation-space bounds. CartPole-v1
@@ -40,11 +39,10 @@ ACROBOT = {
     # Acrobot-v1: swing a two-link robot arm above a threshold (3 actions: +1, 0, -1 torque)
     # Reward: -1 every step → the agent is penalized until it reaches the goal
     "env_name": "Acrobot-v1",
-    # 6D continuous state → 6^6 = 46,656 discrete states (curse of dimensionality)
-    #   why 6 dimensions? Acrobot obs: [cos(θ1)=cosine of the first joint angle, sin(θ1)=sine of the first joint angle, 
-    # cos(θ2)=cosine of the second joint angle, sin(θ2)=sine of the second joint angle, dθ1=angular velocity of the first joint, dθ2=angular velocity of the second joint]
+    # Obs (6D continuous): [cos(θ1), sin(θ1), cos(θ2), sin(θ2), dθ1, dθ2]
+    # (θ1, θ2 = the two joint angles; dθ = their angular velocities).
+    # 6 bins/dim → 6^6 = 46,656 discrete states (curse of dimensionality).
     "n_bins": [6, 6, 6, 6, 6, 6],
-    # Acrobot obs: [cos(θ1), sin(θ1), cos(θ2), sin(θ2), dθ1, dθ2]
     # cos/sin: naturally bounded [-1, 1]
     # Angular velocities: bounded per Gymnasium docs (dθ1 ≤ 4π ≈ 12.566, dθ2 ≤ 9π ≈ 28.274)
     # These max values come from the Gymnasium source, not from observation
