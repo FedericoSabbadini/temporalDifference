@@ -10,6 +10,7 @@ notebooks. Clip ranges come from Gymnasium environment documentation.
 # --- Discretization configs ---
 # Each env needs: name, number of bins per dimension, clipping bounds.
 # The discretizer will clip observations to [clip_low, clip_high] then bin.
+# x_clipped=min(max(x,clip_low),clip_high) --> without clipping I should manage huge values or infinite values.
 
 CARTPOLE = {
     # CartPole-v1: balance a pole on a cart by moving left/right (2 actions)
@@ -18,7 +19,7 @@ CARTPOLE = {
     # Obs (4D continuous): [cart_pos, cart_vel, pole_angle, pole_ang_vel].
     # 10 bins/dim → 10^4 = 10,000 discrete states: a reasonable resolution/size
     # trade-off (more bins grow the state space exponentially).
-    "n_bins": [10, 10, 10, 10],
+    "n_bins": [10, 10, 10, 10], # 10 bins for each of 4 dimension
     #
     # IMPORTANT design choice: the clip range should match the range the agent
     # ACTUALLY visits, not the full observation-space bounds. CartPole-v1
@@ -42,7 +43,7 @@ ACROBOT = {
     # Obs (6D continuous): [cos(θ1), sin(θ1), cos(θ2), sin(θ2), dθ1, dθ2]
     # (θ1, θ2 = the two joint angles; dθ = their angular velocities).
     # 6 bins/dim → 6^6 = 46,656 discrete states (curse of dimensionality).
-    "n_bins": [6, 6, 6, 6, 6, 6],
+    "n_bins": [6, 6, 6, 6, 6, 6], # 6 bins for each of 6 dimension
     # cos/sin: naturally bounded [-1, 1]
     # Angular velocities: bounded per Gymnasium docs (dθ1 ≤ 4π ≈ 12.566, dθ2 ≤ 9π ≈ 28.274)
     # These max values come from the Gymnasium source, not from observation

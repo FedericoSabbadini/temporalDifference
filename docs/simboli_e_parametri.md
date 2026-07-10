@@ -18,6 +18,8 @@
 | — | `episodes` | Numero di episodi di training | 5000 (CartPole), 10000 (Acrobot) | Meno → non converge; più → più costo |
 | — | `max_steps` | Cap di step per episodio | 1000 (CartPole), 500 (Acrobot) | Deve combaciare col limite dell'env |
 
+Pong (DQN): training controllato dal numero totale di frame/timesteps, non dagli episodi. Gli episodi esistono comunque, ma non sono il criterio con cui si decide quando terminare l'addestramento (ogni run dipende dalla durata della partita, andare avanti non ha senso)
+
 **Valori di ritorno degli algoritmi** (importante per il runner):
 - Control (`q_learning`, `sarsa`): `(Q, episode_returns, episode_lengths)`
 - Prediction (`mc_prediction`, `td0_prediction`): `(V, episode_returns, value_history)`

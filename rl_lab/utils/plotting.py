@@ -6,7 +6,7 @@ The course exercises plotted single runs; here we need multi-seed bands.
 
 All plots follow the same style:
   - Moving-average smoothing for readability
-  - Mean line + shaded ±1 std band (when multiple seeds)
+  - Mean line + shaded ±1 std band (when multiple seeds), as required
   - Labeled axes, legend, grid
   - Consistent figure size (10×5)
 
@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 
 def moving_average(x, window=20):
-    """Smooth a 1-D array with a moving average.
+    """Smooth a 1-D array with a moving average of size 'window'.
 
     Uses np.convolve with a uniform kernel of size `window`.
     Returns an array shorter by (window-1) elements ('valid' mode).
@@ -38,7 +38,7 @@ def moving_average(x, window=20):
 
 def plot_learning_curves(results_dict, title, save_path=None, window=20,
                          ylabel="Return"):
-    """Plot learning curves for multiple algorithms with std bands.
+    """Plot learning curves for multiple algorithms (same hyperparameter).
 
     This is the primary visualization tool for the project.
     Each algorithm gets a smoothed mean line with a shaded ±1σ band,
@@ -66,7 +66,7 @@ def plot_learning_curves(results_dict, title, save_path=None, window=20,
         x = np.arange(len(sm_mean))  # x-axis = episode number (after smoothing)
         plt.plot(x, sm_mean, label=label)  # solid line = mean performance
         # Shaded band = ±1 standard deviation (shows seed-to-seed variability)
-        plt.fill_between(x, sm_mean - sm_std, sm_mean + sm_std, alpha=0.2)
+        plt.fill_between(x, sm_mean - sm_std, sm_mean + sm_std, alpha=0.2) # +-0.1
 
     plt.xlabel(f"Episode (smoothed, window={window})")
     plt.ylabel(ylabel)
@@ -84,7 +84,7 @@ def plot_learning_curves(results_dict, title, save_path=None, window=20,
 
 def plot_sensitivity(results_by_param, param_name, algo_name, title=None,
                      save_path=None, window=20):
-    """Plot learning curves for different hyperparameter values.
+    """Plot learning curves (1 algorithm) for different hyperparameter values.
 
     Used for the "sensitivity analysis" required by the assignment:
     how does changing ε, α, or γ affect learning?

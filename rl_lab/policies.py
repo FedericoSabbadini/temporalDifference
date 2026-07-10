@@ -18,20 +18,20 @@ def greedy_action(Q, state):
     Q is a defaultdict mapping states to arrays of Q-values, one per action. 
     (e.g. 
         Q = {
-            (0, 0): np.array([0.5, 0.3]), 
-            (0, 1): np.array([0.2, 0.4])
+            (0, 0): np.array([0.5, 0.3]), # state 1; action 1 + action 2
+            (0, 1): np.array([0.2, 0.4]) # state 2, action 1 + action 2
             }
     )
     state is the current state (e.g. a tuple of ints for discrete states).
     (e.g.
-        state = (0, 0)
+        state = (0, 0) # state 1
     )
     This implements the greedy policy: π(s) = argmax_a Q(s,a).
     Random tie-breaking is important when multiple actions have Q=0
     (as in the initial Q-table), otherwise the agent would always pick action 0.
     """
-    qvals = Q[state]  # array of Q-values, one per action (e.g. [0.5, 0.3] for 2 actions)
-    max_q = np.max(qvals)  # the highest Q-value across all actions
+    qvals = Q[state]  # array of Q-values, one per action (e.g. [0.5, 0.3] for 2 actions) = all actions of state
+    max_q = np.max(qvals)  # the highest Q-value across all actions of state
     # np.isclose handles floating-point comparison (e.g. 0.500000001 ≈ 0.5)
     # flatnonzero returns the indices where the condition is True
     candidates = np.flatnonzero(np.isclose(qvals, max_q))

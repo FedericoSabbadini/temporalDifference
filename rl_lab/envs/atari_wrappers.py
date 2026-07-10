@@ -1,5 +1,7 @@
 """Atari preprocessing wrappers (standard from the Nature DQN paper).
 
+Differently to the other env. for Pong we are required to develop a new personalize env.
+
 Origin: ADAPTED from Tutorial_Gymnasium.json (professor's tutorial showing
 how to create Atari envs with Gymnasium). The wrappers themselves are
 Gymnasium built-in (not SB3), so they are allowed by the assignment.

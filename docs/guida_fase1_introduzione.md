@@ -83,7 +83,7 @@ Metodi più avanzati (UCB, softmax, etc.) non sono richiesti dalla consegna.
 
 ## Scelte implementative
 
-- **Dict Python come Q-table** (`defaultdict(lambda: np.zeros(n_actions))`):
+- **Dict Python come Q-table** (`defaultdict(lambda: np.zeros(n_actions))` = { (1,2,3,4): array([0.,0.])} for state=(1,2,3,4) q(s,a)=[0,0]):
   scelta del corso. Efficiente per spazi sparsi — alloca solo gli stati visitati.
   Un array NumPy 2D sarebbe più veloce ma richiederebbe numerare tutti gli stati
   a priori, complicando il codice.

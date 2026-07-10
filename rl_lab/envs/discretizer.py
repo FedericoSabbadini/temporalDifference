@@ -39,10 +39,11 @@ class DiscretizedEnv(gym.ObservationWrapper): # ObservationWrapper is a Gymnasiu
 
     def __init__(self, env, n_bins, clip_low, clip_high):
         super().__init__(env)  # inherit all env methods (step=do action, reset=restart episode, etc.)
-        self.n_bins = np.array(n_bins, dtype=int)  # e.g. [10, 10, 10, 10] for CartPole -> creates 10^4 = 10,000 discrete states
+        self.n_bins = np.array(n_bins, dtype=int)  # e.g. [10, 10, 10, 10] for CartPole -> creates 10^4 = 10,000 discrete states (combination of all possibilities)
         self.clip_low = np.array(clip_low, dtype=np.float64)  # minimum observable values -> used to clip extreme values put by the environment (e.g. extreme velocities) in the observation space
         self.clip_high = np.array(clip_high, dtype=np.float64)  # maximum observable values -> used to clip extreme values put by the environment (e.g. extreme velocities) in the observation space
         # Width of each bin: (high - low) / n_bins, determines binning resolution
+        # Every bin refers to different dimensions: we need to clip to different use case values
         self.bin_widths = (self.clip_high - self.clip_low) / self.n_bins
 
     def observation(self, obs):

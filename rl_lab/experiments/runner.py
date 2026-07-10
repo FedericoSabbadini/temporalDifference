@@ -36,7 +36,7 @@ def run_multi_seed(make_env_fn, train_fn, seeds=(42, 123, 456),
         all_returns: np.array of shape (n_seeds, n_episodes).
         all_results: list of full result tuples from each seed.
     """
-    all_returns = []  # will become a (n_seeds, n_episodes) array
+    all_returns = []  # will become a (n_seeds, n_episodes) array containing all the REWARDS for each seed+episode
     all_results = []  # full result tuples for each seed (Q-tables, V, etc.)
 
     for seed in seeds:
