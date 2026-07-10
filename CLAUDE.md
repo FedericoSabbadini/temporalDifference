@@ -214,7 +214,9 @@ Ordered; each step ends in a verifiable outcome. Steps 1–5 earn the bulk of th
    implement Double DQN bonus (~5 lines over base DQN). *Outcome:* final deliverable.
    Report format: **LaTeX (Overleaf recommended)**.
 
-**Current status: Steps 1–8 code written. PyTorch cu128 install + GPU verification still pending. No experiments run yet.**
+**Current status: Steps 1–8 code written. PyTorch cu128 (2.11.0+cu128, CUDA 12.8) installed and
+GPU verified (RTX 5060 detected, `torch.cuda.is_available()==True`). DQN validated end-to-end on
+GPU for both the MLP (CartPole) and CNN (Pong) paths. No full experiments run yet.**
 
 ---
 
@@ -299,7 +301,7 @@ This is the primary dev + experiment machine. Google Colab is a fallback only.
 
 Follow sequentially. Check off in this file as you go.
 
-- [x] **Step 1** — `requirements.txt`, `.gitignore`, README, package skeleton. *(PyTorch cu128 install + GPU verify still pending.)*
+- [x] **Step 1** — `requirements.txt`, `.gitignore`, README, package skeleton. *(PyTorch cu128 installed; GPU verified — RTX 5060, CUDA 12.8. Also added `opencv-python` for AtariPreprocessing.)*
 - [x] **Step 2** — `envs/discretizer.py` (dimension-agnostic binning). *(Code written, not tested.)*
 - [x] **Step 3** — `algorithms/tabular/{q_learning,sarsa,mc_prediction,td0}.py` + `policies.py`. *(Code written, not tested.)*
 - [x] **Step 4** — `experiments/runner.py` + `utils/{seeding,plotting}.py`. *(Code written, not tested.)*

@@ -11,6 +11,9 @@ Matches the course exercise plotting conventions (moving_average, figsize).
 
 import os
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend: save figures to disk without a GUI
+                        # (avoids the Tk/_imagingtk DLL load blocked by Windows App Control)
 import matplotlib.pyplot as plt
 
 

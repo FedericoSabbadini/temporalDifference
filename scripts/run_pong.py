@@ -31,6 +31,18 @@ from rl_lab.utils.seeding import set_seed
 FIG_DIR = "figures/pong"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+# Startup banner — makes it obvious which interpreter/device is actually in use.
+# If DEVICE prints "cpu", you launched with the wrong Python; use the cu128 venv:
+#   .venv\Scripts\python.exe scripts\run_pong.py
+print(f"[run_pong] python     : {sys.executable}")
+print(f"[run_pong] torch      : {torch.__version__}  (cuda build: {torch.version.cuda})")
+print(f"[run_pong] cuda avail : {torch.cuda.is_available()}")
+print(f"[run_pong] DEVICE     : {DEVICE}"
+      + (f"  ({torch.cuda.get_device_name(0)})" if torch.cuda.is_available() else ""))
+if DEVICE == "cpu":
+    print("[run_pong] WARNING: running on CPU. Launch with the cu128 venv:")
+    print("[run_pong]   .venv\\Scripts\\python.exe scripts\\run_pong.py")
+
 # Training budget — short enough to be feasible, long enough to show learning
 TOTAL_STEPS = 200_000  # ~50 min on RTX 5060; increase if time allows
 

@@ -26,14 +26,16 @@ from rl_lab.algorithms.deep.networks import MLP, NatureCNN
 def _obs_to_tensor(obs, device):
     """Convert a single observation to a batched float tensor.
 
-    For images (H,W,C uint8): normalise to [0,1] and transpose to (1,C,H,W).
-    For vectors (float): just wrap and add batch dim.
+    For images (C,H,W uint8): normalise to [0,1] → (1,C,H,W).
+    For vectors (float): just wrap and add batch dim → (1,D).
+
+    Atari frames arrive already channel-first (4,84,84) from
+    FrameStackObservation, so no transpose is needed here.
     """
-    obs = np.array(obs)
+    obs = np.asarray(obs)
     if obs.ndim >= 3:
-        # Image observation (H, W, C) → (C, H, W), normalise
+        # Image observation (C, H, W) uint8 → normalise
         obs = obs.astype(np.float32) / 255.0
-        obs = np.transpose(obs, (2, 0, 1))
     else:
         obs = obs.astype(np.float32)
     return torch.from_numpy(obs).unsqueeze(0).to(device)
@@ -42,13 +44,14 @@ def _obs_to_tensor(obs, device):
 def _batch_to_tensor(batch, device):
     """Convert a batch of observations to a float tensor.
 
-    For images (B,H,W,C uint8): normalise and transpose to (B,C,H,W).
+    For images (B,C,H,W uint8): normalise → (B,C,H,W).
     For vectors (B,D): just convert.
+
+    Frames are already channel-first, so no transpose is needed.
     """
-    arr = np.array(batch)
+    arr = np.asarray(batch)
     if arr.ndim >= 4:
         arr = arr.astype(np.float32) / 255.0
-        arr = np.transpose(arr, (0, 3, 1, 2))
     else:
         arr = arr.astype(np.float32)
     return torch.from_numpy(arr).to(device)
