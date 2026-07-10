@@ -1,8 +1,20 @@
 """Q-network architectures for DQN.
 
+Origin: NEW (Standard). Architectures replicate the Nature DQN paper
+(Mnih et al. 2015, Table 1). The exact layer sizes are from the paper.
+PyTorch implementation is original.
+
 MLP: for environments with small vector observations (CartPole debug).
+     Not in the paper — used to validate the DQN training loop on a
+     simple env before moving to the expensive Atari CNN.
+
 NatureCNN: the convolutional network from Mnih et al. (2015) for Atari.
-    Input: (batch, 4, 84, 84) — 4 stacked grayscale frames.
+     Input: (batch, 4, 84, 84) — 4 stacked grayscale frames.
+     Output: Q(s, a) for each of the n_actions.
+
+Both networks output Q-values for ALL actions simultaneously.
+To select an action: action = argmax Q(s, :).
+This is more efficient than computing Q(s,a) for each action separately.
 """
 
 import torch
@@ -11,40 +23,60 @@ import torch.nn.functional as F
 
 
 class MLP(nn.Module):
-    """Two-hidden-layer MLP for vector-observation envs (CartPole debug)."""
+    """Two-hidden-layer MLP for vector-observation envs (CartPole debug).
+
+    Architecture: obs_dim → 128 → 128 → n_actions
+    All layers use ReLU activation except the output (raw Q-values).
+    """
 
     def __init__(self, obs_dim, n_actions, hidden=128):
         super().__init__()
-        self.fc1 = nn.Linear(obs_dim, hidden)
-        self.fc2 = nn.Linear(hidden, hidden)
-        self.out = nn.Linear(hidden, n_actions)
+        self.fc1 = nn.Linear(obs_dim, hidden)   # input → hidden (e.g. 4 → 128 for CartPole)
+        self.fc2 = nn.Linear(hidden, hidden)     # hidden → hidden (128 → 128)
+        self.out = nn.Linear(hidden, n_actions)  # hidden → Q-values (128 → 2 for CartPole)
 
     def forward(self, x):
+        # ReLU activation: max(0, x) — introduces nonlinearity between layers
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
+        # Output layer has NO activation — Q-values can be any real number (positive or negative)
         return self.out(x)
 
 
 class NatureCNN(nn.Module):
-    """Nature DQN convolutional network (Mnih et al. 2015).
+    """Nature DQN convolutional network (Mnih et al. 2015, Table 1).
 
-    Architecture: 3 conv layers → 1 FC layer → Q-values.
-    Designed for 84×84 grayscale Atari frames stacked ×4.
+    Architecture:
+      Conv2d(4→32, 8×8, stride 4) → ReLU
+      Conv2d(32→64, 4×4, stride 2) → ReLU
+      Conv2d(64→64, 3×3, stride 1) → ReLU
+      Flatten → Linear(3136→512) → ReLU → Linear(512→n_actions)
+
+    Input shape: (batch, 4, 84, 84) — 4 stacked 84×84 grayscale frames.
+    The 4 channels are consecutive frames, giving the network information
+    about motion (e.g., ball direction in Pong).
+
+    Output: Q-value for each action (no activation — raw values).
     """
 
     def __init__(self, n_actions):
         super().__init__()
-        self.conv1 = nn.Conv2d(4, 32, kernel_size=8, stride=4)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        # After convolutions on 84×84 input: 64 × 7 × 7 = 3136
-        self.fc1 = nn.Linear(64 * 7 * 7, 512)
-        self.out = nn.Linear(512, n_actions)
+        # Conv layers extract spatial features (edges, objects, motion) from frames
+        # Each conv reduces spatial dimensions: output_size = (input - kernel) / stride + 1
+        self.conv1 = nn.Conv2d(4, 32, kernel_size=8, stride=4)   # 84→20, 4 input channels = 4 stacked frames
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)  # 20→9, increasing channel depth
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)  # 9→7, same depth, smaller spatial
+        # After convolutions on 84×84 input: 64 channels × 7 × 7 = 3136 features
+        self.fc1 = nn.Linear(64 * 7 * 7, 512)  # 3136 → 512 (high-level representation)
+        self.out = nn.Linear(512, n_actions)     # 512 → one Q-value per action
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = x.reshape(x.size(0), -1)
-        x = F.relu(self.fc1(x))
-        return self.out(x)
+        # x shape: (batch, 4, 84, 84) — 4 stacked grayscale frames
+        x = F.relu(self.conv1(x))  # → (batch, 32, 20, 20)
+        x = F.relu(self.conv2(x))  # → (batch, 64, 9, 9)
+        x = F.relu(self.conv3(x))  # → (batch, 64, 7, 7)
+        # Flatten spatial dims into a single vector per sample
+        x = x.reshape(x.size(0), -1)  # → (batch, 3136)
+        x = F.relu(self.fc1(x))       # → (batch, 512)
+        # No activation on output — Q-values are unconstrained real numbers
+        return self.out(x)             # → (batch, n_actions)

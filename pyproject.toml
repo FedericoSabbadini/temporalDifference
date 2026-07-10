@@ -1,0 +1,31 @@
+[project]
+name = "temporal-difference"
+version = "0.1.0"
+description = "RL algorithms from scratch — final project for Reinforcement Learning (UniBS, A.Y. 2025/26)"
+requires-python = ">=3.12"
+dependencies = [
+    "gymnasium[atari]>=1.0",
+    "ale-py>=0.10",
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+    "tqdm>=4.66",
+    "torch>=2.7",
+]
+
+[project.optional-dependencies]
+# Atari baseline only (bonus). FORBIDDEN for Env 1/2 by the assignment.
+baseline = ["stable-baselines3"]
+
+[tool.uv]
+# RTX 5060 (Blackwell) needs the CUDA 12.8 PyTorch build (Linux/Windows only).
+# On macOS, torch is installed from the default PyPI index (CPU-only).
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]

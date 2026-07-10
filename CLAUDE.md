@@ -150,7 +150,8 @@ code; the **report and oral defense are in Italian**.
 TemporalDifference/
 ├── CLAUDE.md                 # this file — persistent context
 ├── README.md
-├── requirements.txt
+├── pyproject.toml            # dependencies & metadata (uv)
+├── uv.lock                   # pinned dependency versions
 ├── .gitignore
 ├── rl_lab/                   # main package
 │   ├── configs.py            # env configs (Python dicts, no YAML)
@@ -256,7 +257,9 @@ GPU for both the MLP (CartPole) and CNN (Pong) paths. No full experiments run ye
 | `pandas` *(optional)* | Aggregating multi-seed results | Only if convenient. |
 | `stable-baselines3` *(optional)* | **Atari baseline ONLY** (bonus) | **Never** for Env 1/2 — forbidden by assignment. |
 
-Install PyTorch with: `pip install torch --index-url https://download.pytorch.org/whl/cu128`
+**Package manager: `uv`.** Install everything with `uv sync`. On Linux/Windows the CUDA 12.8
+PyTorch wheel is pulled automatically via `pyproject.toml` source config; on macOS it falls
+back to the default CPU-only wheel. Run scripts with `uv run python scripts/run_*.py`.
 
 ---
 
