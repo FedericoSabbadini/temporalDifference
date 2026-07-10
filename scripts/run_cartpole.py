@@ -127,10 +127,14 @@ def exp_prediction_comparison():
     3. Evaluate this fixed policy with both MC and TD(0)
     4. Also evaluate a random policy for comparison
 
-    The episode returns show how the evaluated policy performs.
-    MC and TD(0) should show the same asymptotic return (same policy),
-    but TD(0) converges faster (lower variance) and MC is more stable
-    initially (unbiased).
+    TWO views are produced:
+    - Episode RETURN: shows how the evaluated policy performs. Note that MC and
+      TD(0) follow the SAME policy, so this curve is identical by construction —
+      it does NOT reveal the bias/variance difference between the estimators.
+    - Value ESTIMATE V(reference state) over episodes: THIS is where MC and TD(0)
+      differ. MC's estimate is noisy (unbiased, high variance); TD(0)'s is smooth
+      (biased early, low variance). This is the meaningful comparison and matches
+      the classic random-walk experiment from Sutton & Barto (§6.2).
     """
     print("\n=== 3. MC prediction vs TD(0) ===")
 
@@ -152,25 +156,45 @@ def exp_prediction_comparison():
     def random_policy(state):
         return np.random.randint(n_act)  # uniform random: each action with prob 0.5
 
+    # Reference state whose value we track over episodes: the central bin on
+    # every dimension ≈ cart centred, pole upright, near-zero velocities. It is
+    # visited in essentially every episode, so both estimators update it often.
+    anchor = tuple(nb // 2 for nb in CARTPOLE["n_bins"])
+
     # Step 2: Evaluate each policy with both MC and TD(0)
-    # The returns should converge to the same value (same policy being evaluated),
-    # but the convergence speed and variance will differ (MC vs TD trade-off)
     for policy_fn, label in [(learned_policy, "learned"),
                              (random_policy, "random")]:
         # MC prediction: waits until episode end, then uses the full return G
-        mc_ret, _ = run_multi_seed(make_cartpole, mc_prediction, SEEDS,
-                                   policy_fn=policy_fn, episodes=3000,
-                                   gamma=0.99)
+        mc_ret, mc_res = run_multi_seed(make_cartpole, mc_prediction, SEEDS,
+                                        policy_fn=policy_fn, episodes=3000,
+                                        gamma=0.99, track_state=anchor)
         # TD(0) prediction: updates at every step using bootstrap estimate V(S')
-        td_ret, _ = run_multi_seed(make_cartpole, td0_prediction, SEEDS,
-                                   policy_fn=policy_fn, episodes=3000,
-                                   alpha=0.1, gamma=0.99)
+        td_ret, td_res = run_multi_seed(make_cartpole, td0_prediction, SEEDS,
+                                        policy_fn=policy_fn, episodes=3000,
+                                        alpha=0.1, gamma=0.99, track_state=anchor)
+
+        # View 1: episode return (identical by construction — kept for honesty)
         plot_learning_curves(
             {"MC Prediction": mc_ret, "TD(0) Prediction": td_ret},
-            title=f"CartPole — MC vs TD(0) ({label} policy)",
-            save_path=f"{FIG_DIR}/prediction_{label}_policy.png",
+            title=f"CartPole — MC vs TD(0): episode return ({label} policy)",
+            save_path=f"{FIG_DIR}/prediction_{label}_return.png",
             ylabel="Episode return (under evaluated policy)",
         )
+
+        # View 2: value estimate of the reference state — the meaningful one.
+        # value_history is result index [2]; stack across seeds → (n_seeds, episodes)
+        mc_vhist = np.array([r[2] for r in mc_res])
+        td_vhist = np.array([r[2] for r in td_res])
+        plot_learning_curves(
+            {"MC estimate": mc_vhist, "TD(0) estimate": td_vhist},
+            title=f"CartPole — MC vs TD(0): value estimate V(s_ref) ({label} policy)",
+            save_path=f"{FIG_DIR}/prediction_{label}_value.png",
+            ylabel="V(reference state) estimate",
+            window=1,  # no smoothing: we WANT to see MC's raw variance vs TD's
+        )
+        np.savez(f"results/cartpole/prediction_{label}.npz",
+                 mc_value=mc_vhist, td_value=td_vhist,
+                 mc_return=mc_ret, td_return=td_ret)
 
 
 # -----------------------------------------------------------------------

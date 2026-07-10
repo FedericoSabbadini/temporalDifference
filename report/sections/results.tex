@@ -82,23 +82,37 @@ Destra: $\varepsilon=0$ resta bloccato ($\varepsilon=0.1$ apprende).}
 
 \subsection{CartPole --- MC vs TD(0) (predizione)}
 \label{sec:res-cartpole-pred}
-La Fig.~\ref{fig:cp-pred} confronta MC e TD(0) sulla policy greedy appresa.
-Le due curve risultano \emph{praticamente sovrapposte}, con una banda di
-varianza molto ampia. Questo esito richiede una lettura critica onesta
-(Sez.~\ref{sec:discussion}): ci\`o che viene tracciato \`e il \emph{return
-degli episodi generati} sotto la policy fissa --- identico per costruzione tra
-MC e TD(0), perch\'e entrambi seguono la \emph{stessa} policy. La differenza
-bias/varianza tra i due stimatori vive nelle stime $V(s)$, che questo grafico
-non espone. Il grafico conferma quindi solo che entrambi valutano la stessa
-policy (return medio $\sim$230), non il vantaggio di varianza di TD(0).
+Il confronto MC vs TD(0) va letto con due grafici distinti. Il \emph{return}
+degli episodi (Fig.~\ref{fig:cp-pred-return}) \`e \emph{identico per
+costruzione} tra i due metodi: entrambi seguono la stessa policy fissa, quindi
+generano la stessa distribuzione di return (media $\sim$230). Questo grafico non
+pu\`o mostrare la differenza tra i due stimatori --- una lezione metodologica in
+s\'e (vedi fix \#1, Sez.~\ref{sec:lessons-fixes}).
+
+La differenza vive invece nelle \emph{stime} $V(s)$. La
+Fig.~\ref{fig:pred-value} traccia la stima $V(s_{\text{ref}})$ di uno stato di
+riferimento (bin centrale, quasi in equilibrio) episodio per episodio: la
+traiettoria di \textbf{MC \`e rumorosa} (non distorta, alta varianza), quella di
+\textbf{TD(0) \`e liscia} (distorta all'inizio, bassa varianza) e converge in
+modo pi\`u regolare. \`E esattamente il compromesso bias/varianza atteso
+(S\&B \S6.2).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\linewidth]{cartpole_prediction_learned_policy.png}
-\caption{CartPole: MC vs TD(0) sulla policy appresa. Le curve coincidono
-perch\'e si traccia il return della policy condivisa, non l'errore sulle
-stime $V(s)$ (vedi Sez.~\ref{sec:discussion}).}
-\label{fig:cp-pred}
+\includegraphics[width=0.72\linewidth]{cartpole_prediction_learned_return.png}
+\caption{CartPole: MC vs TD(0), \emph{return} della policy appresa. Le curve
+coincidono perch\'e i due metodi valutano la stessa policy --- il return non
+distingue gli stimatori.}
+\label{fig:cp-pred-return}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{cartpole_prediction_learned_value.png}
+\caption{CartPole: MC vs TD(0), \emph{stima} $V(s_{\text{ref}})$ nel tempo
+(fix \#1). MC \`e rumorosa (alta varianza), TD(0) \`e liscia (bassa varianza):
+questo \`e il vero confronto bias/varianza.}
+\label{fig:pred-value}
 \end{figure}
 
 \subsection{Acrobot --- controllo}
@@ -156,8 +170,11 @@ l'attesa ``reward sparso $\Rightarrow$ serve pi\`u esplorazione'': i valori
 ($\sim$$-320$), mentre $\varepsilon=0.4$ \`e nettamente il peggiore
 ($\sim$$-440$). Con $\varepsilon$ costante (non decrescente), un valore alto
 disturba continuamente la policy greedy e impedisce di sfruttare lo swing-up
-appreso. Il confronto MC vs TD(0) su Acrobot presenta lo stesso limite
-metodologico di CartPole (curve sovrapposte, Sez.~\ref{sec:discussion}).
+appreso. Il confronto MC vs TD(0) su Acrobot usa lo stesso schema di CartPole
+dopo il fix \#1 (Fig.~\ref{fig:ac-pred-value}): la stima $V(s_{\text{ref}})$ di
+MC \`e rumorosa e quella di TD(0) liscia; su Acrobot la differenza \`e ancora
+pi\`u marcata perch\'e gli episodi durano fino a 500 passi (il return $G$ di MC
+dipende da 500 transizioni casuali).
 
 \begin{figure}[H]
 \centering
@@ -166,6 +183,15 @@ metodologico di CartPole (curve sovrapposte, Sez.~\ref{sec:discussion}).
 valori bassi (0.05--0.1) battono valori alti (0.4): troppa esplorazione
 disturba la policy.}
 \label{fig:ac-eps}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{acrobot_prediction_value.png}
+\caption{Acrobot: MC vs TD(0), stima $V(s_{\text{ref}})$ nel tempo (fix \#1).
+Come su CartPole, MC \`e rumorosa e TD(0) liscia; la differenza \`e accentuata
+dagli episodi lunghi.}
+\label{fig:ac-pred-value}
 \end{figure}
 
 \subsection{Pong --- studio di ablazione del DQN}

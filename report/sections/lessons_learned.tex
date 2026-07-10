@@ -1,0 +1,183 @@
+\section{Analisi sperimentale e lezioni apprese}
+\label{sec:lessons}
+
+Questa sezione documenta il \emph{processo} sperimentale, non solo i risultati
+finali: cosa ci si aspettava, cosa ha funzionato, cosa no, quali problemi sono
+emersi durante lo sviluppo e quali correzioni sono state applicate. L'obiettivo
+\`e una discussione onesta, con ogni affermazione ancorata all'evidenza
+sperimentale (Sez.~\ref{sec:results}).
+
+\subsection{Obiettivi iniziali di ciascun esperimento}
+\begin{itemize}[nosep]
+  \item \textbf{CartPole controllo}: verificare che i metodi tabellari
+        apprendano davvero e confrontare on-policy (SARSA) vs off-policy
+        (Q\hbox{-}Learning).
+  \item \textbf{Sensibilit\`a} ($\varepsilon,\alpha,\gamma$): mostrare l'effetto
+        degli iperparametri sulla velocit\`a e stabilit\`a dell'apprendimento.
+  \item \textbf{MC vs TD(0)}: illustrare il compromesso bias/varianza tra i due
+        stimatori di predizione.
+  \item \textbf{Casi di fallimento}: rendere visibili instabilit\`a
+        ($\alpha$ estremo) e mancata esplorazione ($\varepsilon=0$).
+  \item \textbf{Acrobot}: applicare gli stessi metodi a un ambiente pi\`u
+        difficile (reward sparso, stato 6-D) e discutere i limiti della
+        discretizzazione.
+  \item \textbf{Pong/DQN}: implementare un DQN da zero e isolare, per ablazione,
+        il contributo di experience replay e target network; testare Double DQN.
+\end{itemize}
+
+\subsection{Cosa ha funzionato}
+\begin{itemize}[nosep]
+  \item \textbf{Apprendimento tabellare corretto}: su CartPole entrambi gli
+        algoritmi salgono da $\sim$30 a un plateau stabile; Q\hbox{-}Learning
+        mostra varianza tra seed pi\`u bassa (Tab.~\ref{tab:cartpole-control}).
+  \item \textbf{Sensibilit\`a coerente con la teoria}: $\alpha=0.1$ \`e il
+        compromesso migliore, $\gamma$ alto vince su un compito di
+        sopravvivenza (Sez.~\ref{sec:res-cartpole-sens}).
+  \item \textbf{Casi di fallimento riproducibili}: $\alpha=1.0$ e
+        $\varepsilon=0$ producono i fallimenti attesi
+        (Sez.~\ref{sec:res-cartpole-fail}).
+  \item \textbf{Ablazione DQN da manuale}: replay indispensabile, target network
+        acceleratrice; risultato netto e riproducibile
+        (Fig.~\ref{fig:pong}, Tab.~\ref{tab:pong-ablation}).
+  \item \textbf{Riproducibilit\`a}: media su 3 seed con bande, seeding combinato
+        (numpy+torch+env), array grezzi salvati in \code{.npz} e tabelle
+        generate da quei dati.
+  \item \textbf{Bonus Double DQN}: implementato e funzionante (apprende in modo
+        simile al DQN completo).
+\end{itemize}
+
+\subsection{Cosa non ha funzionato (o ha sorpreso)}
+\begin{itemize}[nosep]
+  \item \textbf{Il grafico MC vs TD(0) iniziale era poco informativo}: mostrava
+        curve identiche, perch\'e tracciava il return della policy condivisa e
+        non le stime $V(s)$. Corretto (fix \#1, Sez.~\ref{sec:lessons-fixes}).
+  \item \textbf{Due ipotesi su Acrobot smentite dai dati}: bin pi\`u fini sono
+        risultati \emph{migliori} (non peggiori) e $\varepsilon$ basso batte
+        $\varepsilon$ alto (Sez.~\ref{sec:res-acrobot-bins},
+        \ref{sec:res-acrobot-eps}). Risultati mantenuti e analizzati, non
+        ``aggiustati''.
+  \item \textbf{CartPole non raggiungeva 500} ma si fermava a $\sim$184: un
+        \emph{tetto di discretizzazione}, non un bug. Mitigato con il fix \#2.
+  \item \textbf{Acrobot lontano dall'ottimo} ($\sim$$-345$ vs $\sim$$-100$) e con
+        curve molto rumorose: atteso per reward sparso e spazio grande.
+  \item \textbf{Double DQN non supera il DQN base} nel regime breve (200k step):
+        la riduzione del maximization bias non \`e determinante con cos\`i pochi
+        step; comportamento noto in letteratura, non un errore.
+\end{itemize}
+
+\subsection{Problemi incontrati durante lo sviluppo}
+\label{sec:lessons-problems}
+Questi sono problemi \emph{implementativi} reali (distinti dai limiti
+intrinseci dell'RL discussi sotto):
+\begin{itemize}[nosep]
+  \item \textbf{GPU Blackwell (RTX 5060)}: richiede la build PyTorch CUDA 12.8;
+        con build pi\`u vecchie la GPU non viene rilevata.
+  \item \textbf{Pipeline Atari, tre trappole risolte}: (i) l'ambiente
+        \code{-v5} ha gi\`a un frame-skip interno, che combinato con
+        \code{AtariPreprocessing} darebbe uno skip di 16 frame $\Rightarrow$ si
+        forza \code{frameskip=1} alla creazione; (ii) in Gymnasium 1.x
+        \code{FrameStack} \`e stato rinominato \code{FrameStackObservation};
+        (iii) i frame impilati arrivano gi\`a in formato channel-first
+        \code{(4,84,84)}, quindi \emph{non} va applicata alcuna trasposizione
+        prima della CNN. Un errore su uno qualsiasi di questi tre punti produce
+        crash o input malformati alla rete.
+  \item \textbf{Registrazione ALE}: con \code{ale-py} recente serve
+        \code{gym.register\_envs(ale\_py)}, altrimenti \code{gym.make("ALE/...")}
+        fallisce.
+  \item \textbf{Memoria del replay buffer}: 1M transizioni Atari a frame interi
+        sarebbero $\sim$28\,GB; si \`e limitato il buffer a 100k transizioni e si
+        conservano i frame in \code{uint8}, normalizzando solo al training.
+  \item \textbf{Backend Matplotlib}: forzato ad \code{Agg} (non interattivo) per
+        salvare le figure senza GUI.
+  \item \textbf{Conflitti di versione nel codice}: durante la gestione con
+        \code{git} sono rimasti dei marcatori di merge non risolti in alcuni file
+        (Atari/DQN/plotting). Sono stati risolti mantenendo la versione
+        \emph{effettivamente eseguita} (quella che ha prodotto i risultati Pong),
+        e verificati con un test di import dell'intero pacchetto.
+\end{itemize}
+
+\subsection{Correzioni applicate}
+\label{sec:lessons-fixes}
+\paragraph{Fix \#1 --- confronto MC vs TD(0) reso significativo.}
+\emph{Cosa}: oltre al return della policy, si traccia ora la stima
+$V(s_{\text{ref}})$ di uno stato di riferimento (il bin centrale, quasi in
+equilibrio) episodio per episodio.
+\emph{Perch\'e}: il return \`e identico per costruzione tra i due metodi (stessa
+policy), quindi non pu\`o mostrare la differenza; la differenza bias/varianza
+vive nelle stime $V$.
+\emph{Effetto}: la stima MC risulta rumorosa (non distorta, alta varianza),
+quella TD(0) liscia (distorta all'inizio, bassa varianza) --- il quadro classico
+di Sutton \& Barto \S6.2 (Fig.~\ref{fig:pred-value}).
+\emph{Risolto?} S\`i, entro l'approccio scelto (un singolo stato di
+riferimento); una misura globale (RMSE di $V$ su tutti gli stati) richiederebbe
+un $V$ di riferimento non disponibile qui.
+
+\paragraph{Fix \#2 --- discretizzazione CartPole pi\`u efficiente.}
+\emph{Cosa}: gli intervalli di clipping di posizione e angolo sono stati
+ristretti dai limiti dello spazio di osservazione ($\pm4.8$, $\pm0.418$) ai
+limiti di \emph{terminazione} ($\pm2.4$, $\pm0.21$).
+\emph{Perch\'e}: oltre i limiti di terminazione l'episodio \`e gi\`a finito,
+quindi met\`a dei bin di posizione e angolo era sprecata su stati che non
+possono verificarsi.
+\emph{Effetto}: raddoppia la risoluzione utile sulle due dimensioni pi\`u
+importanti; il return finale di CartPole passa da $\sim$184 a
+\PLACEHOLDERCARTPOLE{} (Tab.~\ref{tab:cartpole-control}).
+\emph{Risolto?} Il ``tetto'' si alza ma non sparisce: resta un limite di ogni
+metodo tabellare su stato continuo (serve approssimazione di funzione).
+
+\subsection{Limiti residui}
+\label{sec:lessons-limits}
+Alcuni limiti restano anche dopo le correzioni. \`E importante distinguere quelli
+\emph{intrinseci all'RL} da eventuali difetti di implementazione: i seguenti sono
+caratteristiche attese, non bug.
+\begin{itemize}[nosep]
+  \item \textbf{Efficienza campionaria (sample efficiency) bassa}: i metodi
+        tabellari richiedono migliaia di episodi (5k CartPole, 10k Acrobot) per
+        risultati modesti. \`E inerente al tabular senza generalizzazione.
+  \item \textbf{Stabilit\`a di convergenza}: le curve non si appiattiscono mai del
+        tutto. Con $\varepsilon$ e $\alpha$ \emph{costanti}, l'agente continua a
+        esplorare e pesa le esperienze recenti in modo esponenziale: la
+        fluttuazione asintotica \`e attesa, non un errore.
+  \item \textbf{Sparsit\`a del reward (Acrobot)}: reward $-1$/passo fino
+        all'obiettivo rende l'assegnazione del credito difficile; spiega la
+        convergenza lenta e la distanza dall'ottimo.
+  \item \textbf{Sensibilit\`a agli iperparametri}: i risultati dipendono
+        marcatamente da $\alpha,\gamma,\varepsilon$ e dal numero di bin (Sez.~
+        \ref{sec:res-cartpole-sens}, \ref{sec:res-acrobot-bins}). Tipico dell'RL.
+  \item \textbf{Varianza da seed / casualit\`a}: le bande $\pm1\sigma$ sono a
+        volte ampie (Acrobot, predizione). Con solo 3 seed la stima
+        dell'incertezza \`e essa stessa rumorosa; \`e un compromesso di budget,
+        dichiarato apertamente.
+  \item \textbf{Vincoli computazionali (Pong)}: 200k step contro i 50M del paper
+        Nature; per questo Pong si ferma a $\sim$$-12$ e non a punteggi positivi.
+        \`E una scelta di budget, non un difetto dell'implementazione.
+  \item \textbf{Strategia di esplorazione}: $\varepsilon$-greedy costante \`e la
+        pi\`u semplice; su Acrobot un valore alto \emph{costante} penalizza
+        (Sez.~\ref{sec:res-acrobot-eps}). Un annealing sarebbe pi\`u adatto.
+  \item \textbf{Generalizzazione / discretizzazione}: la discretizzazione
+        uniforme perde precisione (tetto di CartPole; Acrobot lontano
+        dall'ottimo). Non \`e overfitting in senso classico ma
+        \emph{sotto-rappresentazione} dello stato: il limite \`e la griglia, non
+        i dati.
+  \item \textbf{Predizione, misura locale}: il fix \#1 mostra la varianza su
+        \emph{un} stato di riferimento, non l'errore globale su $V$.
+\end{itemize}
+
+\subsection{Possibili miglioramenti futuri}
+\label{sec:lessons-future}
+Realistici, oltre gli obiettivi del corso:
+\begin{itemize}[nosep]
+  \item \textbf{Annealing di $\varepsilon$ e decadimento di $\alpha$}: curve pi\`u
+        pulite e migliore convergenza asintotica.
+  \item \textbf{Approssimazione di funzione per Acrobot}: tile coding o una
+        piccola rete al posto della tabella, per superare la maledizione della
+        dimensionalit\`a.
+  \item \textbf{DQN pi\`u lungo e varianti}: pi\`u step, pi\`u Dueling DQN e
+        Prioritized Experience Replay, verso punteggi positivi su Pong.
+  \item \textbf{Predizione pi\`u rigorosa}: RMSE di $V$ rispetto a un riferimento
+        Monte Carlo ad alta campionatura, come nell'esercizio \code{random\_walk}.
+  \item \textbf{Ablazione Pong in funzione degli step ambiente}: confronto a
+        parit\`a esatta di calcolo.
+  \item \textbf{Fase di valutazione puramente greedy per il DQN}: separare il
+        return di training (con esplorazione) da quello della policy finale.
+\end{itemize}

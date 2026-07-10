@@ -25,8 +25,8 @@ Sensibilit\`a a $\varepsilon,\alpha,\gamma$ & \checkmark &
   Sez.~\ref{sec:res-cartpole-sens}, 6 figure \\
 SARSA vs Q\hbox{-}Learning (empirico + teorico) & \checkmark &
   Sez.~\ref{sec:res-cartpole-control}, \ref{sec:theory} \\
-MC vs TD(0) (bias/varianza/stabilit\`a) & \textasciitilde &
-  Fig.~\ref{fig:cp-pred}; limite discusso in Sez.~\ref{sec:discussion} \\
+MC vs TD(0) (bias/varianza/stabilit\`a) & \checkmark &
+  Fig.~\ref{fig:pred-value} (stima $V$); vedi fix \#1 in Sez.~\ref{sec:lessons-fixes} \\
 $\geq 1$ caso di fallimento & \checkmark &
   Sez.~\ref{sec:res-cartpole-fail}, 2 casi \\
 \midrule
@@ -64,8 +64,10 @@ Report 10--15 pagine, con failure analysis & \checkmark &
 \end{table}
 
 \paragraph{Nota sul confronto MC vs TD(0).}
-\`E l'unico requisito solo parzialmente soddisfatto: l'esperimento esiste ed
-\`e eseguito su 3 seed, ma la visualizzazione scelta (return della policy) non
-espone il compromesso bias/varianza tra i due stimatori. Il punto \`e
-dichiarato apertamente in Sez.~\ref{sec:discussion} e la correzione (tracciare
-l'errore su $V(s)$) \`e indicata tra le azioni future.
+In una prima versione questo era l'unico requisito solo parzialmente
+soddisfatto: la visualizzazione mostrava il return della policy (identico per
+costruzione) e non il compromesso bias/varianza. Con il fix \#1
+(Sez.~\ref{sec:lessons-fixes}) si traccia ora anche la stima $V(s_{\text{ref}})$
+episodio per episodio, che espone la varianza alta di MC contro la traiettoria
+liscia di TD(0): il requisito \`e ora pienamente soddisfatto. Resta come
+possibile estensione una misura globale (RMSE di $V$ su tutti gli stati).

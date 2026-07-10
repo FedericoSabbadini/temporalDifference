@@ -31,7 +31,7 @@ from collections import defaultdict
 
 
 def mc_prediction(env, policy_fn, episodes=5000, gamma=1.0,
-                  first_visit=True, max_steps=1000):
+                  first_visit=True, max_steps=1000, track_state=None):
     """First-visit (or every-visit) MC prediction for V(s).
 
     Args:
@@ -42,15 +42,25 @@ def mc_prediction(env, policy_fn, episodes=5000, gamma=1.0,
         gamma: discount factor (γ=1.0 = undiscounted, standard for episodic tasks).
         first_visit: if True, use first-visit MC; else every-visit.
         max_steps: max steps per episode.
+        track_state: optional reference state (tuple). If given, the current
+                   estimate V(track_state) is recorded after every episode.
+                   This exposes HOW the estimate evolves — the quantity that
+                   actually differs between MC and TD(0). MC's trace is noisy
+                   (high variance, unbiased), TD's is smooth (low variance,
+                   biased early). The episode return alone cannot show this,
+                   because both methods follow the same fixed policy.
 
     Returns:
         V: estimated state-value function (defaultdict: state → float).
         episode_returns: list of total returns per episode (for plotting).
+        value_history: list of V(track_state) after each episode (empty if
+                   track_state is None).
     """
     returns_sum = defaultdict(float)    # cumulative sum of returns G per state
     returns_count = defaultdict(float)  # number of times each state was visited
     V = defaultdict(float)  # estimated V(s) = returns_sum[s] / returns_count[s]
     episode_returns = []  # total return per episode (for plotting)
+    value_history = []  # V(track_state) after each episode (bias/variance study)
 
     for ep in range(episodes):
         # --- Step 1: Generate a COMPLETE episode following policy_fn ---
@@ -92,4 +102,8 @@ def mc_prediction(env, policy_fn, episodes=5000, gamma=1.0,
             returns_count[s] += 1.0
             V[s] = returns_sum[s] / returns_count[s]
 
-    return V, episode_returns
+        # Record the running estimate of the reference state (if requested)
+        if track_state is not None:
+            value_history.append(V[track_state])
+
+    return V, episode_returns, value_history

@@ -30,21 +30,16 @@ gym.register_envs(ale_py)
 
 
 def make_atari_env(env_name="ALE/Pong-v5", render_mode=None):
-<<<<<<< Updated upstream
     """Create an Atari env with standard DQN preprocessing.
 
     Final observation shape is (4, 84, 84): 4 stacked grayscale frames,
     channel-first (PyTorch NCHW convention for the Nature CNN).
     """
     # frameskip=1 disables the -v5 env's built-in frame-skip so that
-    # AtariPreprocessing is the single source of the 4-frame skip.
+    # AtariPreprocessing is the single source of the 4-frame skip (otherwise the
+    # two would compound into a 16-frame skip).
     env = gym.make(env_name, render_mode=render_mode, frameskip=1)
-=======
-    """Create an Atari env with standard DQN preprocessing."""
-    # Create the base Atari environment via the Arcade Learning Environment
-    env = gym.make(env_name, render_mode=render_mode)
     # AtariPreprocessing applies the standard preprocessing from Mnih et al. (2015):
->>>>>>> Stashed changes
     env = gym.wrappers.AtariPreprocessing(
         env,
         noop_max=30,           # random 1-30 no-op actions at episode start (randomize initial state)
@@ -54,12 +49,8 @@ def make_atari_env(env_name="ALE/Pong-v5", render_mode=None):
         grayscale_obs=True,    # convert RGB → grayscale (color is irrelevant for gameplay)
         scale_obs=False,       # keep uint8 [0-255] to save ~4× memory in replay buffer
     )
-<<<<<<< Updated upstream
-    # FrameStack was renamed to FrameStackObservation in Gymnasium 1.x.
+    # Stack 4 consecutive frames to give the network temporal information (e.g.
+    # ball direction in Pong). FrameStack was renamed to FrameStackObservation
+    # in Gymnasium 1.x.
     env = gym.wrappers.FrameStackObservation(env, stack_size=4)
-=======
-    # Stack 4 consecutive frames to give the network temporal information
-    # (e.g. ball direction in Pong requires seeing motion across frames)
-    env = gym.wrappers.FrameStack(env, num_stack=4)
->>>>>>> Stashed changes
     return env

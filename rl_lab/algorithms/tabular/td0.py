@@ -36,7 +36,7 @@ from collections import defaultdict
 
 
 def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
-                   max_steps=1000):
+                   max_steps=1000, track_state=None):
     """TD(0) prediction for V(s).
 
     Args:
@@ -48,13 +48,21 @@ def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
                which means recent experiences weigh more (exponential recency).
         gamma: discount factor.
         max_steps: max steps per episode.
+        track_state: optional reference state (tuple). If given, V(track_state)
+               is recorded after every episode, so the smooth/low-variance
+               evolution of the TD estimate can be compared against MC's noisy
+               one (see mc_prediction). This is the quantity that reveals the
+               bias/variance trade-off; the episode return cannot.
 
     Returns:
         V: estimated state-value function (defaultdict: state → float).
         episode_returns: list of total returns per episode (for plotting).
+        value_history: list of V(track_state) after each episode (empty if
+               track_state is None).
     """
     V = defaultdict(float)  # V(s) = 0 for all states initially
     episode_returns = []  # total return per episode (for plotting)
+    value_history = []  # V(track_state) after each episode (bias/variance study)
 
     for ep in range(episodes):
         state, _ = env.reset()
@@ -83,4 +91,8 @@ def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
 
         episode_returns.append(ep_return)
 
-    return V, episode_returns
+        # Record the running estimate of the reference state (if requested)
+        if track_state is not None:
+            value_history.append(V[track_state])
+
+    return V, episode_returns, value_history

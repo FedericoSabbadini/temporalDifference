@@ -162,10 +162,11 @@ def exp_sensitivity_epsilon():
 def exp_prediction():
     """MC vs TD(0) prediction on the learned Acrobot policy.
 
-    Same approach as CartPole: train Q-Learning, extract greedy policy,
-    evaluate with MC and TD(0). On Acrobot the variance difference is
-    more visible because episodes are longer (up to 500 steps → MC's
-    return G depends on 500 steps of randomness).
+    Same approach as CartPole (see run_cartpole.py for the full rationale):
+    train Q-Learning, extract the greedy policy, evaluate it with MC and TD(0).
+    Two views are produced — the episode return (identical by construction,
+    same policy) and the value estimate V(reference state) over episodes, which
+    is where MC (noisy) and TD(0) (smooth) actually differ.
     """
     print("\n=== 4. MC vs TD(0) prediction (Acrobot) ===")
 
@@ -180,21 +181,42 @@ def exp_prediction():
     def learned_policy(state):
         return greedy_action(Q, state)
 
+    # Central-bin reference state (visited often), value tracked over episodes
+    anchor = tuple(nb // 2 for nb in ACROBOT["n_bins"])
+
     # MC prediction: higher variance on Acrobot because episodes are up to 500 steps long
     # → the return G = R1 + γR2 + ... + γ^499 R500 depends on 500 random transitions
-    mc_ret, _ = run_multi_seed(make_acrobot, mc_prediction, SEEDS,
-                               policy_fn=learned_policy, episodes=3000,
-                               gamma=0.99, max_steps=MAX_STEPS)
+    mc_ret, mc_res = run_multi_seed(make_acrobot, mc_prediction, SEEDS,
+                                    policy_fn=learned_policy, episodes=3000,
+                                    gamma=0.99, max_steps=MAX_STEPS,
+                                    track_state=anchor)
     # TD(0) prediction: lower variance because it only uses ONE step of randomness
-    td_ret, _ = run_multi_seed(make_acrobot, td0_prediction, SEEDS,
-                               policy_fn=learned_policy, episodes=3000,
-                               alpha=0.1, gamma=0.99, max_steps=MAX_STEPS)
+    td_ret, td_res = run_multi_seed(make_acrobot, td0_prediction, SEEDS,
+                                    policy_fn=learned_policy, episodes=3000,
+                                    alpha=0.1, gamma=0.99, max_steps=MAX_STEPS,
+                                    track_state=anchor)
+
+    # View 1: episode return (identical by construction — kept for honesty)
     plot_learning_curves(
         {"MC Prediction": mc_ret, "TD(0) Prediction": td_ret},
-        title="Acrobot — MC vs TD(0) (learned policy)",
-        save_path=f"{FIG_DIR}/prediction_comparison.png",
+        title="Acrobot — MC vs TD(0): episode return (learned policy)",
+        save_path=f"{FIG_DIR}/prediction_return.png",
         ylabel="Episode return (under evaluated policy)",
     )
+
+    # View 2: value estimate of the reference state — the meaningful comparison
+    mc_vhist = np.array([r[2] for r in mc_res])
+    td_vhist = np.array([r[2] for r in td_res])
+    plot_learning_curves(
+        {"MC estimate": mc_vhist, "TD(0) estimate": td_vhist},
+        title="Acrobot — MC vs TD(0): value estimate V(s_ref) (learned policy)",
+        save_path=f"{FIG_DIR}/prediction_value.png",
+        ylabel="V(reference state) estimate",
+        window=1,  # no smoothing: show MC's raw variance vs TD's smoothness
+    )
+    np.savez("results/acrobot/prediction.npz",
+             mc_value=mc_vhist, td_value=td_vhist,
+             mc_return=mc_ret, td_return=td_ret)
 
 
 # -----------------------------------------------------------------------

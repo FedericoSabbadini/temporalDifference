@@ -17,12 +17,9 @@ agli iperparametri" plots required by the assignment for every environment.
 import os
 import numpy as np
 import matplotlib
-<<<<<<< Updated upstream
-matplotlib.use("Agg")  # non-interactive backend: save figures to disk without a GUI
-                        # (avoids the Tk/_imagingtk DLL load blocked by Windows App Control)
-=======
-matplotlib.use("Agg")  # non-interactive backend: render to file only (avoids macOS crashes)
->>>>>>> Stashed changes
+# Non-interactive backend: save figures to disk without a GUI. Avoids GUI-backend
+# issues (Tk load blocked on Windows App Control; crashes on some macOS setups).
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 

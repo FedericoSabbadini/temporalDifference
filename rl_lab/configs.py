@@ -18,22 +18,22 @@ CARTPOLE = {
     # 4D continuous state → 10^4 = 10,000 discrete states (manageable)
     #    why 4 dimensions? CartPole obs: [cart_pos=the position of the cart, cart_vel=the velocity of the cart, pole_angle=the angle of the pole, pole_ang_vel=the angular velocity of the pole]
     #    why 10 bins for each dimension? 10 bins is a reasonable trade-off between resolution and state space size. More bins would increase the state space exponentially, making learning slower and more difficult.
-    "n_bins": [10, 10, 10, 10], 
+    "n_bins": [10, 10, 10, 10],
     # CartPole obs: [cart_pos, cart_vel, pole_angle, pole_ang_vel]
-    # Position: bounded ±4.8 (env terminates outside)
-    # Velocity: technically unbounded, but ±3.0 covers practical range
-    # Angle: ±0.418 rad (≈ ±24°, env terminates beyond ±12°)
-    "clip_low": [-4.8, -3.0, -0.418, -3.0], 
-    # why these values? These values are based on the physical constraints of the CartPole environment. 
-    # The cart position is limited to ±4.8 units, the cart velocity is limited to ±3.0 units, 
-    # the pole angle is limited to ±0.418 radians (approximately ±24 degrees), and the pole angular velocity is limited to ±3.0 units. 
-    # These limits ensure that the agent learns within a reasonable range of states and avoids extreme values that could destabilize learning.
-    # where do these values come from? These values are derived from the Gymnasium environment's specifications and are commonly used in reinforcement 
-    # learning literature for the CartPole problem. They represent the practical limits of the environment's state space, ensuring that the agent operates within a feasible range of observations.
-    "clip_high": [4.8, 3.0, 0.418, 3.0],
-    # why these values? These values are based on the physical constraints of the CartPole environment.
-    # The cart position is limited to ±4.8 units, the cart velocity is limited to ±3.0 units, the pole angle is limited to ±0.418 radians (approximately ±24 degrees), 
-    # and the pole angular velocity is limited to ±3.0 units. These limits ensure that the agent learns within a reasonable range of states and avoids extreme values that could destabilize learning.
+    #
+    # IMPORTANT design choice: the clip range should match the range the agent
+    # ACTUALLY visits, not the full observation-space bounds. CartPole-v1
+    # TERMINATES when |cart_pos| > 2.4 or |pole_angle| > 0.2095 rad (±12°).
+    # States beyond those thresholds never occur (the episode is already over),
+    # so clipping to the wider observation bounds (±4.8, ±0.418) would waste
+    # ~half of the position and angle bins on states that can't happen.
+    # We therefore clip to the TERMINATION bounds, roughly doubling the useful
+    # resolution on the two most important dimensions.
+    #   - Position: ±2.4  (termination threshold)
+    #   - Angle:    ±0.21 (≈ ±12°, termination threshold)
+    #   - Velocities: technically unbounded → ±3.0 covers the practical range
+    "clip_low": [-2.4, -3.0, -0.21, -3.0],
+    "clip_high": [2.4, 3.0, 0.21, 3.0],
 }
 
 ACROBOT = {

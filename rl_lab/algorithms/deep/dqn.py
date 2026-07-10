@@ -38,7 +38,6 @@ from rl_lab.algorithms.deep.networks import MLP, NatureCNN
 def _obs_to_tensor(obs, device):
     """Convert a single observation to a batched float tensor.
 
-<<<<<<< Updated upstream
     For images (C,H,W uint8): normalise to [0,1] → (1,C,H,W).
     For vectors (float): just wrap and add batch dim → (1,D).
 
@@ -49,18 +48,7 @@ def _obs_to_tensor(obs, device):
     if obs.ndim >= 3:
         # Image observation (C, H, W) uint8 → normalise
         obs = obs.astype(np.float32) / 255.0
-    else:
-=======
-    For images (H,W,C uint8): normalize to [0,1] and transpose to (1,C,H,W).
-    PyTorch Conv2d expects channels-first format (B,C,H,W).
-    For vectors (float): just wrap and add batch dimension.
-    """
-    obs = np.array(obs)
-    if obs.ndim >= 3:  # image observation (H, W, C) — e.g. Atari frame
-        obs = obs.astype(np.float32) / 255.0  # normalize pixels from [0,255] → [0,1]
-        obs = np.transpose(obs, (2, 0, 1))    # HWC → CHW (PyTorch Conv2d expects channels-first)
     else:  # vector observation (D,) — e.g. CartPole state
->>>>>>> Stashed changes
         obs = obs.astype(np.float32)
     # unsqueeze(0) adds batch dimension: (C,H,W) → (1,C,H,W) for a single-sample forward pass
     return torch.from_numpy(obs).unsqueeze(0).to(device)
@@ -69,26 +57,15 @@ def _obs_to_tensor(obs, device):
 def _batch_to_tensor(batch, device):
     """Convert a batch of observations to a float tensor.
 
-<<<<<<< Updated upstream
     For images (B,C,H,W uint8): normalise → (B,C,H,W).
     For vectors (B,D): just convert.
 
     Frames are already channel-first, so no transpose is needed.
     """
     arr = np.asarray(batch)
-    if arr.ndim >= 4:
-        arr = arr.astype(np.float32) / 255.0
-    else:
-=======
-    For images (B,H,W,C uint8): normalize and transpose to (B,C,H,W).
-    For vectors (B,D): just convert dtype.
-    """
-    arr = np.array(batch)
-    if arr.ndim >= 4:  # batch of images: (B, H, W, C)
+    if arr.ndim >= 4:  # batch of images: (B, C, H, W)
         arr = arr.astype(np.float32) / 255.0       # normalize uint8 → [0, 1]
-        arr = np.transpose(arr, (0, 3, 1, 2))      # BHWC → BCHW for PyTorch Conv2d
     else:  # batch of vectors: (B, D)
->>>>>>> Stashed changes
         arr = arr.astype(np.float32)
     return torch.from_numpy(arr).to(device)  # move to CPU or GPU
 

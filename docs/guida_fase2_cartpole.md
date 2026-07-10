@@ -171,18 +171,24 @@ run_cartpole.py
   (episodi finiti). Atteso: in un compito di sopravvivenza conviene valorizzare il
   lungo termine.
 
-### Prediction plots — ⚠️ limite metodologico
-- **Osservato**: le curve di MC e TD(0) sono **praticamente sovrapposte**, con
-  banda di varianza molto ampia (return medio ≈230 sulla policy appresa).
-- **Perché**: il grafico traccia il **return degli episodi** generati sotto la
-  policy fissa. Ma MC e TD(0) seguono la **stessa** policy, quindi generano lo
-  stesso return *per costruzione*. Il grafico NON mostra la differenza
-  bias/varianza tra i due **stimatori**, che vive nelle stime V(s), non nel
-  return della policy.
-- **Cosa mostrerebbe la differenza**: tracciare l'errore (es. RMSE) delle stime
-  V(s) rispetto a un riferimento, oppure la varianza dei target di aggiornamento
-  — come nell'esercizio `random_walk` del corso. Questo è il principale punto
-  migliorabile del progetto ed è discusso apertamente nel report.
+### Prediction plots — DUE viste (dopo il fix #1)
+Ci sono due grafici, con nomi `prediction_<policy>_return.png` e
+`prediction_<policy>_value.png`.
+
+- **`_return.png` (return degli episodi)**: le curve di MC e TD(0) sono
+  **identiche per costruzione** (≈230 sulla policy appresa), perché entrambi
+  seguono la **stessa** policy fissa. Questo grafico da solo NON mostra la
+  differenza tra i due stimatori — è una lezione metodologica in sé.
+- **`_value.png` (stima V(stato di riferimento))**: QUI si vede la differenza.
+  Si traccia V del bin centrale (quasi in equilibrio) episodio per episodio:
+  - **MC**: traiettoria **rumorosa** (non distorta, alta varianza)
+  - **TD(0)**: traiettoria **liscia** (distorta all'inizio, bassa varianza)
+  È il compromesso bias/varianza classico (Sutton & Barto §6.2).
+- **Perché il fix**: prima si tracciava solo il return (curve sovrapposte). Il
+  fix #1 aggiunge la vista sulle stime V(s), rendendo il confronto significativo.
+- **Limite residuo**: è una misura *locale* (un solo stato). Una misura globale
+  (RMSE di V su tutti gli stati) richiederebbe un V di riferimento non
+  disponibile qui.
 
 ### Failure case plots
 - **High α**: con α=1.0 la curva resta bloccata in basso (~60), molto sotto ad

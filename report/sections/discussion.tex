@@ -42,14 +42,16 @@ greedy separata, che sarebbe un miglioramento naturale.
 Questa sezione riporta i problemi trovati durante la revisione, senza
 nasconderli.
 
-\paragraph{(1) Confronto MC vs TD(0) poco informativo.}
-Come mostrato in Sez.~\ref{sec:res-cartpole-pred}, i grafici MC vs TD(0)
-tracciano il \emph{return della policy valutata}, identico per costruzione tra
-i due metodi. Non mostrano quindi il vero compromesso bias/varianza, che
-riguarda le stime $V(s)$. Per evidenziarlo servirebbe tracciare, ad esempio,
-l'errore quadratico medio di $V$ rispetto a un riferimento, oppure la varianza
-dei target di aggiornamento --- come nell'esperimento ``random walk'' del
-corso. \`E il principale punto migliorabile del progetto sul lato analisi.
+\paragraph{(1) Confronto MC vs TD(0): da poco informativo a corretto.}
+Nella prima versione i grafici MC vs TD(0) tracciavano il \emph{return della
+policy valutata}, identico per costruzione tra i due metodi, e non mostravano il
+compromesso bias/varianza (che riguarda le stime $V(s)$). Questo \`e stato
+corretto (fix \#1, Sez.~\ref{sec:lessons-fixes}): si traccia ora la stima
+$V(s_{\text{ref}})$ di uno stato di riferimento episodio per episodio
+(Fig.~\ref{fig:pred-value}), che rende visibile la varianza alta di MC contro la
+traiettoria liscia di TD(0). Resta una misura \emph{locale} (un solo stato); una
+misura globale (RMSE di $V$ su tutti gli stati, come nel ``random walk'')
+richiederebbe un $V$ di riferimento non disponibile in questo setup.
 
 \paragraph{(2) Ipotesi smentite dai dati (Acrobot).}
 Sia l'esperimento sui bin sia quello su $\varepsilon$ hanno dato l'esito
