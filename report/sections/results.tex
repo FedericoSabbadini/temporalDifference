@@ -7,23 +7,33 @@ e sono calcolati da \code{make\_report\_tables.py}.
 \subsection{CartPole --- controllo}
 \label{sec:res-cartpole-control}
 La Fig.~\ref{fig:cp-control} e la Tab.~\ref{tab:cartpole-control} mostrano il
-confronto Q\hbox{-}Learning vs SARSA. Entrambi apprendono chiaramente,
-partendo da un return di $\sim$30--40 e raggiungendo un plateau attorno a
-\textbf{184}. I due algoritmi convergono allo \emph{stesso} livello medio, ma
-Q\hbox{-}Learning \`e pi\`u stabile tra i seed ($\pm 8.3$ contro $\pm 18.4$
-di SARSA).
-
-Un punto importante: il return massimo di CartPole-v1 \`e 500, ma gli agenti
-si fermano a $\sim$184. Questo \emph{non} \`e un difetto degli algoritmi ma il
-\textbf{tetto imposto dalla discretizzazione}: con 10 bin per dimensione, stati
-fisicamente diversi collassano nello stesso bin e la policy greedy non pu\`o
-essere pi\`u fine della griglia (vedi Sez.~\ref{sec:discussion}).
+confronto Q\hbox{-}Learning vs SARSA \emph{dopo il fix \#2} (discretizzazione
+ristretta ai limiti di terminazione, Sez.~\ref{sec:lessons-fixes}). Entrambi
+apprendono chiaramente, partendo da $\sim$30--40, ma il comportamento \`e
+cambiato in modo istruttivo rispetto alla versione con bin larghi:
+\begin{itemize}[nosep]
+  \item \textbf{Il tetto si \`e alzato}: le curve superano il vecchio plateau di
+        $\sim$184 e sono \emph{ancora in salita} a 5000 episodi (picchi
+        $\sim$250), invece di appiattirsi presto.
+  \item \textbf{SARSA ora supera Q\hbox{-}Learning}: return finale
+        $225.2 \pm 61.4$ contro $173.8 \pm 39.0$. Nella versione a bin larghi i
+        due erano appaiati a $\sim$184.
+  \item \textbf{Convergenza pi\`u lenta e pi\`u rumorosa}: con bin pi\`u fini ci
+        sono pi\`u stati da visitare, quindi servono pi\`u episodi e la varianza
+        tra seed cresce (da $\pm 8$/$\pm 18$ a $\pm 39$/$\pm 61$).
+\end{itemize}
+\`E un risultato \textbf{a doppio taglio}, riportato onestamente: il fix \#2
+\emph{alza} la performance raggiungibile ma \emph{rallenta} la convergenza --- un
+esempio concreto del compromesso risoluzione/efficienza campionaria della
+discretizzazione. Q\hbox{-}Learning resta lievemente meno rumoroso di SARSA
+(varianza minore) ma raggiunge un return pi\`u basso in questo budget.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\linewidth]{cartpole_control_comparison.png}
-\caption{CartPole: Q\hbox{-}Learning vs SARSA (media su 3 seed, banda
-$\pm1\sigma$). Stesso plateau ($\sim$184), Q\hbox{-}Learning meno rumoroso.}
+\caption{CartPole: Q\hbox{-}Learning vs SARSA dopo il fix \#2 (media su 3 seed,
+banda $\pm1\sigma$). Le curve sono ancora in salita a 5000 episodi; SARSA
+(arancio) supera Q\hbox{-}Learning (blu).}
 \label{fig:cp-control}
 \end{figure}
 
@@ -35,13 +45,16 @@ Le figure di sensibilit\`a (una per iperparametro) confermano le attese
 teoriche:
 \begin{itemize}[nosep]
   \item \textbf{$\alpha$} (Fig.~\ref{fig:cp-sens}, sinistra): $\alpha=0.01$
-        apprende troppo lentamente (plateau $\sim$50); $\alpha=0.1$ \`e il
-        miglior compromesso; $\alpha=0.5$ apprende in fretta ma con curve
-        pi\`u rumorose.
+        apprende troppo lentamente ($\sim$30); $\alpha=0.05$ intermedio
+        ($\sim$110); $\alpha=0.1$ e $\alpha=0.5$ raggiungono entrambi
+        $\sim$180--200, con $\alpha=0.5$ pi\`u \emph{veloce} all'inizio. Con la
+        griglia pi\`u fine (fix \#2) un learning rate pi\`u alto aiuta a coprire
+        i molti stati in fretta.
   \item \textbf{$\gamma$} (Fig.~\ref{fig:cp-sens}, destra): valori alti sono
-        migliori ($\gamma=1.0$ e $0.99$ raggiungono $\sim$200--230, $\gamma=0.9$
-        si ferma a $\sim$140). Atteso: in un compito di ``sopravvivenza'' con
-        reward $+1$/passo conviene valorizzare il lungo termine.
+        migliori ($\gamma=1.0$ raggiunge $\sim$250 e $\gamma=0.99$ $\sim$180,
+        mentre $\gamma=0.9$/$0.95$ si fermano a $\sim$130). Atteso: in un compito
+        di ``sopravvivenza'' con reward $+1$/passo conviene valorizzare il lungo
+        termine.
   \item \textbf{$\varepsilon$}: valori troppo bassi rallentano
         l'apprendimento, valori troppo alti aggiungono rumore alla policy.
 \end{itemize}
@@ -52,7 +65,8 @@ teoriche:
 \hfill
 \includegraphics[width=0.49\linewidth]{cartpole_sensitivity_QLearning_gamma.png}
 \caption{CartPole, Q\hbox{-}Learning: sensibilit\`a ad $\alpha$ (sinistra) e
-$\gamma$ (destra). $\alpha=0.1$ e $\gamma$ alto sono le scelte migliori.}
+$\gamma$ (destra). $\gamma$ alto \`e la scelta migliore; con la griglia fine
+anche $\alpha=0.5$ funziona bene (pi\`u veloce di $\alpha=0.1$).}
 \label{fig:cp-sens}
 \end{figure}
 
@@ -61,12 +75,15 @@ $\gamma$ (destra). $\alpha=0.1$ e $\gamma$ alto sono le scelte migliori.}
 Sono stati riprodotti due fallimenti espliciti (Fig.~\ref{fig:cp-fail}):
 \begin{itemize}[nosep]
   \item \textbf{Learning rate estremo}: con $\alpha=1.0$ l'agente sostituisce
-        completamente la stima ad ogni passo e resta bloccato a $\sim$60,
-        molto sotto ad $\alpha=0.1$ ($\sim$200). $\alpha=0.5$ apprende ancora
-        ma \`e visibilmente pi\`u instabile.
+        completamente la stima ad ogni passo e resta bloccato a $\sim$65,
+        senza progredire --- il fallimento. Da notare che qui i valori
+        \emph{moderati} non falliscono: $\alpha=0.5$ ($\sim$160) risulta anzi il
+        pi\`u veloce, sopra ad $\alpha=0.1$ ($\sim$140). Il problema \`e quindi
+        specifico del valore \emph{estremo} $\alpha=1.0$, non genericamente
+        dell'``$\alpha$ alto''.
   \item \textbf{Assenza di esplorazione}: con $\varepsilon=0$ (e quasi anche
         con $\varepsilon=0.01$) l'agente resta intrappolato attorno a
-        $\sim$35, mentre $\varepsilon=0.1$ raggiunge $\sim$175. \`E la
+        $\sim$40, mentre $\varepsilon=0.1$ raggiunge $\sim$140. \`E la
         dimostrazione concreta del dilemma exploration/exploitation.
 \end{itemize}
 
@@ -75,8 +92,9 @@ Sono stati riprodotti due fallimenti espliciti (Fig.~\ref{fig:cp-fail}):
 \includegraphics[width=0.49\linewidth]{cartpole_failure_high_alpha.png}
 \hfill
 \includegraphics[width=0.49\linewidth]{cartpole_failure_no_exploration.png}
-\caption{CartPole, casi di fallimento. Sinistra: $\alpha=1.0$ non progredisce.
-Destra: $\varepsilon=0$ resta bloccato ($\varepsilon=0.1$ apprende).}
+\caption{CartPole, casi di fallimento. Sinistra: $\alpha=1.0$ non progredisce
+($\sim$65), mentre $\alpha=0.5$ \`e il migliore. Destra: $\varepsilon=0$ resta
+bloccato ($\sim$40), $\varepsilon=0.1$ apprende ($\sim$140).}
 \label{fig:cp-fail}
 \end{figure}
 
@@ -85,17 +103,17 @@ Destra: $\varepsilon=0$ resta bloccato ($\varepsilon=0.1$ apprende).}
 Il confronto MC vs TD(0) va letto con due grafici distinti. Il \emph{return}
 degli episodi (Fig.~\ref{fig:cp-pred-return}) \`e \emph{identico per
 costruzione} tra i due metodi: entrambi seguono la stessa policy fissa, quindi
-generano la stessa distribuzione di return (media $\sim$230). Questo grafico non
+generano la stessa distribuzione di return (media $\sim$162). Questo grafico non
 pu\`o mostrare la differenza tra i due stimatori --- una lezione metodologica in
 s\'e (vedi fix \#1, Sez.~\ref{sec:lessons-fixes}).
 
 La differenza vive invece nelle \emph{stime} $V(s)$. La
 Fig.~\ref{fig:pred-value} traccia la stima $V(s_{\text{ref}})$ di uno stato di
-riferimento (bin centrale, quasi in equilibrio) episodio per episodio: la
-traiettoria di \textbf{MC \`e rumorosa} (non distorta, alta varianza), quella di
-\textbf{TD(0) \`e liscia} (distorta all'inizio, bassa varianza) e converge in
-modo pi\`u regolare. \`E esattamente il compromesso bias/varianza atteso
-(S\&B \S6.2).
+riferimento (lo stato di reset discretizzato, sempre visitato) episodio per
+episodio: \textbf{MC} salta rapidamente al valore corretto ($\sim$90) con alta
+varianza iniziale (non distorta), mentre \textbf{TD(0)} parte da 0 e sale
+lentamente e in modo liscio (distorta all'inizio per il bootstrap, bassa
+varianza). \`E esattamente il compromesso bias/varianza atteso (S\&B \S6.2).
 
 \begin{figure}[H]
 \centering
@@ -110,8 +128,9 @@ distingue gli stimatori.}
 \centering
 \includegraphics[width=0.72\linewidth]{cartpole_prediction_learned_value.png}
 \caption{CartPole: MC vs TD(0), \emph{stima} $V(s_{\text{ref}})$ nel tempo
-(fix \#1). MC \`e rumorosa (alta varianza), TD(0) \`e liscia (bassa varianza):
-questo \`e il vero confronto bias/varianza.}
+(fix \#1). MC (blu) salta subito a $\sim$90 con alta varianza iniziale; TD(0)
+(arancio) parte da 0 e sale lentamente per il bootstrap: questo \`e il vero
+confronto bias/varianza.}
 \label{fig:pred-value}
 \end{figure}
 
@@ -170,11 +189,15 @@ l'attesa ``reward sparso $\Rightarrow$ serve pi\`u esplorazione'': i valori
 ($\sim$$-320$), mentre $\varepsilon=0.4$ \`e nettamente il peggiore
 ($\sim$$-440$). Con $\varepsilon$ costante (non decrescente), un valore alto
 disturba continuamente la policy greedy e impedisce di sfruttare lo swing-up
-appreso. Il confronto MC vs TD(0) su Acrobot usa lo stesso schema di CartPole
-dopo il fix \#1 (Fig.~\ref{fig:ac-pred-value}): la stima $V(s_{\text{ref}})$ di
-MC \`e rumorosa e quella di TD(0) liscia; su Acrobot la differenza \`e ancora
-pi\`u marcata perch\'e gli episodi durano fino a 500 passi (il return $G$ di MC
-dipende da 500 transizioni casuali).
+appreso. Il confronto MC vs TD(0) su Acrobot (fix \#1,
+Fig.~\ref{fig:ac-pred-value}) illustra il \textbf{bias di TD in modo ancora pi\`u
+netto} che su CartPole: MC converge quasi subito al valore corretto
+($\sim$$-92$), mentre TD(0) parte da 0 e \emph{scende lentamente}, raggiungendo
+solo $\sim$$-57$ dopo 3000 episodi --- ancora lontano dalla convergenza. Lo stato
+di riferimento (posizione di reset) \`e $\sim$90 passi dall'obiettivo, e TD
+propaga il valore un passo alla volta: per uno stato cos\`i ``lontano'' dal
+reward il bootstrap \`e lento e la stima resta distorta verso l'inizializzazione
+(0). MC, usando il return completo, non ha questo problema.
 
 \begin{figure}[H]
 \centering
@@ -188,9 +211,10 @@ disturba la policy.}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.72\linewidth]{acrobot_prediction_value.png}
-\caption{Acrobot: MC vs TD(0), stima $V(s_{\text{ref}})$ nel tempo (fix \#1).
-Come su CartPole, MC \`e rumorosa e TD(0) liscia; la differenza \`e accentuata
-dagli episodi lunghi.}
+\caption{Acrobot: MC vs TD(0), stima $V(s_{\text{ref}})$ nel tempo (fix \#1). MC
+(blu) converge subito a $\sim$$-92$; TD(0) (arancio) scende lentamente da 0 e a
+3000 episodi \`e solo a $\sim$$-57$: chiara evidenza del bias e della lenta
+propagazione del bootstrap per uno stato lontano dal reward.}
 \label{fig:ac-pred-value}
 \end{figure}
 

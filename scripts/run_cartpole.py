@@ -156,10 +156,12 @@ def exp_prediction_comparison():
     def random_policy(state):
         return np.random.randint(n_act)  # uniform random: each action with prob 0.5
 
-    # Reference state whose value we track over episodes: the central bin on
-    # every dimension ≈ cart centred, pole upright, near-zero velocities. It is
-    # visited in essentially every episode, so both estimators update it often.
-    anchor = tuple(nb // 2 for nb in CARTPOLE["n_bins"])
+    # Reference state whose value we track over episodes: the DISCRETIZED RESET
+    # state. This is guaranteed reachable and is visited at the start of every
+    # episode, so both estimators update it often. (A geometric "centre bin"
+    # would be unreachable for envs with trig-encoded angles like Acrobot, where
+    # cos θ and sin θ cannot both be ~0.)
+    _e = make_cartpole(); anchor, _ = _e.reset(seed=0); _e.close()
 
     # Step 2: Evaluate each policy with both MC and TD(0)
     for policy_fn, label in [(learned_policy, "learned"),

@@ -181,8 +181,11 @@ def exp_prediction():
     def learned_policy(state):
         return greedy_action(Q, state)
 
-    # Central-bin reference state (visited often), value tracked over episodes
-    anchor = tuple(nb // 2 for nb in ACROBOT["n_bins"])
+    # Reference state = the DISCRETIZED RESET state (always reachable & visited
+    # every episode). A geometric "centre bin" is unreachable on Acrobot, whose
+    # observation encodes angles as [cos θ, sin θ, ...]: cos θ and sin θ cannot
+    # both be ~0, so the all-centre bin is never visited and V stays 0.
+    _e = make_acrobot(); anchor, _ = _e.reset(seed=0); _e.close()
 
     # MC prediction: higher variance on Acrobot because episodes are up to 500 steps long
     # → the return G = R1 + γR2 + ... + γ^499 R500 depends on 500 random transitions

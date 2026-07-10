@@ -1,5 +1,12 @@
 # Fase 1 — Introduzione pratica e infrastruttura
 
+> ### 📖 Percorso di lettura
+> - **Prerequisiti**: [`panoramica_10_minuti.md`](panoramica_10_minuti.md). Teoria: nozione di MDP, policy, ε-greedy (già dal corso).
+> - **Guida precedente**: nessuna — è la prima. **Successiva**: [Fase 2](guida_fase2_cartpole.md).
+> - **Tempo stimato**: ~12 minuti (guida) + sfogliare i file.
+> - **Apri in parallelo** (in quest'ordine): `rl_lab/configs.py` → `rl_lab/envs/discretizer.py` → `rl_lab/policies.py` → `rl_lab/experiments/runner.py` → `rl_lab/utils/{seeding,plotting}.py`.
+> - **Requisito consegna coperto**: nessuno *direttamente*. Questa fase costruisce l'infrastruttura che *abilita* tutti i requisiti delle fasi 2–4 (discretizzazione, riproducibilità multi-seed, plotting con bande std).
+
 ## Obiettivo della fase
 
 Costruire le fondamenta del progetto: l'infrastruttura che permette di eseguire
@@ -111,6 +118,41 @@ from rl_lab.configs import CARTPOLE
 from rl_lab.envs.discretizer import DiscretizedEnv
 # Se l'import funziona → l'infrastruttura è pronta.
 ```
+
+## Modello mentale (cosa succede davvero)
+
+Immagina un singolo esperimento come una catena di montaggio:
+
+1. `configs.py` fornisce i **parametri** (nome env, bin, range). Sono dati inerti.
+2. Una `make_env()` (definita negli script) crea l'ambiente Gymnasium e lo avvolge
+   in `DiscretizedEnv`. Da qui in poi, ogni `env.step()` restituisce uno **stato
+   già discretizzato** (una tupla), non più un vettore continuo.
+3. `run_multi_seed` esegue l'algoritmo **3 volte** (un seed alla volta), ogni volta
+   con un ambiente fresco. Raccoglie i return in una matrice `(3, n_episodi)`.
+4. `plotting.py` collassa quella matrice in **media ± banda** e disegna.
+
+Cosa "vive" tra un pezzo e l'altro:
+- Lo **stato** è effimero: nasce nell'env, viene discretizzato, usato come chiave,
+  e dimenticato.
+- La **Q-table** (nelle fasi 2–4) è ciò che *persiste e cresce* durante una run.
+- Il **seed** è ciò che rende la catena ripetibile: stessi seed → stessi numeri.
+
+Questa fase non "impara" nulla: costruisce solo la catena di montaggio. L'unico
+output verificabile è che il package si importi (vedi sotto).
+
+## Debugging e trappole comuni
+
+| Sintomo | Causa probabile | Dove guardare |
+|---|---|---|
+| `TypeError: unhashable type: 'numpy.ndarray'` usando lo stato come chiave | Hai dimenticato di convertire l'osservazione in **tupla** | `discretizer.py` deve restituire `tuple(bins)`, non l'array |
+| L'agente non impara nulla anche con codice corretto | Range di clipping sbagliato: gli stati utili finiscono tutti nello stesso bin | `configs.py` (`clip_low/high`); verifica che coprano il range *visitato*, non oltre |
+| Risultati diversi ad ogni esecuzione | `set_seed` non chiamato prima della run | `runner.py` chiama `set_seed(seed)` prima di ogni env |
+| Le bande std sembrano assenti | Un solo seed, o array 1-D | `plotting.py` fa `reshape(1,-1)`; servono ≥2 seed per una banda vera |
+| Grafico vuoto / crash matplotlib | Backend GUI su macchina headless | `plotting.py` forza `matplotlib.use("Agg")` |
+
+**Come si ispeziona a mano**: per capire cosa produce il discretizzatore,
+`env.reset()` e stampa la tupla; deve avere lunghezza = numero di dimensioni e
+ogni indice in `[0, n_bins-1]`.
 
 ## Limiti e semplificazioni
 

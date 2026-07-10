@@ -11,12 +11,16 @@ bonus Double DQN.
 
 \subsection{Cosa si \`e imparato}
 \begin{itemize}[nosep]
-  \item La discretizzazione non \`e neutra: impone un tetto di performance
-        (CartPole a $\sim$184 invece di 500) e la sua risoluzione ottima
-        dipende dall'ambiente e dal budget di episodi (Acrobot: 10 bin
-        migliori di 4, contro l'intuizione).
-  \item On-policy (SARSA) vs off-policy (Q\hbox{-}Learning): sui compiti
-        affrontati Q\hbox{-}Learning \`e risultato pi\`u stabile tra i seed.
+  \item La discretizzazione non \`e neutra: la sua risoluzione governa sia il
+        tetto di performance sia la velocit\`a di convergenza. Restringere i bin
+        di CartPole ai limiti di terminazione (fix \#2) alza il tetto (le curve
+        superano 184 e arrivano a $\sim$225) ma rallenta la convergenza e
+        aumenta la varianza. La risoluzione ottima dipende dall'ambiente e dal
+        budget di episodi (Acrobot: 10 bin migliori di 4, contro l'intuizione).
+  \item On-policy (SARSA) vs off-policy (Q\hbox{-}Learning): Q\hbox{-}Learning
+        \`e pi\`u stabile tra i seed, ma su CartPole (fix \#2) SARSA raggiunge un
+        return pi\`u alto: stabilit\`a e performance non coincidono
+        necessariamente.
   \item Nel DQN, l'experience replay \`e il componente decisivo per
         l'apprendimento; la target network migliora stabilit\`a e velocit\`a.
   \item Le ipotesi teoriche vanno \emph{verificate} sui dati: due esperimenti

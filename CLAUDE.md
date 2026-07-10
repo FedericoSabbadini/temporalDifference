@@ -221,17 +221,25 @@ PDF (`report/`, Step 9 — Double DQN bonus included). Dependency management mig
 (`pyproject.toml` + `uv.lock`; `requirements.txt` removed). Tables auto-generated from real data
 via `scripts/make_report_tables.py`.**
 
+**Two fixes applied + re-executed (supersede earlier results):**
+- **Fix #2 (CartPole bins)**: clip ranges tightened to the termination bounds (±2.4 pos, ±0.21
+  angle) instead of the obs-space bounds. **Double-edged result**: raises the ceiling (SARSA now
+  ~225, still climbing at 5000 ep) but slows convergence and raises variance (±39/±61 vs ±8/±18);
+  **SARSA now beats Q-Learning** (was tied at ~184). Reported honestly as mixed, not a clean win.
+- **Fix #1 (MC vs TD(0))**: prediction now also plots V(reference state) over episodes → shows
+  MC (fast to ~90, high early variance) vs TD(0) (slow climb from 0, biased-but-smooth). The
+  reference state is the **discretized reset state** — an earlier "centre bin" anchor gave a
+  physically impossible state on Acrobot (cos&sin both ~0) → flat-zero plot; fixed.
+
 **Key experimental findings (real, mean over 3 seeds):**
-- CartPole control: Q-Learning & SARSA both plateau at ~184 (not 500 — discretization ceiling);
-  Q-Learning lower-variance. γ high is best; α=1.0 and ε=0 are the failure cases.
-- Acrobot control: ~-345 (QL) / -355 (SARSA), far from optimum (~-100).
+- CartPole control (fix #2): QL 173.8±39.0, SARSA 225.2±61.4, still climbing. γ high best;
+  α=1.0 (~65) and ε=0 (~40) are the failure cases; α=0.5 now fastest (finer grid).
+- Acrobot control: ~-345 (QL) / -355 (SARSA), far from optimum (~-100). UNCHANGED (env untouched).
 - **Two Acrobot results CONTRADICT the a-priori hypotheses** (kept & analyzed honestly): finer
   bins are BETTER not worse (10 bins best, 4 worst at 10k episodes); and LOW ε is better than
-  high ε (constant ε, so high ε just disrupts the greedy policy). Docs/comments corrected.
-- Pong ablation: replay is essential (no learning without it, ~-20.5); target net accelerates
-  (~-16 without it); Full DQN -12.1, Double DQN -14.2.
-- **Known limitation**: the MC-vs-TD(0) plots show the shared-policy episode return (identical
-  by construction), NOT the estimator bias/variance in V(s). Flagged in report & guides.
+  high ε. Docs/comments corrected.
+- Pong ablation (UNCHANGED, not re-run): replay essential (~-20.5 without); target net accelerates
+  (~-16 without); Full DQN -12.1, Double DQN -14.2.
 
 ---
 

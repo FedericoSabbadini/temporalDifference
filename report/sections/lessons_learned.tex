@@ -28,8 +28,9 @@ sperimentale (Sez.~\ref{sec:results}).
 \subsection{Cosa ha funzionato}
 \begin{itemize}[nosep]
   \item \textbf{Apprendimento tabellare corretto}: su CartPole entrambi gli
-        algoritmi salgono da $\sim$30 a un plateau stabile; Q\hbox{-}Learning
-        mostra varianza tra seed pi\`u bassa (Tab.~\ref{tab:cartpole-control}).
+        algoritmi salgono da $\sim$30 fino a $\sim$175--225 (ancora in salita a
+        5000 episodi dopo il fix \#2); Q\hbox{-}Learning mostra varianza tra seed
+        pi\`u bassa (Tab.~\ref{tab:cartpole-control}).
   \item \textbf{Sensibilit\`a coerente con la teoria}: $\alpha=0.1$ \`e il
         compromesso migliore, $\gamma$ alto vince su un compito di
         sopravvivenza (Sez.~\ref{sec:res-cartpole-sens}).
@@ -57,7 +58,10 @@ sperimentale (Sez.~\ref{sec:results}).
         \ref{sec:res-acrobot-eps}). Risultati mantenuti e analizzati, non
         ``aggiustati''.
   \item \textbf{CartPole non raggiungeva 500} ma si fermava a $\sim$184: un
-        \emph{tetto di discretizzazione}, non un bug. Mitigato con il fix \#2.
+        \emph{tetto di discretizzazione}, non un bug. Il fix \#2 lo ha alzato
+        ($\sim$225) ma al prezzo di convergenza pi\`u lenta e varianza maggiore
+        --- un miglioramento \emph{a doppio taglio}, non netto (vedi
+        Sez.~\ref{sec:lessons-fixes}).
   \item \textbf{Acrobot lontano dall'ottimo} ($\sim$$-345$ vs $\sim$$-100$) e con
         curve molto rumorose: atteso per reward sparso e spazio grande.
   \item \textbf{Double DQN non supera il DQN base} nel regime breve (200k step):
@@ -100,14 +104,22 @@ intrinseci dell'RL discussi sotto):
 \label{sec:lessons-fixes}
 \paragraph{Fix \#1 --- confronto MC vs TD(0) reso significativo.}
 \emph{Cosa}: oltre al return della policy, si traccia ora la stima
-$V(s_{\text{ref}})$ di uno stato di riferimento (il bin centrale, quasi in
-equilibrio) episodio per episodio.
+$V(s_{\text{ref}})$ di uno stato di riferimento episodio per episodio.
 \emph{Perch\'e}: il return \`e identico per costruzione tra i due metodi (stessa
 policy), quindi non pu\`o mostrare la differenza; la differenza bias/varianza
 vive nelle stime $V$.
-\emph{Effetto}: la stima MC risulta rumorosa (non distorta, alta varianza),
-quella TD(0) liscia (distorta all'inizio, bassa varianza) --- il quadro classico
-di Sutton \& Barto \S6.2 (Fig.~\ref{fig:pred-value}).
+\emph{Effetto}: su CartPole la stima MC salta rapidamente al valore corretto
+($\sim$90 sulla policy appresa) con alta varianza iniziale, mentre TD(0) parte
+da 0 e sale lentamente (distorsione da bootstrap) in modo liscio --- il quadro
+classico di Sutton \& Barto \S6.2 (Fig.~\ref{fig:pred-value}).
+\emph{Un bug scoperto e corretto durante questa verifica}: la prima scelta dello
+stato di riferimento era il ``bin centrale'' su ogni dimensione. Su Acrobot ci\`o
+d\`a uno stato \emph{fisicamente impossibile} --- l'osservazione codifica gli
+angoli come $[\cos\theta, \sin\theta,\dots]$ e $\cos\theta,\sin\theta$ non
+possono essere entrambi $\approx 0$ --- quindi quello stato non viene mai
+visitato e la stima restava piatta a $0$. Corretto usando lo \emph{stato di
+reset discretizzato}, sempre raggiungibile e visitato ad ogni episodio
+(Fig.~\ref{fig:ac-pred-value}).
 \emph{Risolto?} S\`i, entro l'approccio scelto (un singolo stato di
 riferimento); una misura globale (RMSE di $V$ su tutti gli stati) richiederebbe
 un $V$ di riferimento non disponibile qui.
@@ -119,9 +131,13 @@ limiti di \emph{terminazione} ($\pm2.4$, $\pm0.21$).
 \emph{Perch\'e}: oltre i limiti di terminazione l'episodio \`e gi\`a finito,
 quindi met\`a dei bin di posizione e angolo era sprecata su stati che non
 possono verificarsi.
-\emph{Effetto}: raddoppia la risoluzione utile sulle due dimensioni pi\`u
-importanti; il return finale di CartPole passa da $\sim$184 a
-\PLACEHOLDERCARTPOLE{} (Tab.~\ref{tab:cartpole-control}).
+\emph{Effetto (a doppio taglio, non netto)}: raddoppia la risoluzione utile sulle
+due dimensioni pi\`u importanti e \emph{alza il tetto} --- le curve superano il
+vecchio plateau di $\sim$184 e SARSA arriva a $\sim$225. Ma pi\`u stati
+significano convergenza \emph{pi\`u lenta} (curve ancora in salita a 5000
+episodi) e \emph{varianza maggiore} tra seed ($\pm 39$/$\pm 61$ contro
+$\pm 8$/$\pm 18$). Inoltre l'ordine cambia: SARSA ora supera Q\hbox{-}Learning
+(Tab.~\ref{tab:cartpole-control}).
 \emph{Risolto?} Il ``tetto'' si alza ma non sparisce: resta un limite di ogni
 metodo tabellare su stato continuo (serve approssimazione di funzione).
 

@@ -4,8 +4,9 @@
 \subsection{L'agente sta davvero imparando?}
 S\`i, in tutti e tre gli ambienti, ma in misura diversa:
 \begin{itemize}[nosep]
-  \item \textbf{CartPole}: apprendimento netto (da $\sim$30 a $\sim$184),
-        stabile e riproducibile tra i seed.
+  \item \textbf{CartPole}: apprendimento netto (da $\sim$30 a $\sim$175--225,
+        ancora in salita a 5000 episodi dopo il fix \#2), riproducibile tra i
+        seed anche se pi\`u rumoroso della versione a bin larghi.
   \item \textbf{Acrobot}: apprendimento reale ma parziale (da $-470$ a
         $-345$), lontano dall'ottimo e molto rumoroso.
   \item \textbf{Pong}: apprendimento chiaro sopra il caso casuale per le
@@ -18,9 +19,13 @@ tra performance osservata e attesa teorica, non sull'assenza di errori.
 Nessun ambiente raggiunge una convergenza piatta: le curve tabellari restano
 rumorose perch\'e $\varepsilon$ \`e costante (l'agente continua a esplorare) e
 perch\'e $\alpha$ \`e fisso (media a pesi esponenziali, non convergenza a
-media esatta). Questo \`e atteso e coerente con la teoria. In tutti i confronti
-Q\hbox{-}Learning mostra varianza tra seed inferiore a SARSA: l'aggiornamento
-off-policy con $\max$ \`e qui pi\`u stabile della stima on-policy.
+media esatta). Questo \`e atteso e coerente con la teoria. In termini di
+varianza tra seed Q\hbox{-}Learning \`e pi\`u stabile di SARSA su entrambi gli
+ambienti (CartPole $\pm 39$ vs $\pm 61$; Acrobot $\pm 10$ vs $\pm 31$): l'update
+off-policy con $\max$ risulta qui meno rumoroso della stima on-policy. Su
+CartPole, per\`o, dopo il fix \#2 SARSA raggiunge un return \emph{pi\`u alto}
+(225 vs 174): il vantaggio di stabilit\`a di Q\hbox{-}Learning non si traduce in
+performance superiore in questo budget di episodi.
 
 \subsection{Riproducibilit\`a}
 Tutti i risultati sono su 3 seed con banda $\pm 1\sigma$; il seeding combinato
@@ -79,8 +84,9 @@ array sarebbe un miglioramento di riproducibilit\`a.
 \subsection{Buono per un progetto didattico, non ``research-grade''}
 I risultati sono pienamente adeguati agli obiettivi didattici della consegna:
 mostrano apprendimento, confronti corretti e fallimenti analizzati. Non sono
-``research-grade'': CartPole non raggiunge 500 (tetto di discretizzazione),
-Acrobot resta lontano dall'ottimo, e Pong si ferma a $\sim$$-12$ (un DQN
+``research-grade'': CartPole non raggiunge 500 (limite della discretizzazione,
+alzato ma non eliminato dal fix \#2), Acrobot resta lontano dall'ottimo, e Pong
+si ferma a $\sim$$-12$ (un DQN
 addestrato per 50M step, non 200k, arriverebbe a punteggi positivi). Questi
 divari sono attesi e coerenti con il budget di calcolo scelto, e sono
 dichiarati esplicitamente.

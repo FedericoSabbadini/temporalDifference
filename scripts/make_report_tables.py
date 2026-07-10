@@ -55,8 +55,8 @@ def table_control(npz_path, env_label, caption, label):
         rf"\label{{{label}}}",
         r"\begin{tabular}{lccc}",
         r"\toprule",
-        r"Algorithm & Initial return & Final return & Episodes/seed \\",
-        r"          & (first 100 ep) & (last 10\% ep, mean $\pm$ std) & \\",
+        r"Algoritmo & Return iniziale & Return finale & Episodi/seed \\",
+        r"          & (primi 100 ep) & (ultimo 10\% ep, media $\pm$ std) & \\",
         r"\midrule",
     ]
     name_map = {"ql": "Q-Learning", "sarsa": "SARSA"}
@@ -75,22 +75,22 @@ def table_pong(npz_path):
     """Emit the Pong DQN ablation table (5 configurations)."""
     d = np.load(npz_path, allow_pickle=True)
     order = [
-        ("full", "Full DQN (replay + target)"),
+        ("full", "DQN completo (replay + target)"),
         ("double", "Double DQN (bonus)"),
-        ("no_target", "No target network"),
-        ("no_replay", "No experience replay"),
-        ("no_both", "No target + no replay"),
+        ("no_target", "Senza target network"),
+        ("no_replay", "Senza experience replay"),
+        ("no_both", "Senza target + senza replay"),
     ]
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Pong DQN ablation: final performance after 200k environment "
-        r"steps, mean $\pm$ std over 3 seeds. Random policy $\approx -20.4$.}",
+        r"\caption{Ablazione DQN su Pong: performance finale dopo 200k step "
+        r"ambiente, media $\pm$ std su 3 seed. Policy casuale $\approx -20.4$.}",
         r"\label{tab:pong-ablation}",
         r"\begin{tabular}{lcc}",
         r"\toprule",
-        r"Configuration & Final return & Episodes/seed \\",
-        r"              & (last 10\% ep, mean $\pm$ std) & (mean) \\",
+        r"Configurazione & Return finale & Episodi/seed \\",
+        r"               & (ultimo 10\% ep, media $\pm$ std) & (media) \\",
         r"\midrule",
     ]
     for key, name in order:
@@ -109,14 +109,15 @@ def main():
     tables = {
         "cartpole_control.tex": table_control(
             "results/cartpole/control_comparison.npz", "CartPole",
-            "CartPole control: Q-Learning vs SARSA, mean over 3 seeds. "
-            "Max possible return is 500; both plateau near 184 due to the "
-            "coarse $10^4$-state discretization.",
+            "CartPole controllo (discretizzazione fine, fix \\#2): "
+            "Q-Learning vs SARSA, media su 3 seed. Il return massimo \\`e 500; "
+            "con i bin pi\\`u fini le curve sono ancora in salita a 5000 episodi "
+            "e SARSA supera Q-Learning.",
             "tab:cartpole-control"),
         "acrobot_control.tex": table_control(
             "results/acrobot/control_comparison.npz", "Acrobot",
-            "Acrobot control: Q-Learning vs SARSA, mean over 3 seeds. "
-            "Random policy $\\approx -500$; a good swing-up reaches "
+            "Acrobot controllo: Q-Learning vs SARSA, media su 3 seed. "
+            "Policy casuale $\\approx -500$; un buon swing-up raggiunge "
             "$\\approx -100$.",
             "tab:acrobot-control"),
         "pong_ablation.tex": table_pong("results/pong/ablation.npz"),

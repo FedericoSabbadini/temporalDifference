@@ -1,5 +1,12 @@
 # Fase 4 — Pong / DQN (Env 3, Deep RL)
 
+> ### 📖 Percorso di lettura
+> - **Prerequisiti**: [Fase 1](guida_fase1_introduzione.md) (infrastruttura/seeding). Utile la [Fase 2](guida_fase2_cartpole.md) per il target di Bellman. Teoria: Q-Learning, CNN (dal corso di Deep Learning), DQN (Mnih 2015).
+> - **Guida precedente**: [Fase 3](guida_fase3_acrobot.md) — ma questa fase è **quasi indipendente** dai tabular: puoi leggerla anche subito dopo la Fase 1. **Successiva**: nessuna (è l'ultima).
+> - **Tempo stimato**: ~15 minuti.
+> - **Apri in parallelo** (in quest'ordine): `algorithms/deep/networks.py` → `replay_buffer.py` → `dqn.py` (il cuore) → `envs/atari_wrappers.py` → `scripts/run_pong.py`.
+> - **Requisito consegna coperto**: Env 3 — DQN **da zero** con experience replay + target network, ablation study (±replay, ±target), Double DQN (bonus). Vale 4 pt (Deep RL) + fino a 3 pt bonus.
+
 ## Obiettivo della fase
 
 Implementare **DQN da zero in PyTorch** e applicarlo all'ambiente Atari Pong.
@@ -101,7 +108,7 @@ preprocessing standard:
 run_pong.py
 │
 ├── random_baseline()
-│   50 episodi con azioni casuali → return medio (≈ -21)
+│   50 episodi con azioni casuali → return medio (≈ -20.4)
 │   Serve come riferimento: DQN deve fare meglio di questo
 │
 ├── run_config("Full DQN", use_target=True, use_replay=True)
@@ -214,34 +221,91 @@ Atari. Tutto il codice DQN in questo progetto è scritto da zero:
 
 ## Come leggere i risultati
 
+> Risultati **osservati** (media su 3 seed), non attesi. Random baseline ≈ **−20.4**.
+> Numeri in `report/tables/pong_ablation.tex`.
+
 ### ablation_replay.png
-- **Full DQN** (con replay) vs **No replay**
-- Senza replay il training è instabile: le transizioni sono correlate, la rete
-  "dimentica" le esperienze passate. Ci si aspetta curve molto più rumorose e
-  apprendimento peggiore senza replay.
+- **Full DQN** (con replay, ≈ **−12.1**) vs **No replay** (≈ **−20.5**).
+- Risultato netto: **senza replay il DQN non impara affatto**, resta al livello
+  random. Le transizioni correlate rendono il gradient descent inutile. Questo
+  fa dell'experience replay il **componente più critico** del DQN.
 
 ### ablation_target.png
-- **Full DQN** (con target net) vs **No target net**
-- Senza target net il target è un "moving target" che cambia ad ogni gradient step.
-  Ci si aspetta più instabilità e oscillazioni senza target net.
+- **Full DQN** (≈ −12.1) vs **No target net** (≈ **−16.3 ± 2.8**).
+- Senza target net il DQN impara *comunque*, ma **più lentamente e con varianza
+  molto maggiore** (il "moving target" destabilizza). La target net accelera e
+  stabilizza, ma non è indispensabile come il replay.
 
 ### full_comparison.png
-- Tutte e 5 le configurazioni su un grafico + indicazione del baseline random.
-- **Ordine atteso** (dal migliore al peggiore):
-  1. Double DQN (o Full DQN)
-  2. Full DQN
-  3. No target net (instabile ma impara qualcosa)
-  4. No replay (molto instabile)
-  5. No target + no replay (il peggiore)
-- Il **random baseline** (≈ -21) è la linea di riferimento. Qualsiasi
-  configurazione che fa meglio di -21 "ha imparato qualcosa".
+- Tutte e 5 le configurazioni + baseline random. **Ordine osservato** (migliore →
+  peggiore):
+  1. **Full DQN** −12.1 ± 0.9
+  2. **Double DQN** −14.2 ± 0.8
+  3. **No target net** −16.3 ± 2.8 (impara, ma lento e instabile)
+  4. **No replay** ≈ −20.5 (non impara)
+  5. **No target + no replay** ≈ −20.5 (non impara)
+- Nota onesta: **Double DQN non supera** il Full DQN in questo regime breve
+  (200k step). È normale — il vantaggio del Double DQN (meno maximization bias)
+  emerge con addestramenti molto più lunghi. Da non spacciare per miglioria.
+- Segnale indiretto di apprendimento: il Full DQN produce **meno episodi** per
+  seed (~134) delle configurazioni fallite (~240), perché imparando gli scambi
+  durano di più.
 
 ### Nota sulle performance attese
 
-Con solo 200k step, non ci si aspetta che DQN impari a giocare bene a Pong.
-Il paper originale usa 50M step. L'obiettivo è mostrare un **trend positivo**:
-le curve dovrebbero salire rispetto al random, anche se non raggiungono +21
-(vittoria perfetta). Un return di -15 / -10 dopo 200k step è già un buon segnale.
+Con solo 200k step, DQN **non** impara a giocare bene a Pong (il paper usa 50M).
+L'obiettivo, come da consegna, è mostrare **apprendimento vs random**: le curve
+delle configurazioni con replay salgono chiaramente sopra −20.4, arrivando a
+~−12. Non raggiungono punteggi positivi, ed è atteso.
+
+## Modello mentale (tabular vs rete)
+
+Il salto concettuale dalla Fase 2 è **cosa viene aggiornato**:
+
+- **Tabular**: ogni step aggiorno **una cella** `Q[s][a]`. Gli stati sono
+  indipendenti.
+- **DQN**: ogni gradient step aggiorna **tutti i pesi θ** della rete. Un update
+  su un batch di stati *influenza la stima di tutti gli altri stati* (i pesi sono
+  condivisi). Questa condivisione è ciò che dà la generalizzazione — ma è anche
+  la causa dell'instabilità che replay e target network servono a domare.
+
+Cosa "vive" durante una run DQN:
+- **θ (rete online)**: cresce/cambia ad ogni gradient step. È la conoscenza.
+- **θ⁻ (target)**: fotografia di θ, aggiornata ogni 1000 step. Serve a dare un
+  bersaglio fermo.
+- **Replay buffer**: le ultime 100k transizioni. È la "memoria" da cui si
+  ripesca a caso.
+- **step counter**: il loop è *step-based*, non episode-based (standard Atari).
+
+Cosa succede ad ogni step (in una frase): *scegli un'azione (ε-greedy sulla
+rete), esegui, salva la transizione, poi allena la rete su un batch casuale del
+passato e ogni tanto rinfresca la copia-target.*
+
+Ponte con la Fase 2: `_update_network` calcola lo **stesso** target del
+Q-Learning (`r + γ max Q(s',·)`), ma invece di `Q[s][a] += α·δ` minimizza
+`MSE(Q(s,a), target)` con Adam. Se hai capito il Q-Learning tabellare, il DQN è
+"quello, ma con una rete e due stabilizzatori".
+
+## Debugging e trappole comuni
+
+Il DQN è la parte dove i bug sono più insidiosi (non "crashano", semplicemente
+*non impara*). Le trappole reali incontrate in questo progetto:
+
+| Sintomo | Causa | Dove guardare |
+|---|---|---|
+| Errore di shape nella CNN, o rete che non impara | Trasposizione errata dei frame: arrivano **già** `(4,84,84)` channel-first da `FrameStackObservation`, **non** vanno trasposti | `dqn.py`: `_obs_to_tensor`/`_batch_to_tensor` (nessun `transpose`) |
+| Episodi troppo lunghi / dinamica strana | Doppio frame-skip: `-v5` ne ha uno interno + `AtariPreprocessing` → serve `frameskip=1` alla `gym.make` | `atari_wrappers.py` |
+| `AttributeError: FrameStack` | In Gymnasium 1.x è `FrameStackObservation` | `atari_wrappers.py` |
+| `NamespaceNotFound: ALE` | Manca la registrazione degli env Atari | `atari_wrappers.py`: `gym.register_envs(ale_py)` |
+| La rete non impara mai (loss non scende) | Gradient step prima che il buffer sia pronto, o `learning_starts` mal impostato | `dqn.py`: `if len(buffer) >= min_buffer` |
+| Gira su CPU lentissimo | Build PyTorch sbagliata / device errato | banner in `run_pong.py`; serve la build `cu128` per la RTX 5060 |
+| Out-of-memory (RAM) | Buffer troppo grande o frame in float | `replay_buffer.py`: frame in `uint8`; `buffer_capacity` |
+| "No replay" impara comunque bene | Il buffer di dimensione `batch_size` è ancora un mini-batch: è un'approssimazione dell'online, non online puro | `dqn.py` (`use_replay=False`) — limite noto, dichiarato |
+
+**Come si debugga il DQN**: prima si valida su **CartPole** con la `MLP` (veloce,
+poche righe): se lì non impara, il bug è nel loop, non in Atari. Solo dopo si
+passa alla CNN su Pong. Questo è il motivo per cui esiste la `MLP` in
+`networks.py`.
 
 ## Limiti e semplificazioni
 

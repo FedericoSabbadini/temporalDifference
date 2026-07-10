@@ -1,5 +1,12 @@
 # Fase 3 — Acrobot (Env 2, assegnato dal professore)
 
+> ### 📖 Percorso di lettura
+> - **Prerequisiti**: [Fase 2](guida_fase2_cartpole.md) — Acrobot **riusa gli stessi algoritmi** senza modifiche. Teoria: state aggregation, curse of dimensionality (S&B §9.1).
+> - **Guida precedente**: [Fase 2](guida_fase2_cartpole.md). **Successiva**: [Fase 4](guida_fase4_pong.md) (indipendente).
+> - **Tempo stimato**: ~8 minuti.
+> - **Apri in parallelo**: `scripts/run_acrobot.py` e `rl_lab/configs.py` (blocco `ACROBOT`). Gli algoritmi sono quelli già letti in Fase 2.
+> - **Requisito consegna coperto**: Env 2 — applicare gli algoritmi implementati e **discutere le difficoltà specifiche**: esplorazione (reward sparso) e limiti della discretizzazione. Vale ~9 pt (parte dell'analisi sperimentale).
+
 ## Obiettivo della fase
 
 Applicare gli **stessi algoritmi** della Fase 2 a un ambiente più complesso:
@@ -84,7 +91,8 @@ run_acrobot.py
 │
 └── exp_prediction()
     1. Allena Q-Learning → greedy policy
-    2. Valuta con MC e TD(0)  → prediction_comparison.png
+    2. Valuta con MC e TD(0)  → prediction_return.png (return, identico) +
+       prediction_value.png (stima V, il confronto vero)
 ```
 
 ## Scelte implementative
@@ -158,10 +166,57 @@ run_acrobot.py
   appreso. Servirebbe esplorazione alta solo all'inizio (annealing), non
   costante. Questo spiega perché "più esplorazione" qui peggiora.
 
-### prediction_comparison.png
-- Stessa interpretazione di CartPole: MC vs TD(0) sulla policy appresa
-- Su Acrobot la varianza di MC è ancora più evidente perché gli episodi
-  sono più lunghi (fino a 500 step → return G calcolato su 500 step)
+### prediction_return.png e prediction_value.png (dopo il fix #1)
+- **prediction_return.png**: return della policy, identico per MC e TD(0)
+  (stessa policy) — non distingue gli stimatori.
+- **prediction_value.png**: stima V(stato di reset) nel tempo. Su Acrobot il
+  **bias di TD è ancora più netto** che su CartPole: MC converge subito a
+  ~-92 (vicino al valore vero), mentre TD(0) parte da 0 e scende lentamente,
+  a 3000 episodi è solo a ~-57. Lo stato di riferimento è ~90 passi
+  dall'obiettivo e TD propaga il valore un passo alla volta → bootstrap lento,
+  stima distorta verso l'inizializzazione (0). MC usa il return completo e non
+  ha questo problema.
+- **Nota anchor**: lo stato di riferimento è lo stato di reset discretizzato.
+  Un "bin centrale" sarebbe impossibile su Acrobot (cos e sin non possono
+  essere entrambi ~0) → V resterebbe piatta a 0.
+
+## Modello mentale (perché qui è tutto più difficile)
+
+Rispetto a CartPole, immagina la differenza dal punto di vista dell'agente:
+
+- **Il segnale**: su CartPole ricevo `+1` ad ogni step — so *subito* se sto
+  andando bene. Su Acrobot ricevo `-1` ad ogni step *qualunque cosa faccia*,
+  finché per caso non raggiungo il goal. Per centinaia di step non ho **nessuna
+  informazione** su quali azioni siano migliori: tutte danno `-1`.
+- **Cosa cambia dopo un episodio "fallito"** (che non raggiunge il goal): quasi
+  nulla di utile — ho solo imparato che tanti stati valgono `≈ -500`. Il vero
+  apprendimento parte solo dopo il *primo* episodio che, per esplorazione,
+  inciampa nel goal e ottiene un return meno negativo.
+- **Cosa è memorizzato**: una Q-table potenzialmente enorme (46 656 stati con 6
+  bin), di cui in pratica ne visito solo una frazione. Molte celle restano a 0
+  per sempre.
+- **Perché è rumoroso**: con reward sparso e tanti stati, la propagazione del
+  valore all'indietro è lenta e dipende molto dal caso (quali episodi hanno
+  trovato il goal). Da qui le bande di deviazione standard larghe.
+
+Questa è la ragione profonda per cui *lo stesso codice* che su CartPole vola,
+su Acrobot arranca: non è un bug, è la natura del problema (reward sparso +
+spazio grande). È esattamente ciò che la consegna chiede di **discutere**.
+
+## Debugging e trappole comuni
+
+| Sintomo | Causa probabile | Dove guardare |
+|---|---|---|
+| Il value-plot di prediction è **piatto a 0** | Lo stato di riferimento non viene mai visitato | `run_acrobot.py`: l'anchor deve essere lo **stato di reset**, non il "bin centrale" (che su Acrobot è impossibile: cos e sin non possono essere entrambi ~0) |
+| Tutte le curve `bin_resolution` sembrano uguali/mescolate | Chiusura Python: la lambda cattura la variabile del ciclo per riferimento | `run_acrobot.py`: il trucco `def _make(b=bins)` fissa il valore corrente |
+| Memoria/tempo esplodono aumentando i bin | Atteso: `(bin)^6` cresce esponenzialmente | è il punto dell'esperimento, non un bug |
+| L'agente resta a ~−500 (mai migliora) | Esplorazione insufficiente per trovare il goal, **oppure** troncamento a 500 troppo corto | `configs.py`/`run_acrobot.py`: `epsilon`, `max_steps` |
+| Return "migliore" con meno bin | **Non per forza un bug**: a questo budget bin fini vincono; verifica prima di dubitare | vedi "bin_resolution.png" sopra |
+
+**Come si verifica l'anchor**: dopo `env.reset()`, la tupla dello stato di reset
+deve avere `cos θ ≈ 1` (link in basso) → bin alto su quelle dimensioni, non
+centrale. Se stampi l'anchor e vedi tutti indici centrali, è il bug del bin
+centrale.
 
 ## Limiti e semplificazioni
 

@@ -25,7 +25,7 @@ Every result is averaged over **3 seeds** (42, 123, 456) with standard-deviation
 
 ## Project phases
 
-The project is organized into 4 phases. Detailed guides for each phase are in [`docs/`](docs/).
+The project is organized into 4 phases. Detailed guides are in [`docs/`](docs/) — start from the **documentation index** [`docs/README.md`](docs/README.md), which also links a 10-minute overview, a 1-hour guided walkthrough, an oral-exam review, a glossary, and a symbol/parameter reference. The guides are meant to be read *with the source code open alongside*.
 
 ### Phase 1 — Infrastructure ([guide](docs/guida_fase1_introduzione.md))
 Base infrastructure: state discretization (`DiscretizedEnv`), ε-greedy policies, multi-seed runner, plotting utilities, seeding. No experiments — prepares the ground for phases 2–4.
@@ -106,7 +106,13 @@ TemporalDifference/
 │   ├── run_cartpole.py           # all Env 1 experiments
 │   ├── run_acrobot.py            # all Env 2 experiments
 │   └── run_pong.py               # DQN ablations + Double DQN
-├── docs/                         # comprehension guides (per-phase)
+├── docs/                         # learning companion (read with code open)
+│   ├── README.md                 # documentation index + study order
+│   ├── panoramica_10_minuti.md   # project in 10 minutes
+│   ├── walkthrough_1_ora.md      # guided 1-hour tour (guides + code)
+│   ├── ripasso_orale.md          # before-the-oral quick review
+│   ├── glossario.md              # RL terms → where they live in code
+│   ├── simboli_e_parametri.md    # variables, tensors, hyperparameters
 │   ├── guida_fase1_introduzione.md
 │   ├── guida_fase2_cartpole.md
 │   ├── guida_fase3_acrobot.md

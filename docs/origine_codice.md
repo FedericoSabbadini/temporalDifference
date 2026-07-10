@@ -69,6 +69,27 @@ Ogni modulo del progetto è classificato in base alla sua provenienza.
 | `run_cartpole.py` | **Nuovo** | — | Orchestratore degli esperimenti Env 1. Il design degli esperimenti (quali sweep, quali confronti) segue la consegna. |
 | `run_acrobot.py` | **Nuovo** | — | Orchestratore Env 2. Include `exp_bin_resolution()` — esperimento originale che non ha equivalente nel corso. |
 | `run_pong.py` | **Nuovo** | — | Orchestratore Env 3. Design ablation study e gestione multi-seed con padding per episodi di lunghezza diversa. |
+| `make_report_tables.py` | **Nuovo** | — | Genera le tabelle LaTeX del report leggendo **solo** i `.npz` salvati: nessun numero scritto a mano, tabelle rigenerabili. |
+
+---
+
+## Modifiche successive (fix, con cosa è cambiato esattamente)
+
+Due correzioni applicate dopo la prima esecuzione, documentate per trasparenza:
+
+- **Fix #1 — tracking di V(s) nella prediction.** In `mc_prediction.py` e
+  `td0.py` è stato aggiunto il parametro `track_state` e un terzo valore di
+  ritorno `value_history` (la stima `V(track_state)` episodio per episodio). Gli
+  script di CartPole/Acrobot ora producono anche il grafico `_value.png`. Motivo:
+  il grafico del solo *return* è identico tra MC e TD (stessa policy) e non mostra
+  il compromesso bias/varianza. *Origine: nuovo.* Bug scoperto e corretto: l'anchor
+  era il "bin centrale", impossibile su Acrobot → sostituito con lo **stato di
+  reset discretizzato**.
+- **Fix #2 — discretizzazione CartPole.** In `configs.py` i range di clipping di
+  posizione e angolo sono stati ristretti dai bound dell'osservazione ai limiti
+  di **terminazione** (`±2.4`/`±0.21`). *Solo un cambio di parametri*, nessuna
+  modifica di logica. Effetto a doppio taglio (alza il tetto, rallenta la
+  convergenza) — vedi Fase 2.
 
 ---
 
