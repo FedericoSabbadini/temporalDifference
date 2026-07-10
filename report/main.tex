@@ -1,0 +1,75 @@
+% ============================================================
+% TemporalDifference — Final report
+% Reinforcement Learning course, M.Sc. Computer Engineering, UniBS
+% Compile with: pdflatex main && bibtex main && pdflatex main x2
+%   (or simply: latexmk -pdf main.tex)
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{enumitem}
+
+\hypersetup{colorlinks=true, linkcolor=blue!50!black,
+            citecolor=green!40!black, urlcolor=blue!60!black}
+
+\graphicspath{{figures/}}
+
+% Shortcut for referencing figures/tables consistently
+\newcommand{\code}[1]{\texttt{#1}}
+% \checkmark is provided by amssymb; define a fallback just in case
+\providecommand{\checkmark}{\ensuremath{\surd}}
+
+\title{\textbf{TemporalDifference}\\[0.3em]
+       \large Implementazione ``from scratch'' e analisi sperimentale\\
+       di algoritmi di Reinforcement Learning su CartPole, Acrobot e Pong}
+\author{Federico Sabbadini\\
+        \small M.Sc. Computer Engineering --- Universit\`a degli Studi di Brescia\\
+        \small Corso di Reinforcement Learning, A.A.\ 2025/26}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+\noindent
+Questo progetto implementa da zero i principali algoritmi tabellari di
+Reinforcement Learning (Q\hbox{-}Learning, SARSA, Monte Carlo e TD(0)) e un
+agente Deep Q\hbox{-}Network (DQN) in PyTorch, applicandoli a tre ambienti
+Gymnasium: CartPole, Acrobot e Pong. L'obiettivo, in linea con la consegna,
+non \`e ottenere performance elevate ma \emph{comprendere} il comportamento
+degli algoritmi e analizzarne criticamente i risultati. Tutti gli esperimenti
+sono mediati su 3 seed con bande di deviazione standard. Il lavoro include
+analisi di sensibilit\`a agli iperparametri, casi di fallimento espliciti,
+il confronto SARSA vs Q\hbox{-}Learning e MC vs TD(0), e uno studio di
+ablazione del DQN (target network ed experience replay) con il bonus Double
+DQN. L'analisi mette in evidenza anche i risultati che \emph{contraddicono}
+le ipotesi iniziali e i limiti metodologici individuati.
+\end{abstract}
+
+\tableofcontents
+\bigskip\hrule\bigskip
+
+\input{sections/introduction}
+\input{sections/theory}
+\input{sections/methodology}
+\input{sections/experiments}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/compliance}
+\input{sections/code_origin}
+\input{sections/conclusions}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

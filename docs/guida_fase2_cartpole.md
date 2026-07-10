@@ -157,27 +157,38 @@ run_cartpole.py
 - **Asse Y**: return totale dell'episodio (somma dei reward)
 - **Linea continua**: media su 3 seed
 - **Banda colorata**: ±1 deviazione standard
-- **Cosa cercare**: entrambi dovrebbero salire verso ~200–500 (CartPole max = 500).
-  Q-Learning potrebbe convergere leggermente più in alto (apprende la policy ottimale),
-  SARSA potrebbe essere leggermente più stabile (on-policy).
+- **Osservato**: entrambi salgono e si stabilizzano attorno a **~184** (non 500).
+  Il tetto è imposto dalla **discretizzazione** a 10 bin, non dagli algoritmi:
+  stati fisicamente diversi collassano nello stesso bin. Q-Learning è più stabile
+  tra i seed (±8) di SARSA (±18); il livello medio finale è lo stesso.
 
 ### Sensitivity plots
 - Ogni curva corrisponde a un valore diverso del parametro variato
-- **ε alto (0.3)** → troppa esplorazione, return più basso
-- **α alto (0.5)** → update aggressivi, curve rumorose
-- **γ = 1.0** → nessun discounting, potenziale instabilità
-- **γ = 0.9** → agente miope, converge prima ma a un valore più basso
+- **α**: α=0.01 troppo lento (~50), α=0.1 miglior compromesso, α=0.5 veloce ma rumoroso
+- **ε**: valori troppo bassi rallentano, valori alti (0.3) aggiungono rumore alla policy
+- **γ** (osservato): valori **alti** sono i migliori — γ=1.0 e γ=0.99 raggiungono
+  ~200–230, γ=0.9 si ferma a ~140. La temuta instabilità di γ=1.0 non si manifesta
+  (episodi finiti). Atteso: in un compito di sopravvivenza conviene valorizzare il
+  lungo termine.
 
-### Prediction plots
-- Mostrano il return medio della policy valutata (non il miglioramento della policy)
-- Se la policy è buona (learned), il return dovrebbe essere alto e stabile
-- MC e TD(0) dovrebbero convergere allo stesso valore, ma TD(0) più velocemente
-  e MC con più varianza nelle prime fasi
+### Prediction plots — ⚠️ limite metodologico
+- **Osservato**: le curve di MC e TD(0) sono **praticamente sovrapposte**, con
+  banda di varianza molto ampia (return medio ≈230 sulla policy appresa).
+- **Perché**: il grafico traccia il **return degli episodi** generati sotto la
+  policy fissa. Ma MC e TD(0) seguono la **stessa** policy, quindi generano lo
+  stesso return *per costruzione*. Il grafico NON mostra la differenza
+  bias/varianza tra i due **stimatori**, che vive nelle stime V(s), non nel
+  return della policy.
+- **Cosa mostrerebbe la differenza**: tracciare l'errore (es. RMSE) delle stime
+  V(s) rispetto a un riferimento, oppure la varianza dei target di aggiornamento
+  — come nell'esercizio `random_walk` del corso. Questo è il principale punto
+  migliorabile del progetto ed è discusso apertamente nel report.
 
 ### Failure case plots
-- **High α**: la curva con α=1.0 dovrebbe oscillare senza convergere
-- **No exploration**: la curva con ε=0.0 dovrebbe restare bassa o convergere
-  più lentamente rispetto a ε=0.1
+- **High α**: con α=1.0 la curva resta bloccata in basso (~60), molto sotto ad
+  α=0.1 (~200); α=0.5 impara ma è più rumorosa.
+- **No exploration**: con ε=0.0 (e quasi con ε=0.01) la curva resta bassa (~35),
+  mentre ε=0.1 raggiunge ~175.
 
 ## Limiti e semplificazioni
 

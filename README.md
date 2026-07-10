@@ -73,7 +73,17 @@ Figures are saved to `figures/`, raw data to `results/`.
 
 - **Learning curves**: reward (y) vs episode (x), smoothed with moving average. Solid line = mean over 3 seeds, shaded band = ±1 std.
 - **Sensitivity plots**: one curve per hyperparameter value. Shows how changing ε, α, or γ affects learning speed and final performance.
-- **Ablation plots** (Pong): compare DQN with/without each component. The random baseline (≈ -21) is the reference — anything above it means the agent learned something.
+- **Ablation plots** (Pong): compare DQN with/without each component. The random baseline (≈ -20.4) is the reference — anything above it means the agent learned something.
+
+## Report
+
+The final report (Italian, LaTeX) is in [`report/`](report/) — see [report/README.md](report/README.md) to compile it (`latexmk -pdf main.tex`). Result tables are generated from the saved `.npz` data, not hand-written:
+
+```bash
+uv run python scripts/make_report_tables.py   # → report/tables/*.tex
+```
+
+Two experimental results deliberately **contradict** the initial hypotheses (finer Acrobot bins are *better*; lower ε is *better* on Acrobot). These are analyzed honestly in the report's critical-analysis section rather than hidden.
 
 ## Project structure
 

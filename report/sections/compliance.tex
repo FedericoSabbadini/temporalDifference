@@ -1,0 +1,71 @@
+\section{Conformit\`a alla consegna}
+\label{sec:compliance}
+
+La Tab.~\ref{tab:compliance} mappa ogni requisito della consegna sul relativo
+deliverable. Legenda stato: \checkmark{} soddisfatto, \textasciitilde{}
+parziale.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Matrice di conformit\`a requisiti $\to$ implementazione.}
+\label{tab:compliance}
+\begin{tabular}{p{6.6cm}cp{5.2cm}}
+\toprule
+Requisito & Stato & Evidenza \\
+\midrule
+\multicolumn{3}{l}{\textit{Env 1 --- CartPole (comune)}} \\
+Q\hbox{-}Learning, SARSA, MC, TD(0) ``from scratch'' & \checkmark &
+  \code{rl\_lab/algorithms/tabular/} \\
+Discretizzazione stato continuo & \checkmark &
+  \code{envs/discretizer.py}; Tab.~\ref{tab:envs} \\
+Curve di apprendimento (reward vs episodi) & \checkmark &
+  Fig.~\ref{fig:cp-control} \\
+Sensibilit\`a a $\varepsilon,\alpha,\gamma$ & \checkmark &
+  Sez.~\ref{sec:res-cartpole-sens}, 6 figure \\
+SARSA vs Q\hbox{-}Learning (empirico + teorico) & \checkmark &
+  Sez.~\ref{sec:res-cartpole-control}, \ref{sec:theory} \\
+MC vs TD(0) (bias/varianza/stabilit\`a) & \textasciitilde &
+  Fig.~\ref{fig:cp-pred}; limite discusso in Sez.~\ref{sec:discussion} \\
+$\geq 1$ caso di fallimento & \checkmark &
+  Sez.~\ref{sec:res-cartpole-fail}, 2 casi \\
+\midrule
+\multicolumn{3}{l}{\textit{Env 2 --- Acrobot (assegnato)}} \\
+Stessi algoritmi applicati & \checkmark &
+  \code{run\_acrobot.py} \\
+Difficolt\`a di esplorazione (reward sparso) & \checkmark &
+  Sez.~\ref{sec:res-acrobot-eps} \\
+Necessit\`a di discretizzazione/approssimazione & \checkmark &
+  Sez.~\ref{sec:res-acrobot-bins} (esperimento sui bin) \\
+\midrule
+\multicolumn{3}{l}{\textit{Env 3 --- Pong (Atari, assegnato)}} \\
+DQN ``from scratch'' (replay + target) & \checkmark &
+  \code{algorithms/deep/dqn.py} \\
+Ablazione con/senza target network & \checkmark &
+  Fig.~\ref{fig:pong}, Tab.~\ref{tab:pong-ablation} \\
+Ablazione con/senza experience replay & \checkmark &
+  Fig.~\ref{fig:pong}, Tab.~\ref{tab:pong-ablation} \\
+Apprendimento vs policy casuale & \checkmark &
+  baseline $\approx-20.4$; DQN $-12.1$ \\
+Double DQN (bonus) & \checkmark &
+  flag \code{use\_double\_dqn}; Sez.~\ref{sec:res-pong} \\
+\midrule
+\multicolumn{3}{l}{\textit{Requisiti trasversali}} \\
+Media su 3 seed + deviazione standard & \checkmark &
+  tutte le figure/tabelle \\
+Riproducibilit\`a & \checkmark &
+  seeding, \code{.npz}, \code{uv.lock} \\
+No librerie RL di alto livello (Env 1/2) & \checkmark &
+  core scritto a mano; SB3 non usato \\
+Report 10--15 pagine, con failure analysis & \checkmark &
+  questo documento (LaTeX) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Nota sul confronto MC vs TD(0).}
+\`E l'unico requisito solo parzialmente soddisfatto: l'esperimento esiste ed
+\`e eseguito su 3 seed, ma la visualizzazione scelta (return della policy) non
+espone il compromesso bias/varianza tra i due stimatori. Il punto \`e
+dichiarato apertamente in Sez.~\ref{sec:discussion} e la correzione (tracciare
+l'errore su $V(s)$) \`e indicata tra le azioni future.

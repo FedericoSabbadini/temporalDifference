@@ -1,0 +1,14 @@
+\begin{table}[htbp]
+\centering
+\caption{CartPole control: Q-Learning vs SARSA, mean over 3 seeds. Max possible return is 500; both plateau near 184 due to the coarse $10^4$-state discretization.}
+\label{tab:cartpole-control}
+\begin{tabular}{lccc}
+\toprule
+Algorithm & Initial return & Final return & Episodes/seed \\
+          & (first 100 ep) & (last 10\% ep, mean $\pm$ std) & \\
+\midrule
+Q-Learning & 40.4 & $184.3 \pm 8.3$ & 5000 \\
+SARSA & 27.3 & $184.4 \pm 18.4$ & 5000 \\
+\bottomrule
+\end{tabular}
+\end{table}

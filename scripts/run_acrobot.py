@@ -83,17 +83,20 @@ def exp_control_comparison():
 # Assignment: "eventuale necessità di discretizzazione o approximation"
 # -----------------------------------------------------------------------
 def exp_bin_resolution():
-    """Show how bin count affects learning — curse of dimensionality.
+    """Show how bin count affects learning — discretization resolution study.
 
-    This is the key experiment for the Acrobot discussion:
-    - 4 bins/dim → 4^6 = 4,096 states (too coarse, can't represent the dynamics)
-    - 6 bins/dim → 6^6 = 46,656 states (marginal learning)
-    - 8 bins/dim → 8^6 = 262,144 states (potential but needs many more episodes)
-    - 10 bins/dim → 10^6 = 1,000,000 states (hopelessly sparse with only 10k episodes)
+    A-priori hypothesis: more bins → worse, because the state space grows
+    exponentially (10 bins → 10^6 states, "hopelessly sparse" at 10k episodes).
 
-    The message: increasing resolution doesn't help because the state space
-    grows EXPONENTIALLY. This is why tabular methods don't scale and function
-    approximation (neural networks / DQN) is needed.
+    ACTUAL RESULT (see report Sec. Results / figures/acrobot/bin_resolution.png):
+    the OPPOSITE. Within 10k episodes, 10 bins is the BEST (~-300) and 4 bins
+    the WORST (~-420). Acrobot's dynamics need angular precision, so a too-coarse
+    grid (4 bins) cannot distinguish states, and that effect dominates over
+    sparsity at this episode budget. The curse of dimensionality is real in
+    principle but is not yet the bottleneck here.
+
+    This discrepancy is kept and analyzed honestly rather than "corrected":
+    hypotheses must be verified against data.
     """
     print("\n=== 2. Discretization resolution analysis ===")
     results = {}
@@ -130,9 +133,14 @@ def exp_bin_resolution():
 def exp_sensitivity_epsilon():
     """Show how ε affects learning on Acrobot (sparse reward).
 
-    On Acrobot, exploration is critical because the reward is sparse:
-    the agent gets -1 every step until it reaches the goal (or 500 steps).
-    Without enough exploration, it never discovers the goal state.
+    A-priori hypothesis: sparse reward → needs MORE exploration.
+
+    ACTUAL RESULT (see figures/acrobot/sensitivity_epsilon.png): low ε
+    (0.05-0.1) performs BEST (~-320), high ε=0.4 performs WORST (~-440).
+    With CONSTANT ε (no annealing), a high value keeps disrupting the learned
+    greedy policy and prevents exploiting the swing-up. High exploration would
+    help only early on (annealed schedule), not held constant. Another case
+    where the data corrects the initial intuition.
     """
     print("\n=== 3. Sensitivity to ε (Acrobot) ===")
     results = {}

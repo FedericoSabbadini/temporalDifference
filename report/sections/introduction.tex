@@ -1,0 +1,43 @@
+\section{Introduzione}
+\label{sec:introduction}
+
+\subsection{Obiettivi del progetto}
+Il progetto ha lo scopo di implementare \emph{da zero} i principali algoritmi
+di Reinforcement Learning (RL) e di confrontarli su tre ambienti di
+difficolt\`a crescente, analizzandone comportamento, limiti e prestazioni.
+Coerentemente con la consegna, l'enfasi \`e sulla \textbf{comprensione} e
+sull'\textbf{analisi sperimentale critica}, non sulla performance assoluta:
+molti risultati sono volutamente sub-ottimali e vengono analizzati come tali,
+inclusi i casi di fallimento e i risultati che smentiscono le ipotesi di
+partenza.
+
+\subsection{Ambienti}
+Sono stati affrontati tre ambienti Gymnasium~\cite{towers2024gymnasium}:
+\begin{itemize}[nosep]
+  \item \textbf{CartPole-v1} (comune a tutti i gruppi): bilanciare un'asta su
+        un carrello. Stato continuo 4-D, 2 azioni, reward $+1$ per passo.
+  \item \textbf{Acrobot-v1} (assegnato): portare la punta di un doppio pendolo
+        sopra una soglia. Stato continuo 6-D, 3 azioni, reward $-1$ per passo
+        (reward sparso).
+  \item \textbf{ALE/Pong-v5} (assegnato): il gioco Atari Pong, affrontato con
+        Deep RL su osservazioni a pixel~\cite{bellemare2013ale}.
+\end{itemize}
+
+\subsection{Algoritmi}
+Per CartPole e Acrobot si utilizzano quattro algoritmi tabellari implementati
+a mano: due di \emph{controllo} (Q\hbox{-}Learning, SARSA) e due di
+\emph{predizione} (Monte Carlo, TD(0)). Poich\'e gli ambienti hanno stato
+continuo, \`e stato necessario introdurre una \emph{discretizzazione} dello
+spazio degli stati. Per Pong si \`e implementato un DQN in
+PyTorch~\cite{mnih2015} con experience replay e target network, pi\`u il bonus
+Double DQN~\cite{vanhasselt2016}.
+
+\subsection{Struttura del progetto e del report}
+Il codice \`e organizzato nel pacchetto \code{rl\_lab} (algoritmi, ambienti,
+utility) con uno script per ambiente in \code{scripts/}. Il report segue il
+percorso: fondamenti teorici (Sez.~\ref{sec:theory}), metodologia
+(Sez.~\ref{sec:methodology}), setup sperimentale
+(Sez.~\ref{sec:experiments}), risultati (Sez.~\ref{sec:results}), analisi
+critica (Sez.~\ref{sec:discussion}), conformit\`a alla consegna
+(Sez.~\ref{sec:compliance}), origine del codice
+(Sez.~\ref{sec:code-origin}) e conclusioni (Sez.~\ref{sec:conclusions}).

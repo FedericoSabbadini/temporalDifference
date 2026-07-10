@@ -1,0 +1,46 @@
+\section{Conclusioni}
+\label{sec:conclusions}
+
+\subsection{Risultati raggiunti}
+Il progetto soddisfa i requisiti della consegna: i quattro algoritmi tabellari
+e il DQN sono implementati da zero e applicati ai tre ambienti; ogni risultato
+\`e mediato su 3 seed con bande di deviazione standard; sono presenti le
+analisi di sensibilit\`a, i confronti richiesti (SARSA vs Q\hbox{-}Learning,
+MC vs TD(0)), i casi di fallimento e lo studio di ablazione del DQN con il
+bonus Double DQN.
+
+\subsection{Cosa si \`e imparato}
+\begin{itemize}[nosep]
+  \item La discretizzazione non \`e neutra: impone un tetto di performance
+        (CartPole a $\sim$184 invece di 500) e la sua risoluzione ottima
+        dipende dall'ambiente e dal budget di episodi (Acrobot: 10 bin
+        migliori di 4, contro l'intuizione).
+  \item On-policy (SARSA) vs off-policy (Q\hbox{-}Learning): sui compiti
+        affrontati Q\hbox{-}Learning \`e risultato pi\`u stabile tra i seed.
+  \item Nel DQN, l'experience replay \`e il componente decisivo per
+        l'apprendimento; la target network migliora stabilit\`a e velocit\`a.
+  \item Le ipotesi teoriche vanno \emph{verificate} sui dati: due esperimenti
+        Acrobot hanno dato l'esito opposto all'attesa, e questo \`e stato
+        analizzato invece che nascosto.
+\end{itemize}
+
+\subsection{Possibili miglioramenti futuri}
+\begin{itemize}[nosep]
+  \item Rendere informativo il confronto MC vs TD(0) tracciando l'errore sulle
+        stime $V(s)$ (o la varianza dei target), non il return della policy.
+  \item Aggiungere una fase di evaluation puramente greedy per il DQN e
+        graficare l'ablazione Pong in funzione degli \emph{step} ambiente.
+  \item Provare uno schedule di $\varepsilon$ decrescente per i metodi
+        tabellari, per confrontare esplorazione costante vs annealing.
+  \item Persistere come \code{.npz} anche i dati di sensibilit\`a/fallimento
+        per una riproducibilit\`a completa delle tabelle.
+  \item Estendere il budget di training del DQN (verso punteggi positivi su
+        Pong), tempo e hardware permettendo.
+\end{itemize}
+
+\subsection{Valutazione complessiva}
+Coerentemente con l'obiettivo didattico della consegna --- comprensione e
+analisi critica pi\`u che performance assoluta --- il progetto raggiunge i
+suoi scopi. I limiti individuati sono dichiarati esplicitamente e trasformati
+in spunti di miglioramento, il che \`e a sua volta parte dell'analisi
+richiesta.

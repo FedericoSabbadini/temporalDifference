@@ -1,0 +1,84 @@
+\section{Analisi critica}
+\label{sec:discussion}
+
+\subsection{L'agente sta davvero imparando?}
+S\`i, in tutti e tre gli ambienti, ma in misura diversa:
+\begin{itemize}[nosep]
+  \item \textbf{CartPole}: apprendimento netto (da $\sim$30 a $\sim$184),
+        stabile e riproducibile tra i seed.
+  \item \textbf{Acrobot}: apprendimento reale ma parziale (da $-470$ a
+        $-345$), lontano dall'ottimo e molto rumoroso.
+  \item \textbf{Pong}: apprendimento chiaro sopra il caso casuale per le
+        configurazioni con replay; nessun apprendimento senza replay.
+\end{itemize}
+Il fatto che il codice ``giri'' non basta: la valutazione si basa sul confronto
+tra performance osservata e attesa teorica, non sull'assenza di errori.
+
+\subsection{Convergenza, stabilit\`a e varianza}
+Nessun ambiente raggiunge una convergenza piatta: le curve tabellari restano
+rumorose perch\'e $\varepsilon$ \`e costante (l'agente continua a esplorare) e
+perch\'e $\alpha$ \`e fisso (media a pesi esponenziali, non convergenza a
+media esatta). Questo \`e atteso e coerente con la teoria. In tutti i confronti
+Q\hbox{-}Learning mostra varianza tra seed inferiore a SARSA: l'aggiornamento
+off-policy con $\max$ \`e qui pi\`u stabile della stima on-policy.
+
+\subsection{Riproducibilit\`a}
+Tutti i risultati sono su 3 seed con banda $\pm 1\sigma$; il seeding combinato
+(numpy + torch + env) rende le run ripetibili. Le bande, spesso ampie
+(soprattutto Acrobot e predizione), sono riportate onestamente e non
+nascoste: sono esse stesse un risultato (indicano quanto l'esito dipenda dal
+seed).
+
+\subsection{Training vs evaluation, checkpoint}
+Per il DQN training ed evaluation sono separati: la baseline casuale \`e
+valutata a parte campionando azioni uniformi, e i pesi finali di ogni run sono
+salvati come checkpoint (\code{results/pong/<config>/model\_seed<n>.pt}). Un
+limite onesto: nel loop DQN la ``curva'' \`e il return di training (con
+$\varepsilon$ ancora $>0$), quindi \`e una stima leggermente pessimistica
+della policy greedy; non \`e stata aggiunta una fase di evaluation puramente
+greedy separata, che sarebbe un miglioramento naturale.
+
+\subsection{Limiti metodologici individuati}
+Questa sezione riporta i problemi trovati durante la revisione, senza
+nasconderli.
+
+\paragraph{(1) Confronto MC vs TD(0) poco informativo.}
+Come mostrato in Sez.~\ref{sec:res-cartpole-pred}, i grafici MC vs TD(0)
+tracciano il \emph{return della policy valutata}, identico per costruzione tra
+i due metodi. Non mostrano quindi il vero compromesso bias/varianza, che
+riguarda le stime $V(s)$. Per evidenziarlo servirebbe tracciare, ad esempio,
+l'errore quadratico medio di $V$ rispetto a un riferimento, oppure la varianza
+dei target di aggiornamento --- come nell'esperimento ``random walk'' del
+corso. \`E il principale punto migliorabile del progetto sul lato analisi.
+
+\paragraph{(2) Ipotesi smentite dai dati (Acrobot).}
+Sia l'esperimento sui bin sia quello su $\varepsilon$ hanno dato l'esito
+opposto all'ipotesi iniziale (pi\`u bin = meglio; meno esplorazione = meglio).
+Questo \`e stato mantenuto e discusso come risultato, non ``corretto'' per
+farlo combaciare con l'attesa. La lezione: la curse of dimensionality e la
+difficolt\`a di esplorazione sono reali in principio, ma il loro effetto
+dipende dal budget di episodi e dallo schema di $\varepsilon$ (costante vs
+decrescente).
+
+\paragraph{(3) Asse x in ``episodi'' nell'ablazione Pong.}
+Le curve Pong sono in funzione dell'\emph{indice di episodio}, ma le
+configurazioni raggiungono numeri di episodi diversi a parit\`a di 200k step.
+Confrontarle allo stesso indice di episodio non \`e un confronto a parit\`a di
+calcolo esatta; un asse in ``step ambiente'' sarebbe pi\`u corretto. La
+conclusione qualitativa (replay indispensabile) resta comunque valida.
+
+\paragraph{(4) Persistenza parziale dei dati grezzi.}
+I runner salvano come \code{.npz} solo le comparazioni di controllo e
+l'ablazione Pong; sensibilit\`a, fallimenti e predizione producono solo
+figure. Le tabelle usano quindi solo dati realmente persistiti; le altre
+analisi sono discusse qualitativamente dalle figure. Salvare anche quegli
+array sarebbe un miglioramento di riproducibilit\`a.
+
+\subsection{Buono per un progetto didattico, non ``research-grade''}
+I risultati sono pienamente adeguati agli obiettivi didattici della consegna:
+mostrano apprendimento, confronti corretti e fallimenti analizzati. Non sono
+``research-grade'': CartPole non raggiunge 500 (tetto di discretizzazione),
+Acrobot resta lontano dall'ottimo, e Pong si ferma a $\sim$$-12$ (un DQN
+addestrato per 50M step, non 200k, arriverebbe a punteggi positivi). Questi
+divari sono attesi e coerenti con il budget di calcolo scelto, e sono
+dichiarati esplicitamente.

@@ -18,8 +18,11 @@ perché servono i metodi con approssimazione (DQN, Fase 4).
 ### Curse of dimensionality (Sutton & Barto §9.1)
 
 Con CartPole: 4 dimensioni × 10 bin = 10^4 = **10.000 stati**. Gestibile.
-Con Acrobot: 6 dimensioni × 6 bin = 6^6 = **46.656 stati**. Già problematico.
-Se usassimo 10 bin: 10^6 = **1.000.000 stati**. Impraticabile per tabular.
+Con Acrobot: 6 dimensioni × 6 bin = 6^6 = **46.656 stati**. Già grande.
+Con 10 bin: 10^6 = **1.000.000 stati** — in *principio* impraticabile per tabular.
+(In pratica, però, l'esperimento `bin_resolution` mostra che entro 10.000 episodi
+10 bin resta la scelta migliore: la sparsità non è ancora il collo di bottiglia a
+questo budget. Vedi la sezione "Come leggere i risultati".)
 
 Questo è il cuore della **curse of dimensionality**: lo spazio degli stati cresce
 **esponenzialmente** con il numero di dimensioni. È il motivo principale per cui
@@ -94,9 +97,12 @@ run_acrobot.py
 
 - **6 bin per dimensione** come default: compromesso tra risoluzione e dimensionalità.
   L'esperimento `exp_bin_resolution` mostra esplicitamente cosa succede con 4, 6, 8, 10 bin.
+  (Nota: i risultati indicano che 6 bin non è in realtà l'ottimo a 10k episodi — vedi
+  "Come leggere i risultati"; resta un default ragionevole per gli altri esperimenti.)
 
-- **ε = 0.2 nell'esperimento bin_resolution**: più alto del default (0.1) perché
-  con più stati serve più esplorazione.
+- **ε = 0.2 nell'esperimento bin_resolution**: scelta a priori (più alto del default 0.1).
+  L'esperimento di sensibilità mostra però che su Acrobot ε basso funziona meglio: ε=0.2
+  è quindi una scelta conservativa, non l'ottima.
 
 - **Sensitivity solo su ε** (non α e γ): su Acrobot il parametro più critico è
   l'esplorazione (reward sparso). La consegna per Env 2 chiede di discutere le
@@ -113,31 +119,44 @@ run_acrobot.py
 
 ## Come leggere i risultati
 
+> **Nota**: questa sezione riporta i risultati **effettivamente osservati** dopo
+> l'esecuzione (media su 3 seed). Alcuni contraddicono le ipotesi iniziali: sono
+> mantenuti e spiegati così come sono, non "aggiustati". I numeri esatti sono in
+> `report/tables/acrobot_control.tex` e nella Sez. Risultati del report.
+
 ### control_comparison.png
-- **Cosa aspettarsi**: curve che partono da -500 (random) e migliorano lentamente.
-  Con 6 bin, il miglior return raggiungibile è circa -100 / -150 (non il -80
-  ottimale, perché la discretizzazione perde informazione).
-- **Q-Learning vs SARSA**: Q-Learning dovrebbe convergere leggermente più in alto
-  (off-policy, cerca la policy ottimale), SARSA potrebbe essere più stabile.
-- **Confronto con CartPole**: convergenza molto più lenta e return finale più basso
-  (relativamente al massimo). Questo illustra la difficoltà dell'ambiente.
+- **Osservato**: entrambe le curve partono da ≈-470 (vicino al random -500) e
+  migliorano fino a un plateau rumoroso attorno a **-345 (Q-Learning) / -355
+  (SARSA)**. Lontano dall'ottimo (≈-100): l'agente impara qualche spinta utile
+  ma non uno swing-up efficiente.
+- **Q-Learning vs SARSA**: come atteso, Q-Learning è più stabile tra i seed
+  (±10 contro ±31 di SARSA). Il livello medio finale è simile.
+- **Confronto con CartPole**: convergenza più lenta, più rumorosa e più lontana
+  dall'ottimo — coerente con reward sparso e spazio degli stati grande.
 
-### bin_resolution.png
-- **4 bin** (4^6 = 4.096 stati): troppo grossolano, non impara quasi nulla
-- **6 bin** (6^6 = 46.656 stati): impara qualcosa ma lentamente
-- **8 bin** (8^6 = 262.144 stati): potenzialmente migliore ma servirebbero
-  molti più episodi per esplorare tutti gli stati
-- **10 bin** (10^6 = 1.000.000 stati): troppi stati, l'agente non ha abbastanza
-  episodi per visitarli → performance peggiore dei 6 bin
-- **Messaggio**: non basta aumentare la risoluzione. La Q-table non scala.
-  Serve function approximation.
+### bin_resolution.png — ⚠️ risultato che smentisce l'ipotesi
+- **Ipotesi iniziale** (annotata anche nel codice): più bin → peggio, per la
+  sparsità (10 bin = 10^6 stati "impraticabili").
+- **Osservato**: **l'opposto**. Entro 10.000 episodi, **10 bin è la
+  configurazione MIGLIORE** (≈-300) e **4 bin la PEGGIORE** (≈-420); 6 e 8 bin
+  stanno in mezzo.
+- **Interpretazione corretta**: le dinamiche di Acrobot richiedono precisione
+  angolare. Con soli 4 bin la discretizzazione è troppo grossolana per
+  distinguere stati diversi, e questo effetto **domina** sulla sparsità. La
+  curse of dimensionality è reale in principio, ma a questo budget di episodi
+  non è ancora il fattore limitante.
+- **Lezione**: le ipotesi vanno verificate sui dati. Function approximation
+  resta comunque la via giusta per spazi molto più grandi, ma non è ciò che
+  questo esperimento dimostra in queste condizioni.
 
-### sensitivity_epsilon.png
-- **ε basso (0.05)**: esplora troppo poco in uno spazio grande → non trova il goal
-- **ε alto (0.4)**: esplora molto ma sfrutta poco → return più rumoroso
-- **ε medio (0.1–0.2)**: compromesso migliore
-- **Confronto con CartPole**: su CartPole ε=0.1 funziona bene; su Acrobot
-  potrebbe servire ε più alto per l'esplorazione iniziale.
+### sensitivity_epsilon.png — ⚠️ risultato che smentisce l'ipotesi
+- **Ipotesi iniziale**: reward sparso → serve *più* esplorazione.
+- **Osservato**: i valori **bassi** (ε=0.05–0.1) danno i risultati migliori
+  (≈-320); ε=0.4 è nettamente il peggiore (≈-440).
+- **Interpretazione**: con ε **costante** (non decrescente), un valore alto
+  disturba continuamente la policy greedy e impedisce di sfruttare lo swing-up
+  appreso. Servirebbe esplorazione alta solo all'inizio (annealing), non
+  costante. Questo spiega perché "più esplorazione" qui peggiora.
 
 ### prediction_comparison.png
 - Stessa interpretazione di CartPole: MC vs TD(0) sulla policy appresa

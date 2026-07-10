@@ -215,9 +215,23 @@ Ordered; each step ends in a verifiable outcome. Steps 1–5 earn the bulk of th
    implement Double DQN bonus (~5 lines over base DQN). *Outcome:* final deliverable.
    Report format: **LaTeX (Overleaf recommended)**.
 
-**Current status: Steps 1–8 code written. PyTorch cu128 (2.11.0+cu128, CUDA 12.8) installed and
-GPU verified (RTX 5060 detected, `torch.cuda.is_available()==True`). DQN validated end-to-end on
-GPU for both the MLP (CartPole) and CNN (Pong) paths. No full experiments run yet.**
+**Current status: ALL experiments run (Steps 5, 6, 8 complete). Results in `results/*.npz` +
+`figures/`; DQN checkpoints in `results/pong/`. LaTeX report written and compiles to a 16-page
+PDF (`report/`, Step 9 — Double DQN bonus included). Dependency management migrated to `uv`
+(`pyproject.toml` + `uv.lock`; `requirements.txt` removed). Tables auto-generated from real data
+via `scripts/make_report_tables.py`.**
+
+**Key experimental findings (real, mean over 3 seeds):**
+- CartPole control: Q-Learning & SARSA both plateau at ~184 (not 500 — discretization ceiling);
+  Q-Learning lower-variance. γ high is best; α=1.0 and ε=0 are the failure cases.
+- Acrobot control: ~-345 (QL) / -355 (SARSA), far from optimum (~-100).
+- **Two Acrobot results CONTRADICT the a-priori hypotheses** (kept & analyzed honestly): finer
+  bins are BETTER not worse (10 bins best, 4 worst at 10k episodes); and LOW ε is better than
+  high ε (constant ε, so high ε just disrupts the greedy policy). Docs/comments corrected.
+- Pong ablation: replay is essential (no learning without it, ~-20.5); target net accelerates
+  (~-16 without it); Full DQN -12.1, Double DQN -14.2.
+- **Known limitation**: the MC-vs-TD(0) plots show the shared-policy episode return (identical
+  by construction), NOT the estimator bias/variance in V(s). Flagged in report & guides.
 
 ---
 
@@ -308,12 +322,12 @@ Follow sequentially. Check off in this file as you go.
 - [x] **Step 2** — `envs/discretizer.py` (dimension-agnostic binning). *(Code written, not tested.)*
 - [x] **Step 3** — `algorithms/tabular/{q_learning,sarsa,mc_prediction,td0}.py` + `policies.py`. *(Code written, not tested.)*
 - [x] **Step 4** — `experiments/runner.py` + `utils/{seeding,plotting}.py`. *(Code written, not tested.)*
-- [ ] **Step 5** — Run `scripts/run_cartpole.py`: learning curves, ε/α/γ sweeps, SARSA-vs-QL, MC-vs-TD(0), failure case → figures.
-- [ ] **Step 6** — Run `scripts/run_acrobot.py`: same + bin-resolution experiment → figures.
-- [x] **Step 7** — `algorithms/deep/{networks,replay_buffer,dqn}.py` + Double DQN. *(Code written, not tested.)*
-- [ ] **Step 8** — Run `scripts/run_pong.py`: DQN ablations (target net, replay) + Double DQN × 3 seeds → figures.
-- [ ] **Step 9** — Write `report/` (10–15 pp, Italian, LaTeX): algorithms, setup, results, critical +
-      failure analysis, final section. Double DQN bonus.
+- [x] **Step 5** — Ran `scripts/run_cartpole.py`: learning curves, ε/α/γ sweeps, SARSA-vs-QL, MC-vs-TD(0), failure case → `figures/cartpole/`.
+- [x] **Step 6** — Ran `scripts/run_acrobot.py`: control, bin-resolution, ε-sensitivity, prediction → `figures/acrobot/`.
+- [x] **Step 7** — `algorithms/deep/{networks,replay_buffer,dqn}.py` + Double DQN. *(Validated end-to-end.)*
+- [x] **Step 8** — Ran `scripts/run_pong.py`: DQN ablations (target net, replay) + Double DQN × 3 seeds → `figures/pong/` + checkpoints.
+- [x] **Step 9** — Wrote `report/` (Italian, LaTeX, 16 pp): compiles via `latexmk`. Sections incl. critical
+      analysis, failure analysis, compliance matrix, code origin. Double DQN bonus covered. Tables auto-generated.
 
 ---
 

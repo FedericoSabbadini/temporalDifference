@@ -1,0 +1,204 @@
+\section{Risultati}
+\label{sec:results}
+
+Tutti i valori numerici provengono dagli array \code{.npz} salvati dai runner
+e sono calcolati da \code{make\_report\_tables.py}.
+
+\subsection{CartPole --- controllo}
+\label{sec:res-cartpole-control}
+La Fig.~\ref{fig:cp-control} e la Tab.~\ref{tab:cartpole-control} mostrano il
+confronto Q\hbox{-}Learning vs SARSA. Entrambi apprendono chiaramente,
+partendo da un return di $\sim$30--40 e raggiungendo un plateau attorno a
+\textbf{184}. I due algoritmi convergono allo \emph{stesso} livello medio, ma
+Q\hbox{-}Learning \`e pi\`u stabile tra i seed ($\pm 8.3$ contro $\pm 18.4$
+di SARSA).
+
+Un punto importante: il return massimo di CartPole-v1 \`e 500, ma gli agenti
+si fermano a $\sim$184. Questo \emph{non} \`e un difetto degli algoritmi ma il
+\textbf{tetto imposto dalla discretizzazione}: con 10 bin per dimensione, stati
+fisicamente diversi collassano nello stesso bin e la policy greedy non pu\`o
+essere pi\`u fine della griglia (vedi Sez.~\ref{sec:discussion}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{cartpole_control_comparison.png}
+\caption{CartPole: Q\hbox{-}Learning vs SARSA (media su 3 seed, banda
+$\pm1\sigma$). Stesso plateau ($\sim$184), Q\hbox{-}Learning meno rumoroso.}
+\label{fig:cp-control}
+\end{figure}
+
+\input{tables/cartpole_control.tex}
+
+\subsection{CartPole --- sensibilit\`a agli iperparametri}
+\label{sec:res-cartpole-sens}
+Le figure di sensibilit\`a (una per iperparametro) confermano le attese
+teoriche:
+\begin{itemize}[nosep]
+  \item \textbf{$\alpha$} (Fig.~\ref{fig:cp-sens}, sinistra): $\alpha=0.01$
+        apprende troppo lentamente (plateau $\sim$50); $\alpha=0.1$ \`e il
+        miglior compromesso; $\alpha=0.5$ apprende in fretta ma con curve
+        pi\`u rumorose.
+  \item \textbf{$\gamma$} (Fig.~\ref{fig:cp-sens}, destra): valori alti sono
+        migliori ($\gamma=1.0$ e $0.99$ raggiungono $\sim$200--230, $\gamma=0.9$
+        si ferma a $\sim$140). Atteso: in un compito di ``sopravvivenza'' con
+        reward $+1$/passo conviene valorizzare il lungo termine.
+  \item \textbf{$\varepsilon$}: valori troppo bassi rallentano
+        l'apprendimento, valori troppo alti aggiungono rumore alla policy.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\linewidth]{cartpole_sensitivity_QLearning_alpha.png}
+\hfill
+\includegraphics[width=0.49\linewidth]{cartpole_sensitivity_QLearning_gamma.png}
+\caption{CartPole, Q\hbox{-}Learning: sensibilit\`a ad $\alpha$ (sinistra) e
+$\gamma$ (destra). $\alpha=0.1$ e $\gamma$ alto sono le scelte migliori.}
+\label{fig:cp-sens}
+\end{figure}
+
+\subsection{CartPole --- casi di fallimento}
+\label{sec:res-cartpole-fail}
+Sono stati riprodotti due fallimenti espliciti (Fig.~\ref{fig:cp-fail}):
+\begin{itemize}[nosep]
+  \item \textbf{Learning rate estremo}: con $\alpha=1.0$ l'agente sostituisce
+        completamente la stima ad ogni passo e resta bloccato a $\sim$60,
+        molto sotto ad $\alpha=0.1$ ($\sim$200). $\alpha=0.5$ apprende ancora
+        ma \`e visibilmente pi\`u instabile.
+  \item \textbf{Assenza di esplorazione}: con $\varepsilon=0$ (e quasi anche
+        con $\varepsilon=0.01$) l'agente resta intrappolato attorno a
+        $\sim$35, mentre $\varepsilon=0.1$ raggiunge $\sim$175. \`E la
+        dimostrazione concreta del dilemma exploration/exploitation.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\linewidth]{cartpole_failure_high_alpha.png}
+\hfill
+\includegraphics[width=0.49\linewidth]{cartpole_failure_no_exploration.png}
+\caption{CartPole, casi di fallimento. Sinistra: $\alpha=1.0$ non progredisce.
+Destra: $\varepsilon=0$ resta bloccato ($\varepsilon=0.1$ apprende).}
+\label{fig:cp-fail}
+\end{figure}
+
+\subsection{CartPole --- MC vs TD(0) (predizione)}
+\label{sec:res-cartpole-pred}
+La Fig.~\ref{fig:cp-pred} confronta MC e TD(0) sulla policy greedy appresa.
+Le due curve risultano \emph{praticamente sovrapposte}, con una banda di
+varianza molto ampia. Questo esito richiede una lettura critica onesta
+(Sez.~\ref{sec:discussion}): ci\`o che viene tracciato \`e il \emph{return
+degli episodi generati} sotto la policy fissa --- identico per costruzione tra
+MC e TD(0), perch\'e entrambi seguono la \emph{stessa} policy. La differenza
+bias/varianza tra i due stimatori vive nelle stime $V(s)$, che questo grafico
+non espone. Il grafico conferma quindi solo che entrambi valutano la stessa
+policy (return medio $\sim$230), non il vantaggio di varianza di TD(0).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{cartpole_prediction_learned_policy.png}
+\caption{CartPole: MC vs TD(0) sulla policy appresa. Le curve coincidono
+perch\'e si traccia il return della policy condivisa, non l'errore sulle
+stime $V(s)$ (vedi Sez.~\ref{sec:discussion}).}
+\label{fig:cp-pred}
+\end{figure}
+
+\subsection{Acrobot --- controllo}
+\label{sec:res-acrobot-control}
+Su Acrobot (Fig.~\ref{fig:ac-control}, Tab.~\ref{tab:acrobot-control})
+entrambi gli algoritmi migliorano da $\sim$$-470$ (vicino al caso casuale,
+$-500$) fino a un plateau rumoroso attorno a $-345$/$-355$. La performance
+resta ben lontana dall'ottimo ($\sim$$-100$): l'agente impara a dare qualche
+spinta utile ma non una strategia di swing-up efficiente. Q\hbox{-}Learning
+\`e di nuovo pi\`u stabile di SARSA ($\pm 10$ vs $\pm 31$). L'elevata varianza
+delle curve \`e coerente con reward sparso e spazio degli stati grande.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{acrobot_control_comparison.png}
+\caption{Acrobot: Q\hbox{-}Learning vs SARSA. Miglioramento netto rispetto al
+casuale ($-500$) ma lontano dall'ottimo ($\sim$$-100$); curve molto rumorose.}
+\label{fig:ac-control}
+\end{figure}
+
+\input{tables/acrobot_control.tex}
+
+\subsection{Acrobot --- risoluzione della discretizzazione}
+\label{sec:res-acrobot-bins}
+Questo \`e l'esperimento pi\`u istruttivo e con l'esito \textbf{pi\`u
+sorprendente} (Fig.~\ref{fig:ac-bins}). L'ipotesi iniziale (annotata anche nel
+codice) era che aumentare i bin avrebbe \emph{peggiorato} l'apprendimento a
+causa della sparsit\`a ($10$ bin $\to 10^6$ stati). I dati mostrano
+l'\textbf{opposto}: entro 10\,000 episodi, \textbf{10 bin \`e la
+configurazione migliore} ($\sim$$-300$) e \textbf{4 bin la peggiore}
+($\sim$$-420$).
+
+L'interpretazione corretta \`e che le dinamiche di Acrobot richiedono
+precisione angolare: con soli 4 bin la discretizzazione \`e troppo grossolana
+per rappresentare stati distinti, e ci\`o domina sull'effetto della sparsit\`a.
+La ``maledizione della dimensionalit\`a'' \`e reale in principio, ma a questo
+budget di episodi non \`e ancora il fattore limitante --- una lezione
+metodologica importante: le ipotesi vanno verificate sui dati, non assunte.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{acrobot_bin_resolution.png}
+\caption{Acrobot: effetto della risoluzione di discretizzazione. Contrariamente
+all'ipotesi iniziale, 10 bin (rosso) \`e il migliore e 4 bin (blu) il peggiore
+entro 10k episodi: la precisione angolare conta pi\`u della sparsit\`a a questo
+budget.}
+\label{fig:ac-bins}
+\end{figure}
+
+\subsection{Acrobot --- sensibilit\`a a $\varepsilon$ e predizione}
+\label{sec:res-acrobot-eps}
+Anche la sensibilit\`a a $\varepsilon$ (Fig.~\ref{fig:ac-eps}) smentisce
+l'attesa ``reward sparso $\Rightarrow$ serve pi\`u esplorazione'': i valori
+\emph{bassi} ($\varepsilon=0.05$--$0.1$) danno i risultati migliori
+($\sim$$-320$), mentre $\varepsilon=0.4$ \`e nettamente il peggiore
+($\sim$$-440$). Con $\varepsilon$ costante (non decrescente), un valore alto
+disturba continuamente la policy greedy e impedisce di sfruttare lo swing-up
+appreso. Il confronto MC vs TD(0) su Acrobot presenta lo stesso limite
+metodologico di CartPole (curve sovrapposte, Sez.~\ref{sec:discussion}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.80\linewidth]{acrobot_sensitivity_epsilon.png}
+\caption{Acrobot: sensibilit\`a a $\varepsilon$. Con $\varepsilon$ costante,
+valori bassi (0.05--0.1) battono valori alti (0.4): troppa esplorazione
+disturba la policy.}
+\label{fig:ac-eps}
+\end{figure}
+
+\subsection{Pong --- studio di ablazione del DQN}
+\label{sec:res-pong}
+Il risultato Pong \`e il pi\`u pulito e ``da manuale'' del progetto
+(Fig.~\ref{fig:pong}, Tab.~\ref{tab:pong-ablation}). Rispetto alla baseline
+casuale ($\approx -20.4$):
+\begin{itemize}[nosep]
+  \item \textbf{DQN completo}: miglior risultato, $-12.1 \pm 0.9$. Apprende
+        chiaramente e in modo consistente tra i seed.
+  \item \textbf{Double DQN}: $-14.2 \pm 0.8$, apprende con traiettoria simile
+        al DQN completo (in questo regime breve non lo supera).
+  \item \textbf{Senza target network}: $-16.3 \pm 2.8$. Apprende ma pi\`u
+        lentamente e con varianza molto maggiore (il ``target mobile'' rende
+        l'addestramento instabile).
+  \item \textbf{Senza replay} e \textbf{senza entrambi}: $-20.6$ e $-20.5$,
+        cio\`e \emph{nessun apprendimento} --- restano al livello casuale.
+\end{itemize}
+La conclusione \`e netta: l'\textbf{experience replay \`e il componente
+critico} (senza di esso non si apprende affatto), mentre la target network
+\emph{accelera e stabilizza} ma non \`e strettamente indispensabile. Si noti
+anche che il DQN completo produce \emph{meno} episodi per seed ($\sim$134)
+rispetto alle configurazioni fallite ($\sim$240): apprendere allunga gli
+scambi, quindi a parit\`a di 200k step si giocano meno episodi --- un segnale
+indiretto di apprendimento.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{pong_full_comparison.png}
+\caption{Pong: studio di ablazione DQN (200k step, 3 seed). Replay + target
+(blu) e Double DQN (viola) apprendono; senza target (arancio) apprende
+lentamente; senza replay (verde/rosso) resta al livello casuale.}
+\label{fig:pong}
+\end{figure}
+
+\input{tables/pong_ablation.tex}

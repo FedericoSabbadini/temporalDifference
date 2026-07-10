@@ -1,0 +1,78 @@
+\section{Fondamenti teorici}
+\label{sec:theory}
+
+Si riportano solo i concetti necessari a comprendere le implementazioni. La
+notazione segue Sutton \& Barto~\cite{sutton2018}.
+
+\subsection{MDP, valore e policy}
+Un problema di RL \`e modellato come un \emph{Markov Decision Process} (MDP):
+ad ogni \emph{timestep} l'agente osserva uno \emph{stato} $s$, sceglie
+un'\emph{azione} $a$ secondo una \emph{policy} $\pi(a|s)$, riceve un
+\emph{reward} $r$ e transita in $s'$. L'obiettivo \`e massimizzare il
+\emph{return} atteso $G_t = \sum_{k=0}^{\infty}\gamma^k r_{t+k+1}$, dove
+$\gamma \in [0,1]$ \`e il fattore di sconto. Si definiscono la
+\emph{state-value} $V^\pi(s)=\mathbb{E}_\pi[G_t\,|\,S_t=s]$ e la
+\emph{action-value} $Q^\pi(s,a)=\mathbb{E}_\pi[G_t\,|\,S_t=s, A_t=a]$.
+
+\subsection{Predizione vs controllo}
+\`E fondamentale distinguere i due compiti, perch\'e la consegna li richiede
+entrambi:
+\begin{itemize}[nosep]
+  \item \textbf{Predizione}: stimare $V^\pi$ per una policy $\pi$
+        \emph{fissata}. Monte Carlo e TD(0) sono algoritmi di predizione.
+  \item \textbf{Controllo}: trovare una policy migliore. Q\hbox{-}Learning e
+        SARSA sono algoritmi di controllo.
+\end{itemize}
+
+\subsection{Monte Carlo (MC) e TD(0)}
+Entrambi stimano $V^\pi$ ma con target diversi (S\&B \S5.1, \S6.1):
+\begin{align}
+  \text{MC:}\quad   & V(S_t) \leftarrow V(S_t) + \alpha\,[\,G_t - V(S_t)\,] \\
+  \text{TD(0):}\quad& V(S_t) \leftarrow V(S_t) + \alpha\,[\,R_{t+1} + \gamma V(S_{t+1}) - V(S_t)\,]
+\end{align}
+MC usa il return \emph{effettivo} $G_t$: \`e non distorto (\emph{unbiased}) ma
+ad alta varianza e richiede episodi completi. TD(0) usa il \emph{bootstrap}
+$R_{t+1}+\gamma V(S_{t+1})$: \`e distorto (usa una stima) ma a varianza pi\`u
+bassa e aggiornabile online. Il termine
+$\delta_t = R_{t+1}+\gamma V(S_{t+1})-V(S_t)$ \`e il \emph{TD error}.
+
+\subsection{SARSA (on-policy) e Q-Learning (off-policy)}
+Sono aggiornamenti TD sulla $Q$ (S\&B \S6.4--6.5):
+\begin{align}
+  \text{SARSA:}\quad     & Q(S,A) \leftarrow Q(S,A) + \alpha\,[\,R + \gamma Q(S',A') - Q(S,A)\,] \\
+  \text{Q\hbox{-}Learning:}\quad & Q(S,A) \leftarrow Q(S,A) + \alpha\,[\,R + \gamma \textstyle\max_{a'} Q(S',a') - Q(S,A)\,]
+\end{align}
+SARSA \`e \emph{on-policy}: il target usa l'azione $A'$ effettivamente scelta
+dalla policy $\varepsilon$-greedy, quindi tiene conto del rischio
+dell'esplorazione. Q\hbox{-}Learning \`e \emph{off-policy}: il target usa il
+$\max$, cio\`e valuta la policy greedy indipendentemente da come si esplora.
+
+\subsection{Esplorazione: $\varepsilon$-greedy}
+La policy $\varepsilon$-greedy sceglie un'azione casuale con probabilit\`a
+$\varepsilon$ (\emph{exploration}) e l'azione greedy $\arg\max_a Q(s,a)$
+altrimenti (\emph{exploitation}). \`E il compromesso pi\`u semplice tra i due
+e viene usato in tutto il progetto (S\&B \S2.1).
+
+\subsection{Discretizzazione (state aggregation)}
+I metodi tabellari richiedono uno spazio di stati finito. CartPole e Acrobot
+hanno stato continuo, quindi ogni dimensione viene divisa in \emph{bin}
+uniformi (S\&B \S9.4, \emph{state aggregation}): stati vicini finiscono nello
+stesso bin. Il numero di stati cresce come (bin)$^{\text{dim}}$: $10^4$ per
+CartPole (gestibile), fino a $10^6$ per Acrobot con 10 bin (\emph{curse of
+dimensionality}).
+
+\subsection{Deep Q-Network (DQN)}
+Quando lo spazio degli stati \`e troppo grande (pixel di Pong), la $Q$ viene
+approssimata da una rete neurale $Q(s,a;\theta)$~\cite{mnih2015}. Due
+componenti stabilizzano l'addestramento:
+\begin{itemize}[nosep]
+  \item \textbf{Experience Replay}: le transizioni sono salvate in un buffer e
+        campionate a mini-batch casuali, rompendo la correlazione temporale.
+  \item \textbf{Target Network}: una copia $\theta^-$ della rete, aggiornata
+        di rado, fornisce target stabili
+        $y = R + \gamma \max_{a'} Q(S',a';\theta^-)$.
+\end{itemize}
+Il \textbf{Double DQN}~\cite{vanhasselt2016} disaccoppia selezione e
+valutazione dell'azione,
+$y = R + \gamma\, Q(S', \arg\max_{a'}Q(S',a';\theta);\theta^-)$, riducendo la
+sovrastima ($\emph{maximization bias}$, S\&B \S6.7).

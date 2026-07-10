@@ -1,0 +1,58 @@
+\section{Setup sperimentale}
+\label{sec:experiments}
+
+\subsection{Hardware e librerie}
+Gli esperimenti tabellari (CartPole, Acrobot) girano su CPU. Il DQN gira su
+GPU NVIDIA RTX 5060 (8\,GB, architettura Blackwell), che richiede la build
+PyTorch CUDA 12.8. Librerie: Gymnasium (+ ALE per Atari), PyTorch, NumPy,
+Matplotlib. La gestione delle dipendenze usa \code{uv} (\code{uv sync}); le
+librerie RL di alto livello (es.\ Stable-Baselines3) \emph{non} sono usate
+per il core, come richiesto dalla consegna.
+
+\subsection{Iperparametri}
+\begin{table}[H]
+\centering
+\caption{Iperparametri principali. I valori di default seguono le convenzioni
+di Sutton \& Barto; per il DQN sono ridotti rispetto al paper Nature per
+rientrare nel budget di calcolo (vedi Sez.~\ref{sec:discussion}).}
+\label{tab:hyper}
+\begin{tabular}{lll}
+\toprule
+ & Tabellari (CartPole/Acrobot) & DQN (Pong) \\
+\midrule
+Episodi / step         & 5000 / 10000 episodi   & 200\,000 step \\
+$\alpha$ (learning rate)& 0.1                    & $10^{-4}$ (Adam) \\
+$\gamma$               & 0.99                    & 0.99 \\
+$\varepsilon$          & 0.1 (costante)          & $1.0 \to 0.02$ (lineare, 100k step) \\
+Replay buffer          & ---                     & 100\,000 transizioni \\
+Batch size             & ---                     & 32 \\
+Target update          & ---                     & ogni 1000 step \\
+Learning starts        & ---                     & 10\,000 step \\
+Seed                   & \multicolumn{2}{c}{$\{42, 123, 456\}$ (3 run per esperimento)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Esperimenti eseguiti}
+\paragraph{CartPole (\code{run\_cartpole.py}).}
+(1) Q\hbox{-}Learning vs SARSA; (2) sensibilit\`a a $\varepsilon,\alpha,\gamma$
+per entrambi gli algoritmi (6 figure); (3) MC vs TD(0) su policy appresa e
+casuale; (4) casi di fallimento ($\alpha$ elevato, $\varepsilon=0$).
+
+\paragraph{Acrobot (\code{run\_acrobot.py}).}
+(1) Q\hbox{-}Learning vs SARSA; (2) effetto della risoluzione di
+discretizzazione (4/6/8/10 bin); (3) sensibilit\`a a $\varepsilon$;
+(4) MC vs TD(0) su policy appresa.
+
+\paragraph{Pong (\code{run\_pong.py}).}
+Studio di ablazione a 5 configurazioni --- DQN completo, senza target
+network, senza replay, senza entrambi, e Double DQN --- pi\`u la baseline
+casuale. Ogni configurazione su 3 seed.
+
+\subsection{Criteri di valutazione}
+Le curve mostrano il return (media su 3 seed, smoothing a media mobile) con
+banda $\pm 1\sigma$. Le tabelle riportano la performance ``finale'', definita
+come media sull'\emph{ultimo 10\%} degli episodi di ciascun seed (aggregata
+poi tra seed): \`e una stima dell'asintoto pi\`u robusta del valore degli
+ultimissimi episodi, molto rumorosi. Il codice che genera le tabelle
+(\code{scripts/make\_report\_tables.py}) legge solo gli \code{.npz} salvati.
