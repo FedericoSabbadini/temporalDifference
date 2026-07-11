@@ -54,7 +54,7 @@ def plot_learning_curves(results_dict, title, save_path=None, window=20,
     """
     plt.figure(figsize=(10, 5))
 
-    for label, data in results_dict.items():
+    for label, data in results_dict.items(): # label is the seed, data is the array of linked rewards
         if data.ndim == 1:
             data = data.reshape(1, -1)  # single seed → treat as 1-row matrix
         # axis=0 computes mean/std ACROSS seeds (each row is one seed's returns)

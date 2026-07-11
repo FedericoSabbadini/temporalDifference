@@ -99,7 +99,7 @@ def mc_prediction(env, policy_fn, episodes=5000, gamma=1.0,
             # This converges to the true V^π(s) by the law of large numbers
             returns_sum[s] += G
             returns_count[s] += 1.0
-            V[s] = returns_sum[s] / returns_count[s]
+            V[s] = returns_sum[s] / returns_count[s] # V[s] = mean of all returns G observed at s
 
         # Record the running estimate of the reference state (if requested)
         if track_state is not None:
