@@ -35,7 +35,7 @@ class ReplayBuffer:
 
     def __init__(self, capacity):
         # deque with maxlen: when full, oldest transition is automatically dropped (FIFO)
-        self.buffer = deque(maxlen=capacity)
+        self.buffer = deque(maxlen=capacity) # deque is faster than list for FIFO operations
 
     def push(self, state, action, reward, next_state, done):
         """Store a single transition (S, A, R, S', done)."""
@@ -62,10 +62,10 @@ class ReplayBuffer:
         # zip(*batch) transposes list-of-tuples into tuple-of-lists
         states, actions, rewards, next_states, dones = zip(*batch)
         return (
-            np.array(states),  # shape: (batch, *obs_shape)
+            np.array(states),  # shape: (batch, *obs_shape) = (batch, 4, 84, 84) for Atari
             np.array(actions, dtype=np.int64),   # int64 required by torch.gather
             np.array(rewards, dtype=np.float32), # float32 for GPU efficiency
-            np.array(next_states),  # same shape as states
+            np.array(next_states),  # same shape as states = (batch, *obs_shape) = (batch, 4, 84, 84) for Atari
             np.array(dones, dtype=np.float32),   # 0.0 or 1.0 for masking
         )
 

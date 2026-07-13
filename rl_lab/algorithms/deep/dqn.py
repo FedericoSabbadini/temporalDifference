@@ -1,7 +1,6 @@
 """DQN training loop — from scratch in PyTorch (Mnih et al. 2015).
 
 Origin: NEW. This is the most complex and entirely original part of the project.
-The course only provided SB3-based DQN (forbidden for the core implementation).
 The training loop is written from scratch following the Nature DQN paper.
 
 Implements Deep Q-Network with:
@@ -79,8 +78,22 @@ def _update_network(online_net, target_net, buffer, optimizer, batch_size,
     """One gradient step on a mini-batch from the replay buffer.
 
     This is the neural-network equivalent of the tabular Q-Learning update:
-      Tabular:  Q[s][a] += α * (target - Q[s][a])
-      DQN:      minimize MSE( Q_online(s,a) - target )  via backprop
+      Tabular:  Q[s][a] += α * (target - Q[s][a]) -> update is made in-place
+      DQN:      Q_wtarget[s][a] = neural net output -> update is made via gradient descent on the loss, no in-place modification of Q-values.
+                     w are the network weights (parameters) updated by gradient descent: w = w - α * ∇_w loss
+                     (if w = w_online update every step, if w = w_target update every N steps)
+                     ∇_w = (R + γ max_a' Q_wtarget(S', a') - Q_wonline(S, A)) * ∇_w Q_wonline(S, A)
+
+
+    Args:
+        online_net: the Q-network being trained (θ)
+        target_net: the target Q-network (θ')
+        buffer: the replay buffer
+        optimizer: the optimizer for updating the online network
+        batch_size: the size of the mini-batch
+        gamma: the discount factor
+        device: the device to run the computation on (CPU or GPU)
+        use_double_dqn: whether to use Double DQN
     """
     # Sample a random mini-batch from the replay buffer
     states, actions, rewards, next_states, dones = buffer.sample(batch_size)
@@ -106,8 +119,9 @@ def _update_network(online_net, target_net, buffer, optimizer, batch_size,
             # Step 1: ONLINE net selects the best action in S'
             best_actions = online_net(next_states_t).argmax(dim=1, keepdim=True)
             # Step 2: TARGET net evaluates Q at that action
+            q_values_next = target_net(next_states_t)
             # This prevents the overestimation caused by using max on noisy Q-values
-            next_q = target_net(next_states_t).gather(1, best_actions).squeeze(1)
+            next_q = q_values_next.gather(1, best_actions).squeeze(1) #
         else:
             # Standard DQN: target net does both selection AND evaluation
             # max(dim=1)[0] returns the maximum Q-value across actions (the [0] gets values, [1] would get indices)
@@ -162,7 +176,7 @@ def train_dqn(
         epsilon_start/end/decay_steps: linear ε-decay schedule.
             Starts at epsilon_start (full exploration), decays linearly to
             epsilon_end over decay_steps, then stays at epsilon_end.
-        learning_starts: fill buffer with this many transitions before updating.
+        learning_starts: fill buffer with this many transitions before updating. Necessary to i.i.d. sampling from the buffer.
         use_target_network: if False, target net = online net (ablation).
         use_replay: if False, update on each transition (no buffer).
         use_double_dqn: if True, use Double DQN action selection (bonus).
@@ -196,7 +210,7 @@ def train_dqn(
     else:
         # Ablation: target net IS the online net (same Python object → same weights)
         # Every gradient step changes the target too → the "moving target" problem
-        target_net = online_net
+        target_net = online_net # pointer to the same object, not a copy
 
     # Adam optimizer: adaptive learning rate per parameter (better than plain SGD for RL)
     optimizer = torch.optim.Adam(online_net.parameters(), lr=lr)
@@ -210,7 +224,7 @@ def train_dqn(
         # Without replay: buffer holds only batch_size transitions (essentially online learning).
         # Each update uses the most recent transitions → correlated data, less stable.
         buffer = ReplayBuffer(batch_size)
-        min_buffer = batch_size  # start learning as soon as one batch is available
+        min_buffer = batch_size  # start learning as soon as one batch is available/stored
 
     # --- Training loop (STEP-BASED, standard for Atari) ---
     # Unlike tabular algorithms which loop over episodes, DQN counts total env steps.
@@ -254,6 +268,7 @@ def train_dqn(
             buffer.push(state, action, reward, next_state, float(done))
 
             # Gradient update (only after buffer has enough transitions for a diverse batch)
+            # This if is not executed only in the first few steps of training, until the buffer is filled enough.
             if len(buffer) >= min_buffer:
                 _update_network(
                     online_net, target_net, buffer, optimizer,

@@ -1,58 +1,155 @@
-"""Atari preprocessing wrappers (standard from the Nature DQN paper).
+"""
+Atari preprocessing pipeline used by the original Nature DQN
+(Mnih et al., Nature 2015).
 
-Differently to the other env. for Pong we are required to develop a new personalize env.
+Unlike CartPole and Acrobot, Atari environments require additional
+preprocessing before observations can be fed to a convolutional neural
+network (CNN). Raw Atari observations are large RGB images that contain
+more information than necessary for learning and are expensive to process.
 
-Origin: ADAPTED from Tutorial_Gymnasium.json (professor's tutorial showing
-how to create Atari envs with Gymnasium). The wrappers themselves are
-Gymnasium built-in (not SB3), so they are allowed by the assignment.
+This environment reproduces the standard preprocessing pipeline proposed
+in the original DQN paper using Gymnasium's official wrappers.
 
-Pipeline (Mnih et al. 2015, §Methods):
-  1. NoopReset — random no-ops at episode start (up to 30).
-     Prevents the agent from memorizing fixed starting conditions.
-  2. Frame-skip 4 — repeat each action for 4 frames, max over last 2.
-     Reduces computation 4×. Max-over-2 handles Atari sprite flickering.
-  3. Grayscale + resize to 84×84.
-     Color is irrelevant for most games; 84×84 is the paper standard.
-  4. Stack 4 consecutive frames → observation shape (84, 84, 4).
-     A single frame is ambiguous about direction of motion (e.g., which
-     way is the ball moving?). 4 frames let the network infer velocity.
+Origin:
+    Adapted from the professor's Gymnasium tutorial. Only built-in
+    Gymnasium wrappers are used (no Stable-Baselines3 wrappers),
+    therefore the implementation fully complies with the assignment.
 
-Note: scale_obs=False keeps frames as uint8 (0-255) instead of float32 (0-1).
-This saves ~4× memory in the replay buffer. Normalization happens at training
-time in dqn.py (_obs_to_tensor / _batch_to_tensor).
+Pipeline
+--------
+1. NoopReset (up to 30 random NOOP actions)
+   At the beginning of every episode, the environment performs a random
+   number of "do nothing" actions. This prevents every game from starting
+   from exactly the same situation, reducing overfitting to a fixed
+   opening sequence.
+
+2. Frame Skip = 4
+   The agent selects one action, but that action is repeated for the next
+   four Atari frames. Consequently, the agent makes one decision every
+   four game frames instead of every frame, reducing computation by
+   approximately 4×.
+
+   During these four frames the game evolves normally (the ball and the
+   paddles continue moving); only the selected action remains unchanged.
+
+   AtariPreprocessing also computes the pixel-wise maximum over the last
+   two frames. This compensates for Atari rendering artefacts where some
+   objects (such as the Pong ball) may temporarily disappear on
+   alternating frames ("sprite flickering").
+
+3. Grayscale + Resize (84×84)
+   RGB images are converted to grayscale because colour carries almost no
+   useful information for Pong. Each frame is then resized to 84×84
+   pixels, matching the input resolution used by the original Nature DQN.
+
+4. Frame Stack (4 observations)
+   A single image tells the agent where the ball currently is, but not
+   where it is moving. Therefore, the four most recent observations are
+   stacked together so the CNN can infer motion (direction and approximate
+   velocity) from changes across time.
+
+Memory optimization
+-------------------
+scale_obs=False keeps observations as uint8 values in [0,255] instead of
+float32 values in [0,1]. This reduces replay-buffer memory by about 4×.
+Normalization is performed only immediately before observations are fed
+to the neural network (see dqn.py).
 """
 
 import gymnasium as gym
 import ale_py
 
-# Register the ALE/* environments with Gymnasium. Modern ale-py (>=0.10) no
-# longer auto-registers on import of gymnasium, so this is required or
-# gym.make("ALE/Pong-v5") raises NamespaceNotFound.
+# Register all Atari (ALE/*) environments with Gymnasium.
+# Recent versions of ale-py no longer register Atari environments
+# automatically, therefore without this call
+# gym.make("ALE/Pong-v5") would raise NamespaceNotFound.
 gym.register_envs(ale_py)
 
 
 def make_atari_env(env_name="ALE/Pong-v5", render_mode=None):
-    """Create an Atari env with standard DQN preprocessing.
-
-    Final observation shape is (4, 84, 84): 4 stacked grayscale frames,
-    channel-first (PyTorch NCHW convention for the Nature CNN).
     """
-    # frameskip=1 disables the -v5 env's built-in frame-skip so that
-    # AtariPreprocessing is the single source of the 4-frame skip (otherwise the
-    # two would compound into a 16-frame skip).
-    env = gym.make(env_name, render_mode=render_mode, frameskip=1)
-    # AtariPreprocessing applies the standard preprocessing from Mnih et al. (2015):
+    Create a Pong environment with the standard Nature DQN preprocessing.
+
+    Final observation
+    -----------------
+    Shape:
+        (4, 84, 84)
+
+    Meaning:
+        - 4 recent grayscale observations;
+        - each observation is an 84×84 image;
+        - channel-first layout (PyTorch convention).
+
+    The stacked observations provide temporal information, allowing the
+    CNN to estimate the direction and approximate velocity of the ball,
+    which cannot be inferred from a single image.
+    """
+
+    # Disable the environment's built-in frame skipping.
+    # We want AtariPreprocessing to be the only component responsible for
+    # frame skipping. Otherwise both mechanisms would be applied
+    # simultaneously (e.g. 4 × 4 = 16 real frames for every chosen action).
+    env = gym.make(
+        env_name,
+        render_mode=render_mode,
+        frameskip=1,
+    )
+
+    # Apply the standard preprocessing pipeline from the Nature DQN paper.
     env = gym.wrappers.AtariPreprocessing(
         env,
-        noop_max=30,           # random 1-30 no-op actions at episode start (randomize initial state)
-        frame_skip=4,          # repeat each action for 4 frames (4× speedup); max over last 2 frames
-        screen_size=84,        # resize to 84×84 pixels (reduces computation, matches paper)
-        terminal_on_life_loss=False,  # don't end episode on life loss (full-game episodes)
-        grayscale_obs=True,    # convert RGB → grayscale (color is irrelevant for gameplay)
-        scale_obs=False,       # keep uint8 [0-255] to save ~4× memory in replay buffer
+
+        # Perform between 1 and 30 random "do nothing" (NOOP) actions at
+        # the beginning of each episode. This randomizes the initial state
+        # and prevents the agent from memorizing a fixed opening sequence.
+        noop_max=30,
+
+        # Repeat every chosen action for four consecutive Atari frames.
+        # The game keeps evolving normally during these frames while the
+        # selected action remains unchanged, reducing computation by about
+        # 4×. AtariPreprocessing also returns the pixel-wise maximum over
+        # the last two frames to compensate for Atari sprite flickering.
+        frame_skip=4,
+
+        # Resize every frame to 84×84 pixels, matching the standard input
+        # resolution used by the original DQN architecture.
+        screen_size=84,
+
+        # Do not terminate the episode when a life (or point) is lost.
+        # Episodes correspond to complete games rather than intermediate
+        # events.
+        terminal_on_life_loss=False,
+
+        # Convert RGB images to grayscale. Colour is unnecessary for Pong
+        # and removing it reduces the amount of information processed by
+        # the CNN.
+        grayscale_obs=True,
+
+        # Keep observations as uint8 values in [0,255] instead of
+        # converting them immediately to float32 in [0,1]. This reduces
+        # replay-buffer memory usage by approximately 4×. Normalization is
+        # performed only when observations are converted into tensors for
+        # the neural network.
+        scale_obs=False,
     )
-    # Stack 4 consecutive frames to give the network temporal information (e.g.
-    # ball direction in Pong). FrameStack was renamed to FrameStackObservation
-    # in Gymnasium 1.x.
-    env = gym.wrappers.FrameStackObservation(env, stack_size=4)
+
+    # Store the four most recent observations.
+    #
+    # A single image provides only the current ball position, making its
+    # direction of motion ambiguous. By stacking four consecutive
+    # observations, the CNN can infer both direction and approximate
+    # velocity from how the ball position changes over time.
+    #
+    # Final observation shape:
+    #     (4, 84, 84)
+    #
+    # where:
+    #     axis 0 -> time (oldest → newest observation)
+    #     axis 1 -> image height
+    #     axis 2 -> image width
+    env = gym.wrappers.FrameStackObservation(
+        env,
+        stack_size=4,
+    )
+
     return env

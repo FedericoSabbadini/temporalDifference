@@ -41,6 +41,7 @@ ACROBOT = {
     # Reward: -1 every step → the agent is penalized until it reaches the goal
     "env_name": "Acrobot-v1",
     # Obs (6D continuous): [cos(θ1), sin(θ1), cos(θ2), sin(θ2), dθ1, dθ2]
+    # 1 is the angle of the first link relative to the vertical, 2 is the angle of the second link relative to the first link
     # (θ1, θ2 = the two joint angles; dθ = their angular velocities).
     # 6 bins/dim → 6^6 = 46,656 discrete states (curse of dimensionality).
     "n_bins": [6, 6, 6, 6, 6, 6], # 6 bins for each of 6 dimension
@@ -57,6 +58,9 @@ PONG = {
     "env_name": "ALE/Pong-v5",
     # No discretization needed — DQN uses the raw pixel observations
     # It makes no sense to discretize a 210x160x3 image into a Q-table, so we leave this empty.
+    # We should have a number of states of the order of 210*160*3 = 100,800, which is huge and not feasible for a tabular method.
+    # Why can't we aggregate by pixel intensity? Because the agent needs to know the position of the ball and paddle,
+    #  which is lost if we aggregate.
 }
 
 # --- Common experiment settings ---

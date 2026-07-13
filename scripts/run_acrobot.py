@@ -186,6 +186,8 @@ def exp_prediction():
     # observation encodes angles as [cos θ, sin θ, ...]: cos θ and sin θ cannot
     # both be ~0, so the all-centre bin is never visited and V stays 0.
     _e = make_acrobot(); anchor, _ = _e.reset(seed=0); _e.close()
+    # achor is a tuple of 6 integers, one per dimension, e.g. (3, 3, 3, 3, 3, 3), retrieved from the discretized reset state.
+    # Instead of using a geometric centre bin (which is unreachable), we use the discretized reset state as the reference state for value estimation.
 
     # MC prediction: higher variance on Acrobot because episodes are up to 500 steps long
     # → the return G = R1 + γR2 + ... + γ^499 R500 depends on 500 random transitions

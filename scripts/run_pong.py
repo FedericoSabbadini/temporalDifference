@@ -100,7 +100,7 @@ def run_config(label, seeds=SEEDS, **dqn_kwargs):
     # (the step budget is fixed at TOTAL_STEPS, but episode lengths vary)
     max_len = max(len(r) for r in all_returns)
     # np.nan for missing values → nanmean/nanstd in plotting will ignore them
-    padded = np.full((len(seeds), max_len), np.nan)
+    padded = np.full((len(seeds), max_len), np.nan) # it will full a matrix of shape (num_seeds, max_len) with NaN values
     for i, r in enumerate(all_returns):
         padded[i, :len(r)] = r  # fill in actual data, leave rest as NaN
 
@@ -140,7 +140,6 @@ def random_baseline(seeds=SEEDS, n_episodes=50):
         all_returns.append(ep_returns)
         env.close()
 
-    # Expected: ≈ -21 (random agent loses almost every point in a game to 21)
     mean_ret = np.mean(all_returns)
     print(f"  Random policy mean return: {mean_ret:.1f}")
     return mean_ret
