@@ -104,41 +104,54 @@ def table_pong(npz_path):
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    tables = {
-        "cartpole_control.tex": table_control(
-            "results/cartpole/control_comparison.npz", "CartPole",
-            "CartPole, controllo: Q-Learning vs SARSA a parit\\`a di iperparametri "
-            "($\\alpha=0.1$, $\\gamma=0.99$, $\\varepsilon=0.1$), media su 3 seed. "
-            "Il return massimo dell'ambiente \\`e 500; entrambe le curve sono ancora "
-            "in salita a fine budget.",
-            "tab:cartpole-control"),
-        "acrobot_control.tex": table_control(
-            "results/acrobot/control_comparison.npz", "Acrobot",
-            "Acrobot, controllo: Q-Learning vs SARSA, media su 3 seed. "
-            "Policy casuale $\\approx -500$; un buon swing-up raggiunge "
-            "$\\approx -100$.",
-            "tab:acrobot-control"),
-        "pong_ablation.tex": table_pong("results/pong/ablation.npz"),
+    # Each entry: output file -> (npz it needs, builder). A table is only written if its
+    # .npz exists, so this script still works while an experiment is being re-run and
+    # its results are deliberately absent.
+    jobs = {
+        "cartpole_control.tex": (
+            "results/cartpole/control_comparison.npz",
+            lambda p: table_control(
+                p, "CartPole",
+                "CartPole, controllo: Q-Learning vs SARSA a parit\\`a di iperparametri "
+                "($\\alpha=0.1$, $\\gamma=0.99$, $\\varepsilon=0.1$), media su 3 seed. "
+                "Il return massimo dell'ambiente \\`e 500; entrambe le curve sono ancora "
+                "in salita a fine budget.",
+                "tab:cartpole-control")),
+        "acrobot_control.tex": (
+            "results/acrobot/control_comparison.npz",
+            lambda p: table_control(
+                p, "Acrobot",
+                "Acrobot, controllo: Q-Learning vs SARSA, media su 3 seed. "
+                "Policy casuale $\\approx -500$; un buon swing-up raggiunge "
+                "$\\approx -100$.",
+                "tab:acrobot-control")),
+        "pong_ablation.tex": ("results/pong/ablation.npz", table_pong),
     }
 
-    for fname, content in tables.items():
+    for fname, (npz_path, build) in jobs.items():
         path = os.path.join(OUT_DIR, fname)
+        if not os.path.exists(npz_path):
+            print(f"SKIP  {fname}: {npz_path} not found (experiment not run yet)")
+            continue
         with open(path, "w") as f:
-            f.write(content)
+            f.write(build(npz_path))
         print(f"Wrote {path}")
 
-    # Also print a plain-text summary for quick inspection / the report text
     print("\n=== Plain-text summary (for reference) ===")
     for npz, label in [("results/cartpole/control_comparison.npz", "CartPole"),
                        ("results/acrobot/control_comparison.npz", "Acrobot")]:
+        if not os.path.exists(npz):
+            continue
         d = np.load(npz, allow_pickle=True)
         for key in ("ql", "sarsa"):
             m, s, c = _final_perf(d[key])
             print(f"{label:9s} {key:6s}: final {m:7.1f} +/- {s:4.1f}  ({c[0]} ep)")
-    d = np.load("results/pong/ablation.npz", allow_pickle=True)
-    for key in ("full", "double", "no_target", "no_replay", "no_both"):
-        m, s, c = _final_perf(d[key])
-        print(f"Pong      {key:10s}: final {m:7.1f} +/- {s:4.1f}  ({int(np.mean(c))} ep)")
+
+    if os.path.exists("results/pong/ablation.npz"):
+        d = np.load("results/pong/ablation.npz", allow_pickle=True)
+        for key in ("full", "double", "no_target", "no_replay", "no_both"):
+            m, s, c = _final_perf(d[key])
+            print(f"Pong      {key:10s}: final {m:7.1f} +/- {s:4.1f}  ({int(np.mean(c))} ep)")
 
 
 if __name__ == "__main__":
