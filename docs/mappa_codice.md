@@ -48,8 +48,7 @@ Tutti prendono l'`env` e restituiscono tuple con `episode_returns` all'**indice 
 
 ### `algorithms/deep/` - il DQN
 - `networks.py`
-  - `class MLP(nn.Module)` - rete per osservazioni-vettore (debug su CartPole).
-  - `class NatureCNN(nn.Module)` - CNN del paper Nature per Atari; `forward` - 
+  - `class NatureCNN(nn.Module)` - CNN del paper Nature per Atari; `forward` restituisce
     Q per tutte le azioni.
 - `replay_buffer.py`
   - `class ReplayBuffer` - `push(s,a,r,s',done)`, `sample(batch_size) - tuple di

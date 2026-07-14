@@ -89,10 +89,16 @@ run_acrobot.py
 │   Q-Learning con ε ∈ [0.05, 0.1, 0.2, 0.4] - sensitivity_epsilon.png
 │   Mostra quanto l'esplorazione impatta su Acrobot
 │
-└── exp_prediction()
-    1. Allena Q-Learning - greedy policy
-    2. Valuta con MC e TD(0) - prediction_return.png (return, identico) +
-       prediction_value.png (stima V, il confronto vero)
+├── exp_prediction()
+│   1. Allena Q-Learning - greedy policy
+│   2. Valuta con MC e TD(0) - prediction_return.png (return, identico) +
+│      prediction_value.png (stima V, il confronto vero)
+│
+└── exp_epsilon_annealing()
+    ε costante = 0.1 vs ε annealing (1.0 to 0.01) - epsilon_annealing.png
+    Verifica se l'annealing (esplora presto, sfrutta dopo) batte il miglior
+    ε costante. Acrobot è l'ambiente dove l'annealing è motivato dal reward
+    sparso (Pong lo ha già; CartPole non ne ha bisogno).
 ```
 
 ## Scelte implementative

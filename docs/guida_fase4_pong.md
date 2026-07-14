@@ -96,7 +96,7 @@ preprocessing standard:
 
 | File | Ruolo |
 |---|---|
-| `rl_lab/algorithms/deep/networks.py` | `NatureCNN` (architettura convoluzionale) e `MLP` (per debug su CartPole) |
+| `rl_lab/algorithms/deep/networks.py` | `NatureCNN` (architettura convoluzionale) |
 | `rl_lab/algorithms/deep/replay_buffer.py` | Buffer circolare con campionamento uniforme |
 | `rl_lab/algorithms/deep/dqn.py` | Training loop completo: ε-decay, update, target sync, ablation flags |
 | `rl_lab/envs/atari_wrappers.py` | Preprocessing Atari (grayscale, resize, frame stack) |
@@ -189,10 +189,6 @@ while step < total_steps:
 - **Hard update ogni 1000 step** (non soft/Polyak update): il paper originale
   fa hard update ogni 10k step. Qui 1000 è proporzionale ai 200k step totali.
 
-- **NatureCNN automatica vs MLP**: `train_dqn` sceglie la rete in base alla
-  forma dell'osservazione. Se `obs.ndim == 1` - MLP (per debug su CartPole).
-  Se `obs.ndim >= 3` - NatureCNN (per Atari).
-
 - **senza replay: batch_size=1 equivalente**: quando `use_replay=False`,
   il buffer ha capacità batch_size e si "campiona" la transizione appena inserita.
   È equivalente a fare online learning (un update per transizione).
@@ -202,7 +198,6 @@ while step < total_steps:
 | Componente | Origine |
 |---|---|
 | `networks.py` - `NatureCNN` | **Nuovo**, ma l'architettura replica il paper (Mnih et al. 2015, Table 1). I numeri (32@8×8/4, 64@4×4/2, 64@3×3/1, FC 512) sono esattamente quelli del paper. |
-| `networks.py` - `MLP` | **Nuovo.** Rete semplice per debug su CartPole prima di passare ad Atari. |
 | `replay_buffer.py` | **Nuovo.** Implementazione minimale con `deque`. Il concetto è dal paper; lo stile (store uint8, sample con numpy) è standard. |
 | `dqn.py` - `train_dqn` | **Nuovo.** È la parte più complessa e completamente originale del progetto. Il loop è scritto da zero seguendo il paper. |
 | `dqn.py` - Double DQN | **Nuovo.** ~3 righe di codice aggiuntive: `best_actions = online_net(next_states).argmax()`, poi `target_net.gather(best_actions)`. |
@@ -302,10 +297,12 @@ Il DQN è la parte dove i bug sono più insidiosi (non "crashano", semplicemente
 | Out-of-memory (RAM) | Buffer troppo grande o frame in float | `replay_buffer.py`: frame in `uint8`; `buffer_capacity` |
 | "No replay" impara comunque bene | Il buffer di dimensione `batch_size` è ancora un mini-batch: è un'approssimazione dell'online, non online puro | `dqn.py` (`use_replay=False`) - limite noto, dichiarato |
 
-**Come si debugga il DQN**: prima si valida su **CartPole** con la `MLP` (veloce,
-poche righe): se lì non impara, il bug è nel loop, non in Atari. Solo dopo si
-passa alla CNN su Pong. Questo è il motivo per cui esiste la `MLP` in
-`networks.py`.
+**Come si debugga il DQN**: i bug del loop non fanno crashare, semplicemente
+impediscono l'apprendimento. Conviene controllare, nell'ordine: che la loss
+scenda dopo `learning_starts`, che le shape dei batch siano `(B,4,84,84)`, e che
+il return medio superi lentamente il baseline casuale (≈ −20.4). Se serve un
+riferimento esterno, si può confrontare con la baseline SB3 consentita dalla
+consegna (vedi README).
 
 ## Limiti e semplificazioni
 

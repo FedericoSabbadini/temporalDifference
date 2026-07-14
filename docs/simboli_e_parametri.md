@@ -107,7 +107,7 @@ alla CNN (vedi guida Fase 4, sezione Debugging).
 | Simbolo | Valore | Dove |
 |---|---|---|
 | `SEEDS` | `[42, 123, 456]` | `configs.py` - i 3 seed di ogni esperimento |
-| finestra smoothing | `window=20` (tabular), `10` (Pong), `1` (value plot) | `plotting.py` / script |
+| finestra smoothing | `window=40` (tabular), `10` (Pong), `1` (value plot) | `plotting.py` / script |
 | baseline random Pong | ≈ `-20.4` | `run_pong.py` (`random_baseline`) |
 
 ---

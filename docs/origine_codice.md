@@ -43,7 +43,6 @@ Ogni modulo del progetto è classificato in base alla sua provenienza.
 | File | Classificazione | Fonte | Note |
 |---|---|---|---|
 | `networks.py` - `NatureCNN` | **Nuovo / Standard** | Mnih et al. 2015, Table 1 | Architettura replicata dal paper. I numeri (32@8×8/4, 64@4×4/2, 64@3×3/1, FC 512) sono esatti. Implementazione in PyTorch è originale. |
-| `networks.py` - `MLP` | **Nuovo** | - | Rete minimale per debug DQN su CartPole prima di passare ad Atari. Non ha equivalente nel corso. |
 | `replay_buffer.py` | **Nuovo** | Mnih et al. 2015, §Methods | Implementazione minimale con `collections.deque`. Il concetto è dal paper; il codice è scritto da zero. |
 | `dqn.py` | **Nuovo** | Mnih et al. 2015 | Training loop scritto interamente da zero. È la parte più complessa e originale del progetto. Include ablation flags e Double DQN. Il corso non forniva codice DQN da zero (solo SB3). |
 

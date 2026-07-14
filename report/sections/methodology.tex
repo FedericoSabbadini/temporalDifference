@@ -56,9 +56,8 @@ una policy casuale.
 \subsection{Architettura del DQN}
 La rete \`e la Nature-CNN~\cite{mnih2015}: tre layer convoluzionali
 ($8{\times}8$/4, $4{\times}4$/2, $3{\times}3$/1) seguiti da due layer fully
-connected ($3136{\to}512{\to}n_{\text{azioni}}$). Per il debug su CartPole
-esiste anche una MLP a due hidden layer. La rete restituisce $Q(s,\cdot)$ per
-tutte le azioni in un solo forward pass.
+connected ($3136{\to}512{\to}n_{\text{azioni}}$). La rete restituisce
+$Q(s,\cdot)$ per tutte le azioni in un solo forward pass.
 
 \subsection{Training vs evaluation}
 Per gli algoritmi tabellari la ``curva di apprendimento'' \`e il return per

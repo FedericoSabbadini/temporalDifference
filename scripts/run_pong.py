@@ -199,7 +199,7 @@ def main():
 
     # --- Generate ablation plots ---
     # Each plot isolates one factor to show its impact on learning.
-    # window=10 instead of default 20 because DQN produces fewer episodes.
+    # window=10 instead of the default 40 because DQN produces fewer episodes.
 
     # Ablation 1: experience replay ON vs OFF (with target network in both)
     # Expected: without replay, learning is slower/noisier due to correlated updates

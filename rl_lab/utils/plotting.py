@@ -36,7 +36,7 @@ def moving_average(x, window=20):
     return np.convolve(x, np.ones(window) / window, mode="valid")
 
 
-def plot_learning_curves(results_dict, title, save_path=None, window=20,
+def plot_learning_curves(results_dict, title, save_path=None, window=40,
                          ylabel="Return"):
     """Plot learning curves for multiple algorithms (same hyperparameter).
 
@@ -83,7 +83,7 @@ def plot_learning_curves(results_dict, title, save_path=None, window=20,
 
 
 def plot_sensitivity(results_by_param, param_name, algo_name, title=None,
-                     save_path=None, window=20):
+                     save_path=None, window=40):
     """Plot learning curves (1 algorithm) for different hyperparameter values.
 
     Used for the "sensitivity analysis" required by the assignment:

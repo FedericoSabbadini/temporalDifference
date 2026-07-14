@@ -108,9 +108,15 @@ run_cartpole.py
 │ - prediction_<policy>_return.png (return, identico) +
 │     prediction_<policy>_value.png (stima V, il confronto vero)
 │
-└── exp_failure_case()
-    α alto [0.1, 0.5, 1.0] - failure_high_alpha.png
-    ε nullo [0.0, 0.01, 0.1] - failure_no_exploration.png
+├── exp_failure_case()
+│   α alto [0.1, 0.5, 1.0]  - failure_high_alpha.png
+│   ε nullo [0.0, 0.01, 0.1] - failure_no_exploration.png
+│   γ nullo [0.0, 0.9, 0.99] - failure_no_discount.png (miopia)
+│
+└── exp_epsilon_annealing()  (control)
+    ε costante = 0.1 vs ε annealing (1.0 to 0.01) - epsilon_annealing.png
+    Verifica di controllo: su CartPole (reward denso) l'annealing NON dovrebbe
+    dare vantaggi, al contrario di Acrobot. Rende esplicito il contrasto.
 ```
 
 ## Scelte implementative
@@ -162,7 +168,7 @@ run_cartpole.py
 ## Come leggere i risultati
 
 ### Learning curves (control_comparison.png)
-- **Asse X**: episodio (smoothed con moving average, window=20)
+- **Asse X**: episodio (smoothed con moving average, window=40)
 - **Asse Y**: return totale dell'episodio (somma dei reward)
 - **Linea continua**: media su 3 seed
 - **Banda colorata**: ±1 deviazione standard

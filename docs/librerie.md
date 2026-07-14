@@ -25,7 +25,6 @@ Fornisce CartPole, Acrobot e (con `ale-py`) gli Atari.
 | `env.reset(seed=…)` - `(obs, info)` | stato iniziale (riproducibile) | tutti gli algoritmi, `runner.py` |
 | `env.step(a)` - `(obs, reward, terminated, truncated, info)` | esegue un'azione | tutti gli algoritmi |
 | `env.action_space.n` | numero di azioni | `q_learning`, `dqn`, … |
-| `env.observation_space.shape` | forma dell'osservazione (sceglie MLP vs CNN) | `dqn.py` |
 | `gym.ObservationWrapper` | classe base per trasformare le osservazioni | `envs/discretizer.py` |
 | `gym.wrappers.AtariPreprocessing` | grayscale, resize 84×84, frame-skip | `envs/atari_wrappers.py` |
 | `gym.wrappers.FrameStackObservation` | impila 4 frame (in Gymnasium 1.x; era `FrameStack`) | `envs/atari_wrappers.py` |

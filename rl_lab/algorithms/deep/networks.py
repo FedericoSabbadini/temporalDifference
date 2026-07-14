@@ -1,45 +1,20 @@
-"""Q-network architectures for DQN.
+"""Q-network architecture for DQN.
 
-Origin: NEW (Standard). Architectures replicate the Nature DQN paper
-(Mnih et al. 2015, Table 1). The exact layer sizes are from the paper.
-PyTorch implementation is original.
-
-MLP: for environments with small vector observations (CartPole debug).
-     Not in the paper - used to validate the DQN training loop on a
-     simple env before moving to the expensive Atari CNN.
+Origin: NEW (Standard). Replicates the Nature DQN paper (Mnih et al. 2015,
+Table 1). The exact layer sizes are from the paper; PyTorch implementation is
+original.
 
 NatureCNN: the convolutional network from Mnih et al. (2015) for Atari.
      Input: (batch, 4, 84, 84) - 4 stacked grayscale frames.
      Output: Q(s, a) for each of the n_actions.
 
-Both networks output Q-values for ALL actions simultaneously.
+The network outputs Q-values for ALL actions simultaneously.
 To select an action: action = argmax Q(s, :).
 This is more efficient than computing Q(s,a) for each action separately.
 """
 
 import torch.nn as nn
 import torch.nn.functional as F
-
-
-class MLP(nn.Module):
-    """Two-hidden-layer MLP for vector-observation envs (CartPole debug).
-
-    Architecture: obs_dim to 128 to 128 to n_actions
-    All layers use ReLU activation except the output (raw Q-values).
-    """
-
-    def __init__(self, obs_dim, n_actions, hidden=128):
-        super().__init__()
-        self.fc1 = nn.Linear(obs_dim, hidden)   # input to hidden (e.g. 4 to 128 for CartPole)
-        self.fc2 = nn.Linear(hidden, hidden)     # hidden to hidden (128 to 128)
-        self.out = nn.Linear(hidden, n_actions)  # hidden to Q-values (128 to 2 for CartPole)
-
-    def forward(self, x):
-        # ReLU activation: max(0, x) - introduces nonlinearity between layers
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        # Output layer has NO activation - Q-values can be any real number (positive or negative)
-        return self.out(x)
 
 
 class NatureCNN(nn.Module):
