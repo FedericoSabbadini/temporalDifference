@@ -4,11 +4,11 @@ Origin: ADAPTED from the course Esercitazione_RL / control.py.
 Same update rule and SARSA pattern (choose A' before update).
 
 Update rule:
-    Q(S,A) ← Q(S,A) + α [ R + γ Q(S',A') - Q(S,A) ]
+    Q(S,A) += α [ R + γ Q(S',A') - Q(S,A) ]
 
 Key difference from Q-Learning: the target uses the ACTUAL next action A'
 chosen by the ε-greedy policy, not the greedy max. This makes SARSA
-ON-POLICY — it evaluates and improves the policy it is currently following.
+ON-POLICY - it evaluates and improves the policy it is currently following.
 
 Consequence: SARSA learns a "safer" policy that accounts for its own
 exploration noise. Classic example (S&B §6.5, Fig. 6.5): on CliffWalking,
@@ -17,7 +17,7 @@ and fall off), while Q-Learning walks right along it (because the target
 assumes greedy behavior, ignoring the exploration risk).
 
 The name SARSA comes from the quintuple used in each update:
-(S, A, R, S', A') → State, Action, Reward, next State, next Action.
+(S, A, R, S', A') - State, Action, Reward, next State, next Action.
 """
 
 import numpy as np
@@ -40,7 +40,7 @@ def sarsa(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
 
     for ep in range(episodes):
         state, _ = env.reset()
-        # SARSA needs the first action BEFORE entering the loop —
+        # SARSA needs the first action BEFORE entering the loop - 
         # unlike Q-Learning, which only needs the action inside the loop.
         # This is because SARSA uses the (S, A, R, S', A') quintuple.
         action = epsilon_greedy_action(Q, state, epsilon, n_actions)
@@ -52,14 +52,14 @@ def sarsa(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
             done = terminated or truncated
             total_reward += reward
 
-            # Choose next action A' BEFORE updating — this is the key SARSA pattern.
+            # Choose next action A' BEFORE updating - this is the key SARSA pattern.
             # A' is chosen by the SAME ε-greedy policy the agent is following.
             # The full quintuple (S, A, R, S', A') is now available for the update.
             next_action = epsilon_greedy_action(Q, next_state, epsilon,
                                                 n_actions)
 
             # === SARSA update (S&B §6.4, Eq. 6.7) ===
-            # target = R + γ Q(S', A') — uses the ACTUAL next action A' (not max)
+            # target = R + γ Q(S', A') - uses the ACTUAL next action A' (not max)
             # This makes SARSA ON-POLICY: the target respects the exploration policy.
             td_target = reward + gamma * Q[next_state][next_action] * (not done)
             Q[state][action] += alpha * (td_target - Q[state][action])

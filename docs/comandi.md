@@ -1,4 +1,4 @@
-# Comandi e workflow — cheat sheet
+# Comandi e workflow - cheat sheet
 
 > Tutti i comandi che servono, dal setup al report, in un posto solo.
 > Regola generale: si lancia sempre con **`uv run`** (usa il `.venv` gestito da
@@ -6,22 +6,22 @@
 
 ---
 
-## ⚡ Cheat sheet (i comandi che userai davvero)
+## Cheat sheet (i comandi che userai davvero)
 
 ```bash
 # Setup una tantum
 uv sync                                        # installa tutte le dipendenze
 
 # Eseguire gli esperimenti (rigenerano results/ e figures/)
-uv run python scripts/run_cartpole.py          # Fase 2 — CartPole   (~15 min, CPU)
-uv run python scripts/run_acrobot.py           # Fase 3 — Acrobot    (~30 min, CPU)
-uv run python scripts/run_pong.py              # Fase 4 — Pong/DQN   (ore, GPU)
+uv run python scripts/run_cartpole.py          # Fase 2 - CartPole   (~15 min, CPU)
+uv run python scripts/run_acrobot.py           # Fase 3 - Acrobot    (~30 min, CPU)
+uv run python scripts/run_pong.py              # Fase 4 - Pong/DQN   (ore, GPU)
 
 # Rigenerare le tabelle del report dai dati salvati
-uv run python scripts/make_report_tables.py    # legge results/*.npz → report/tables/*.tex
+uv run python scripts/make_report_tables.py    # legge results/*.npz - report/tables/*.tex
 
 # Compilare il report
-cd report && latexmk -pdf main.tex             # → report/main.pdf
+cd report && latexmk -pdf main.tex             # - report/main.pdf
 
 # Verifica GPU (sulla macchina con RTX 5060)
 uv run python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
@@ -29,7 +29,7 @@ uv run python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_
 
 ---
 
-## 🔄 Workflow del progetto (la pipeline completa)
+## Workflow del progetto (la pipeline completa)
 
 Ogni figura e ogni tabella del report è **rigenerabile** da zero. Il flusso:
 
@@ -39,29 +39,29 @@ Ogni figura e ogni tabella del report è **rigenerabile** da zero. Il flusso:
      ▼
  scripts/run_<env>.py      (orchestratore dell'ambiente)
      │
-     ├─ make_env()  ──►  DiscretizedEnv / make_atari_env      (ambiente)
-     ├─ algoritmo   ──►  q_learning / sarsa / … / train_dqn   (apprendimento)
-     └─ run_multi_seed()   (ripete su 3 seed)  ──► set_seed()
+     ├─ make_env()  ── DiscretizedEnv / make_atari_env      (ambiente)
+     ├─ algoritmo   ── q_learning / sarsa / … / train_dqn   (apprendimento)
+     └─ run_multi_seed()   (ripete su 3 seed)  ──set_seed()
      │
      ▼
  results/<env>/*.npz        (array grezzi)  +  results/pong/*.pt (checkpoint)
      │
-     ├─────────────► utils/plotting.py ──► figures/<env>/*.png
+     ├─────────────utils/plotting.py ──figures/<env>/*.png
      │
-     └─► make_report_tables.py ──► report/tables/*.tex
+     └─make_report_tables.py ──report/tables/*.tex
                                         │
                                         ▼
-                         report/main.tex ──(latexmk)──► report/main.pdf
+                         report/main.tex ──(latexmk)──report/main.pdf
 ```
 
 **Principio chiave**: i dati grezzi (`results/`) sono la *fonte di verità*. Le
-figure e le tabelle si derivano da lì — non ci sono numeri scritti a mano.
+figure e le tabelle si derivano da lì - non ci sono numeri scritti a mano.
 
 ---
 
-## 📋 Comandi per fase
+## Comandi per fase
 
-### Fase 2 — CartPole
+### Fase 2 - CartPole
 ```bash
 uv run python scripts/run_cartpole.py
 ```
@@ -69,14 +69,14 @@ Produce: `figures/cartpole/` (control, 6 sensitivity, 2 failure, 4 prediction) e
 `results/cartpole/*.npz`. Esegue in ordine: `exp_control_comparison`,
 `exp_sensitivity`, `exp_prediction_comparison`, `exp_failure_case`.
 
-### Fase 3 — Acrobot
+### Fase 3 - Acrobot
 ```bash
 uv run python scripts/run_acrobot.py
 ```
 Produce: `figures/acrobot/` (control, bin_resolution, sensitivity_epsilon,
 prediction) e `results/acrobot/*.npz`.
 
-### Fase 4 — Pong / DQN
+### Fase 4 - Pong / DQN
 ```bash
 uv run python scripts/run_pong.py
 ```
@@ -86,7 +86,7 @@ il banner iniziale stampa il device in uso.
 
 ---
 
-## 🧩 Comandi utili di sviluppo/verifica
+## Comandi utili di sviluppo/verifica
 
 ```bash
 # Verifica che il package si importi (infrastruttura ok)
@@ -110,7 +110,7 @@ print('ultimi return:', [round(x) for x in r[-5:]])
 
 ---
 
-## ⏱️ Tempi e risorse (indicativi)
+## Tempi e risorse (indicativi)
 
 | Comando | Tempo | Risorsa |
 |---|---|---|
@@ -122,7 +122,7 @@ print('ultimi return:', [round(x) for x in r[-5:]])
 
 ---
 
-## 🔁 Riproducibilità
+## Riproducibilità
 
 - Ogni esperimento usa i seed `{42, 123, 456}` (in `configs.py`).
 - `set_seed` fissa numpy + torch (CPU e CUDA) prima di ogni run; l'env è seedato

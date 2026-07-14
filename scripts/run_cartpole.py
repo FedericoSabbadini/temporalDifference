@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CartPole experiments — Env 1 (common to all groups).
+"""CartPole experiments - Env 1 (common to all groups).
 
 Origin: NEW. Orchestrator that runs all required CartPole analyses.
 The experiment design follows the assignment requirements point by point.
@@ -39,7 +39,7 @@ FIG_DIR = "figures/cartpole"
 def make_cartpole():
     """Create a discretized CartPole environment."""
     env = gym.make(CARTPOLE["env_name"])  # continuous 4-D observation, 2 actions
-    # Wrap with discretizer: continuous obs → tuple of bin indices (hashable for Q-table)
+    # Wrap with discretizer: continuous obs - tuple of bin indices (hashable for Q-table)
     return DiscretizedEnv(env, CARTPOLE["n_bins"],
                           CARTPOLE["clip_low"], CARTPOLE["clip_high"])
 
@@ -53,7 +53,7 @@ def exp_control_comparison():
 
     Both are TD control algorithms that learn a policy from interaction.
     Q-Learning uses max (greedy target), SARSA uses the actual next action.
-    On CartPole the difference is subtle — no "cliff" to make it dramatic.
+    On CartPole the difference is subtle - no "cliff" to make it dramatic.
     """
     print("\n=== 1. Q-Learning vs SARSA ===")
     # Run each algorithm with the SAME hyperparameters for a fair comparison
@@ -66,7 +66,7 @@ def exp_control_comparison():
     # Plot both on the same axes for direct visual comparison
     plot_learning_curves(
         {"Q-Learning": ql_ret, "SARSA": sa_ret},
-        title="CartPole — Q-Learning vs SARSA",
+        title="CartPole - Q-Learning vs SARSA",
         save_path=f"{FIG_DIR}/control_comparison.png",
     )
     # Save raw data so plots can be regenerated without re-training
@@ -129,7 +129,7 @@ def exp_prediction_comparison():
 
     TWO views are produced:
     - Episode RETURN: shows how the evaluated policy performs. Note that MC and
-      TD(0) follow the SAME policy, so this curve is identical by construction —
+      TD(0) follow the SAME policy, so this curve is identical by construction - 
       it does NOT reveal the bias/variance difference between the estimators.
     - Value ESTIMATE V(reference state) over episodes: THIS is where MC and TD(0)
       differ. MC's estimate is noisy (unbiased, high variance); TD(0)'s is smooth
@@ -138,7 +138,7 @@ def exp_prediction_comparison():
     """
     print("\n=== 3. MC prediction vs TD(0) ===")
 
-    # Step 1: Train Q-Learning to get a good Q-table (control → learn a policy)
+    # Step 1: Train Q-Learning to get a good Q-table (control - learn a policy)
     set_seed(42)  # fixed seed for reproducibility of the learned policy
     env = make_cartpole()
     Q, _, _ = q_learning(env, episodes=5000, alpha=0.1, gamma=0.99,
@@ -147,11 +147,11 @@ def exp_prediction_comparison():
     print("  Learned Q-table, extracting greedy policy...")
 
     # Extract the greedy policy from the learned Q-table: π(s) = argmax_a Q(s,a)
-    # This is now a FIXED policy — MC and TD(0) will evaluate it without changing it
+    # This is now a FIXED policy - MC and TD(0) will evaluate it without changing it
     def learned_policy(state):
         return greedy_action(Q, state)
 
-    # Random policy for comparison — helps show that the learned policy is actually good
+    # Random policy for comparison - helps show that the learned policy is actually good
     n_act = 2  # CartPole has 2 actions (left, right)
     def random_policy(state):
         return np.random.randint(n_act)  # uniform random: each action with prob 0.5
@@ -175,21 +175,21 @@ def exp_prediction_comparison():
                                         policy_fn=policy_fn, episodes=3000,
                                         alpha=0.1, gamma=0.99, track_state=anchor)
 
-        # View 1: episode return (identical by construction — kept for honesty)
+        # View 1: episode return (identical by construction - kept for honesty)
         plot_learning_curves(
             {"MC Prediction": mc_ret, "TD(0) Prediction": td_ret},
-            title=f"CartPole — MC vs TD(0): episode return ({label} policy)",
+            title=f"CartPole - MC vs TD(0): episode return ({label} policy)",
             save_path=f"{FIG_DIR}/prediction_{label}_return.png",
             ylabel="Episode return (under evaluated policy)",
         )
 
-        # View 2: value estimate of the reference state — the meaningful one.
-        # value_history is result index [2]; stack across seeds → (n_seeds, episodes)
+        # View 2: value estimate of the reference state - the meaningful one.
+        # value_history is result index [2]; stack across seeds - (n_seeds, episodes)
         mc_vhist = np.array([r[2] for r in mc_res])
         td_vhist = np.array([r[2] for r in td_res])
         plot_learning_curves(
             {"MC estimate": mc_vhist, "TD(0) estimate": td_vhist},
-            title=f"CartPole — MC vs TD(0): value estimate V(s_ref) ({label} policy)",
+            title=f"CartPole - MC vs TD(0): value estimate V(s_ref) ({label} policy)",
             save_path=f"{FIG_DIR}/prediction_{label}_value.png",
             ylabel="V(reference state) estimate",
             window=1,  # no smoothing: we WANT to see MC's raw variance vs TD's
@@ -207,19 +207,19 @@ def exp_prediction_comparison():
 def exp_failure_case():
     """Demonstrate two common failure modes of tabular RL.
 
-    1. HIGH α (learning rate): update too aggressive → Q-values oscillate
+    1. HIGH α (learning rate): update too aggressive - Q-values oscillate
        without converging. This is the instability failure case.
        (S&B §6.7 discusses sensitivity to α)
 
     2. NO EXPLORATION (ε=0): the agent follows the greedy policy from the
-       start, never discovers better actions → convergence to suboptimal.
+       start, never discovers better actions - convergence to suboptimal.
        This is the exploration/exploitation dilemma (S&B §2.1).
     """
     print("\n=== 4. Failure case ===")
 
-    # Failure 1: high learning rate → instability
+    # Failure 1: high learning rate - instability
     # α=1.0 means Q(s,a) is fully replaced by the new target every step
-    # → Q-values oscillate wildly and never converge
+    # - Q-values oscillate wildly and never converge
     results = {}
     for alpha in [0.1, 0.5, 1.0]:
         ret, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
@@ -228,12 +228,12 @@ def exp_failure_case():
         results[alpha] = ret
     plot_sensitivity(
         results, "α", "Q-Learning",
-        title="CartPole — Failure case: high learning rate → instability",
+        title="CartPole - Failure case: high learning rate - instability",
         save_path=f"{FIG_DIR}/failure_high_alpha.png",
     )
 
-    # Failure 2: no exploration → poor convergence
-    # ε=0.0 means the agent NEVER explores → it gets stuck with whatever
+    # Failure 2: no exploration - poor convergence
+    # ε=0.0 means the agent NEVER explores - it gets stuck with whatever
     # actions it tried first, even if better actions exist (S&B §2.1)
     results2 = {}
     for eps in [0.0, 0.01, 0.1]:
@@ -243,7 +243,7 @@ def exp_failure_case():
         results2[eps] = ret
     plot_sensitivity(
         results2, "ε", "Q-Learning",
-        title="CartPole — Failure case: no exploration (ε=0)",
+        title="CartPole - Failure case: no exploration (ε=0)",
         save_path=f"{FIG_DIR}/failure_no_exploration.png",
     )
 

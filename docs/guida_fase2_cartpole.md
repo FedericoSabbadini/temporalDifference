@@ -1,22 +1,22 @@
-# Fase 2 — CartPole (Env 1, comune a tutti i gruppi)
+# Fase 2 - CartPole (Env 1, comune a tutti i gruppi)
 
-> ### 📖 Percorso di lettura
-> - **Prerequisiti**: [Fase 1](guida_fase1_introduzione.md) (discretizzazione, runner, plotting). Teoria: TD control, MC/TD prediction (S&B §5–6).
+> ### Percorso di lettura
+> - **Prerequisiti**: [Fase 1](guida_fase1_introduzione.md) (discretizzazione, runner, plotting). Teoria: TD control, MC/TD prediction (S&B §5-6).
 > - **Guida precedente**: [Fase 1](guida_fase1_introduzione.md). **Successiva**: [Fase 3](guida_fase3_acrobot.md).
 > - **Tempo stimato**: ~15 minuti (è la fase più densa).
 > - **Apri in parallelo**: `algorithms/tabular/q_learning.py`, `sarsa.py`, `mc_prediction.py`, `td0.py` (corti, ~70 righe: leggili tutti) e `scripts/run_cartpole.py`.
-> - **Requisito consegna coperto**: Env 1 — i 4 algoritmi da zero, learning curves, sensitivity (ε/α/γ), SARSA vs Q-Learning, MC vs TD(0), ≥1 failure case. È la fetta più grande del voto (10 pt implementazione + 9 pt analisi).
+> - **Requisito consegna coperto**: Env 1 - i 4 algoritmi da zero, learning curves, sensitivity (ε/α/γ), SARSA vs Q-Learning, MC vs TD(0), ≥1 failure case. È la fetta più grande del voto (10 pt implementazione + 9 pt analisi).
 
 ## Obiettivo della fase
 
 Implementare e confrontare i 4 algoritmi tabular RL richiesti dalla consegna
 su CartPole-v1, producendo tutte le analisi obbligatorie:
 
-1. **Learning curves** — reward vs episodi per ogni algoritmo
-2. **Confronto control** — SARSA vs Q-Learning (differenze empiriche e teoriche)
-3. **Confronto prediction** — Monte Carlo vs TD(0) (bias, varianza, stabilità)
-4. **Sensitivity** — impatto di ε, α, γ su Q-Learning e SARSA
-5. **Failure case** — almeno un caso di instabilità o mancata convergenza
+1. **Learning curves** - reward vs episodi per ogni algoritmo
+2. **Confronto control** - SARSA vs Q-Learning (differenze empiriche e teoriche)
+3. **Confronto prediction** - Monte Carlo vs TD(0) (bias, varianza, stabilità)
+4. **Sensitivity** - impatto di ε, α, γ su Q-Learning e SARSA
+5. **Failure case** - almeno un caso di instabilità o mancata convergenza
 
 Questa fase copre la parte più pesante del voto: 10 punti (implementazione) +
 9 punti (analisi sperimentale) passano in gran parte da qui.
@@ -25,7 +25,7 @@ Questa fase copre la parte più pesante del voto: 10 punti (implementazione) +
 
 ### Q-Learning vs SARSA (Sutton & Barto §6.5)
 
-Entrambi sono algoritmi di **TD control** — imparano una policy ottimale
+Entrambi sono algoritmi di **TD control** - imparano una policy ottimale
 interagendo con l'ambiente. La differenza è nel **target dell'update**:
 
 | | Q-Learning (off-policy) | SARSA (on-policy) |
@@ -42,9 +42,9 @@ SARSA impara un percorso più sicuro (perché sa che esplorerà con probabilità
 Su CartPole il divario è meno drammatico perché non ci sono "cliff" equivalenti,
 ma la differenza on-policy/off-policy è comunque visibile nella stabilità delle curve.
 
-### Monte Carlo vs TD(0) (Sutton & Barto §6.1–6.2)
+### Monte Carlo vs TD(0) (Sutton & Barto §6.1-6.2)
 
-Entrambi sono algoritmi di **prediction** — stimano V(s) per una **policy fissa**
+Entrambi sono algoritmi di **prediction** - stimano V(s) per una **policy fissa**
 (non imparano la policy, la ricevono come input).
 
 | | Monte Carlo | TD(0) |
@@ -64,11 +64,11 @@ Qui lo applichiamo a CartPole: valutiamo la policy appresa da Q-Learning con MC 
 La consegna dice esplicitamente: "Risultati negativi devono essere analizzati, non
 ignorati." Due failure case classici:
 
-1. **α troppo alto** → l'update è troppo aggressivo, i Q-values oscillano
+1. **α troppo alto** - l'update è troppo aggressivo, i Q-values oscillano
    senza convergere. Corrisponde al concetto di learning rate instability
    (Sutton & Barto §2.4 per il caso bandit, §6.7 per TD).
 
-2. **ε = 0** → nessuna exploration. L'agente segue la policy greedy dal primo
+2. **ε = 0** - nessuna exploration. L'agente segue la policy greedy dal primo
    episodio e non scopre stati migliori. Corrisponde al dilemma
    exploration/exploitation (Sutton & Barto §2.1).
 
@@ -89,40 +89,39 @@ run_cartpole.py
 │
 ├── exp_control_comparison()
 │   Q-Learning × 3 seed  ──┐
-│   SARSA × 3 seed  ───────┤→ plot: control_comparison.png
-│                           └→ salva: results/cartpole/control_comparison.npz
+│   SARSA × 3 seed  ───────┤ - plot: control_comparison.png
+│                           └ - salva: results/cartpole/control_comparison.npz
 │
 ├── exp_sensitivity()
 │   Per ogni algoritmo (Q-Learning, SARSA):
-│     ε sweep [0.01, 0.05, 0.1, 0.3]  → sensitivity_QLearning_epsilon.png
-│     α sweep [0.01, 0.05, 0.1, 0.5]  → sensitivity_QLearning_alpha.png
-│     γ sweep [0.9, 0.95, 0.99, 1.0]  → sensitivity_QLearning_gamma.png
+│     ε sweep [0.01, 0.05, 0.1, 0.3] - sensitivity_QLearning_epsilon.png
+│     α sweep [0.01, 0.05, 0.1, 0.5] - sensitivity_QLearning_alpha.png
+│     γ sweep [0.9, 0.95, 0.99, 1.0] - sensitivity_QLearning_gamma.png
 │     (stessa cosa per SARSA)
 │
 ├── exp_prediction_comparison()
-│   1. Allena Q-Learning → ottiene Q*
+│   1. Allena Q-Learning - ottiene Q*
 │   2. Estrae la greedy policy: π(s) = argmax_a Q(s,a)
 │   3. Valuta π con MC prediction × 3 seed
 │   4. Valuta π con TD(0) prediction × 3 seed
 │   5. Ripete con random policy per confronto
-│   → prediction_<policy>_return.png (return, identico) +
+│ - prediction_<policy>_return.png (return, identico) +
 │     prediction_<policy>_value.png (stima V, il confronto vero)
 │
 └── exp_failure_case()
-    α alto [0.1, 0.5, 1.0]     → failure_high_alpha.png
-    ε nullo [0.0, 0.01, 0.1]   → failure_no_exploration.png
+    α alto [0.1, 0.5, 1.0] - failure_high_alpha.png
+    ε nullo [0.0, 0.01, 0.1] - failure_no_exploration.png
 ```
 
 ## Scelte implementative
 
-- **5000 episodi** per il training tabular. Con 10 bin per dimensione → 10^4 =
-  10000 stati possibili. Nota: dopo il fix #2 (bin ristretti ai limiti di
-  terminazione) la risoluzione utile è più fine, quindi si visitano più stati e
+- **5000 episodi** per il training tabular. Con 10 bin per dimensione - 10^4 =
+  10000 stati possibili. Nota: con i bin ristretti ai limiti di terminazione la risoluzione utile è più fine, quindi si visitano più stati e
   5000 episodi **non bastano più a convergere del tutto**: le curve sono ancora
   in salita a fine training (vedi "Come leggere i risultati").
 
 - **α = 0.1, γ = 0.99, ε = 0.1** come default: valori standard dalla letteratura
-  e dalle esercitazioni del corso. Non c'è ottimizzazione degli iperparametri —
+  e dalle esercitazioni del corso. Non c'è ottimizzazione degli iperparametri - 
   il punto è confrontare gli algoritmi a parità di condizioni.
 
 - **3000 episodi per prediction**: meno del control perché la policy è fissa
@@ -143,7 +142,7 @@ run_cartpole.py
 |---|---|
 | `q_learning.py` | **Adattato** da `control.py` dell'Esercitazione_RL. Stessa logica, adattato a Gymnasium API (`terminated`, `truncated`, `env.reset()` con seed). |
 | `sarsa.py` | **Adattato** da `control.py`. Il pattern SARSA (scegliere A' prima dell'update) è lo stesso del corso. |
-| `mc_prediction.py` | **Adattato** da `prediction.py` / `random_walk_incomplete.json`. La struttura (generare episodio → calcolare return → aggiornare V) è la stessa. |
+| `mc_prediction.py` | **Adattato** da `prediction.py` / `random_walk_incomplete.json`. La struttura (generare episodio - calcolare return - aggiornare V) è la stessa. |
 | `td0.py` | **Adattato** da `prediction.py` / `random_walk_incomplete.json`. L'update step-by-step è identico al corso. |
 | `run_cartpole.py` | **Nuovo.** Orchestratore che combina tutti gli esperimenti. Il pattern di sweep su iperparametri è ispirato a `compare_epsilons` del corso. |
 
@@ -167,43 +166,42 @@ run_cartpole.py
 - **Asse Y**: return totale dell'episodio (somma dei reward)
 - **Linea continua**: media su 3 seed
 - **Banda colorata**: ±1 deviazione standard
-- **Osservato (dopo il fix #2)**: entrambi salgono ma sono **ancora in salita a
+- **Osservato**: entrambi salgono ma sono **ancora in salita a
   5000 episodi** (non un plateau). SARSA arriva a **~225**, Q-Learning a **~174**:
   con la griglia più fine SARSA supera Q-Learning (prima erano appaiati a ~184).
-  Q-Learning resta meno rumoroso (±39 vs ±61 di SARSA). Il fix #2 alza il tetto
-  ma rallenta la convergenza e aumenta la varianza — miglioramento a doppio taglio.
+  Q-Learning resta meno rumoroso (±39 vs ±61 di SARSA). Questa scelta alza il tetto ma rallenta la convergenza e aumenta la varianza - miglioramento a doppio taglio.
 
 ### Sensitivity plots
 - Ogni curva corrisponde a un valore diverso del parametro variato
-- **α**: α=0.01 troppo lento (~30), α=0.1 e α=0.5 arrivano entrambi a ~180–200
+- **α**: α=0.01 troppo lento (~30), α=0.1 e α=0.5 arrivano entrambi a ~180-200
   (α=0.5 più veloce con la griglia fine), α=0.05 intermedio
 - **ε**: valori troppo bassi rallentano, valori alti (0.3) aggiungono rumore alla policy
-- **γ** (osservato): valori **alti** sono i migliori — γ=1.0 raggiunge ~250 e
+- **γ** (osservato): valori **alti** sono i migliori - γ=1.0 raggiunge ~250 e
   γ=0.99 ~180, γ=0.9/0.95 si fermano a ~130. La temuta instabilità di γ=1.0 non si manifesta
   (episodi finiti). Atteso: in un compito di sopravvivenza conviene valorizzare il
   lungo termine.
 
-### Prediction plots — DUE viste (dopo il fix #1)
+### Prediction plots - DUE viste
 Ci sono due grafici, con nomi `prediction_<policy>_return.png` e
 `prediction_<policy>_value.png`.
 
 - **`_return.png` (return degli episodi)**: le curve di MC e TD(0) sono
   **identiche per costruzione** (≈162 sulla policy appresa), perché entrambi
   seguono la **stessa** policy fissa. Questo grafico da solo NON mostra la
-  differenza tra i due stimatori — è una lezione metodologica in sé.
+  differenza tra i due stimatori - è una lezione metodologica in sé.
 - **`_value.png` (stima V(stato di riferimento))**: QUI si vede la differenza.
   Si traccia V dello stato di reset discretizzato (sempre visitato) episodio per episodio:
   - **MC**: traiettoria **rumorosa** (non distorta, alta varianza)
   - **TD(0)**: traiettoria **liscia** (distorta all'inizio, bassa varianza)
   È il compromesso bias/varianza classico (Sutton & Barto §6.2).
-- **Perché il fix**: prima si tracciava solo il return (curve sovrapposte). Il
-  fix #1 aggiunge la vista sulle stime V(s), rendendo il confronto significativo.
+- **Perché due viste**: il return da solo produce curve sovrapposte; la vista
+  sulle stime V(s) rende il confronto significativo.
 - **Limite residuo**: è una misura *locale* (un solo stato). Una misura globale
   (RMSE di V su tutti gli stati) richiederebbe un V di riferimento non
   disponibile qui.
 
 ### Failure case plots
-- **High α**: con α=1.0 la curva resta bloccata in basso (~65) — il fallimento.
+- **High α**: con α=1.0 la curva resta bloccata in basso (~65) - il fallimento.
   Attenzione: qui i valori moderati NON falliscono, anzi α=0.5 (~160) è il
   migliore, sopra ad α=0.1 (~140). Il problema è specifico del valore estremo
   α=1.0, non genericamente dell'"α alto".
@@ -221,7 +219,7 @@ Segui un singolo episodio di **Q-Learning** come se fossi l'agente:
   ricevo `+1` e il nuovo stato.
 - **Cosa cambia dopo lo step**: aggiorno **una sola cella** della Q-table,
   `Q[s][a]`, spostandola di `α` verso `r + γ max Q[s']`. Nient'altro cambia.
-- **Cosa cambia dopo l'episodio**: nulla di speciale — la Q-table è già stata
+- **Cosa cambia dopo l'episodio**: nulla di speciale - la Q-table è già stata
   aggiornata step per step. Registro solo il return totale per la curva.
 - **Perché migliora**: all'inizio i valori sono casuali e l'agente cade subito.
   Ma ogni volta che sopravvive un po' di più, propaga "questo stato porta a
@@ -245,7 +243,7 @@ c'è nessun buffer, nessuna rete: tutta la conoscenza è in quel dizionario.
 | I valori esplodono / NaN | Manca il fattore `(not done)`: si continua a sommare futuro dopo il terminale | `q_learning.py`/`td0.py`: `... * (not done)` |
 | L'agente sceglie sempre l'azione 0 | Tie-breaking assente: con Q tutti a 0, `argmax` restituisce sempre il primo | `policies.py`: `greedy_action` usa `np.flatnonzero` + scelta casuale |
 | Prediction: return "troppo bello" | Stai valutando la policy sbagliata (es. greedy invece di quella richiesta) | `run_cartpole.py`: `policy_fn` passato a `mc_prediction`/`td0_prediction` |
-| Curve MC e TD(0) sovrapposte nel plot | **Non è un bug**: il *return* è identico per costruzione. La differenza è nella stima V (fix #1) | vedi "Prediction plots" sopra |
+| Curve MC e TD(0) sovrapposte nel plot | **Non è un bug**: il *return* è identico per costruzione. La differenza è nella stima V | vedi "Prediction plots" sopra |
 | Le due curve del value-plot partono uguali | Corretto: `V` inizializzata a 0; TD sale lentamente, MC salta subito | `td0.py`/`mc_prediction.py` |
 
 **Come si isola un problema**: riduci a `episodes=200` e un solo seed, poi

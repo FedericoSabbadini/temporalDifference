@@ -1,11 +1,11 @@
-# Fase 4 — Pong / DQN (Env 3, Deep RL)
+# Fase 4 - Pong / DQN (Env 3, Deep RL)
 
-> ### 📖 Percorso di lettura
+> ### Percorso di lettura
 > - **Prerequisiti**: [Fase 1](guida_fase1_introduzione.md) (infrastruttura/seeding). Utile la [Fase 2](guida_fase2_cartpole.md) per il target di Bellman. Teoria: Q-Learning, CNN (dal corso di Deep Learning), DQN (Mnih 2015).
-> - **Guida precedente**: [Fase 3](guida_fase3_acrobot.md) — ma questa fase è **quasi indipendente** dai tabular: puoi leggerla anche subito dopo la Fase 1. **Successiva**: nessuna (è l'ultima).
+> - **Guida precedente**: [Fase 3](guida_fase3_acrobot.md) - ma questa fase è **quasi indipendente** dai tabular: puoi leggerla anche subito dopo la Fase 1. **Successiva**: nessuna (è l'ultima).
 > - **Tempo stimato**: ~15 minuti.
-> - **Apri in parallelo** (in quest'ordine): `algorithms/deep/networks.py` → `replay_buffer.py` → `dqn.py` (il cuore) → `envs/atari_wrappers.py` → `scripts/run_pong.py`.
-> - **Requisito consegna coperto**: Env 3 — DQN **da zero** con experience replay + target network, ablation study (±replay, ±target), Double DQN (bonus). Vale 4 pt (Deep RL) + fino a 3 pt bonus.
+> - **Apri in parallelo** (in quest'ordine): `algorithms/deep/networks.py` - `replay_buffer.py` - `dqn.py` (il cuore) - `envs/atari_wrappers.py` - `scripts/run_pong.py`.
+> - **Requisito consegna coperto**: Env 3 - DQN **da zero** con experience replay + target network, ablation study (±replay, ±target), Double DQN (bonus). Vale 4 pt (Deep RL) + fino a 3 pt bonus.
 
 ## Obiettivo della fase
 
@@ -14,11 +14,11 @@ La consegna richiede:
 
 1. DQN con **Experience Replay** + **Target Network** (implementazione completa)
 2. **Ablation study**: confronto con/senza target network, con/senza replay
-3. **NON è richiesta alta performance** — basta mostrare apprendimento vs random
+3. **NON è richiesta alta performance** - basta mostrare apprendimento vs random
 4. **Bonus**: Double DQN (+3 punti, cap a 25)
 
 Questa fase vale 4 punti (Deep RL) + fino a 3 punti bonus. È la parte più
-tecnicamente nuova del progetto — il primo DQN scritto da zero.
+tecnicamente nuova del progetto - il primo DQN scritto da zero.
 
 ## Collegamento con la teoria
 
@@ -47,7 +47,7 @@ gli altri** (i pesi sono condivisi). Questo causa due problemi:
 
 **Problema**: le transizioni (S, A, R, S') arrivano in sequenza temporale e sono
 **correlate** (stati consecutivi sono simili). Il gradient descent assume
-campioni i.i.d. → correlazione temporale rende l'apprendimento instabile.
+campioni i.i.d. - correlazione temporale rende l'apprendimento instabile.
 
 **Soluzione**: salvare le transizioni in un **buffer** e campionare **mini-batch
 casuali** per il training. Questo rompe le correlazioni temporali e permette
@@ -59,14 +59,14 @@ in ordine casuale, invece di studiare solo l'ultima esperienza.
 #### 2. Target Network
 
 **Problema**: il target y = R + γ max_a' Q(S', a'; θ) usa la **stessa rete** che
-stiamo aggiornando. Se aggiorniamo θ, il target cambia → "moving target problem".
+stiamo aggiornando. Se aggiorniamo θ, il target cambia - "moving target problem".
 È come sparare a un bersaglio che si muove ad ogni colpo.
 
 **Soluzione**: usare una **copia separata** della rete (θ⁻) per calcolare il target.
-Questa copia viene aggiornata solo periodicamente (ogni N step si fa θ⁻ ← θ).
+Questa copia viene aggiornata solo periodicamente (ogni N step si fa θ⁻ - θ).
 Il target diventa stabile tra un aggiornamento e l'altro.
 
-### Double DQN (van Hasselt et al. 2016) — bonus
+### Double DQN (van Hasselt et al. 2016) - bonus
 
 Q-Learning standard soffre di **maximization bias** (Sutton & Barto §6.7):
 il `max` nel target tende a sovrastimare i Q-values perché usa la stessa rete
@@ -85,10 +85,10 @@ applicato con reti neurali.
 I frame raw di Pong (210×160×3, RGB) sono troppo grandi e ridondanti. Il
 preprocessing standard:
 
-1. **Grayscale** (3 canali → 1): colore irrilevante per Pong
+1. **Grayscale** (3 canali - 1): colore irrilevante per Pong
 2. **Resize 84×84**: riduce la dimensionalità
 3. **Frame skip 4**: ripete ogni azione per 4 frame (efficienza + velocità)
-4. **Stack 4 frame**: la rete vede 4 frame consecutivi → può percepire il **movimento**
+4. **Stack 4 frame**: la rete vede 4 frame consecutivi - può percepire il **movimento**
    della palla (un singolo frame è ambiguo sulla direzione)
 5. **Max over last 2 frames**: gestisce il flickering dei giochi Atari
 
@@ -108,32 +108,32 @@ preprocessing standard:
 run_pong.py
 │
 ├── random_baseline()
-│   50 episodi con azioni casuali → return medio (≈ -20.4)
+│   50 episodi con azioni casuali - return medio (≈ -20.4)
 │   Serve come riferimento: DQN deve fare meglio di questo
 │
 ├── run_config("Full DQN", use_target=True, use_replay=True)
 │   Per ogni seed:
-│     1. make_pong() → crea env con preprocessing
-│     2. train_dqn() → training loop (200k step)
-│        - Epsilon decay lineare: 1.0 → 0.02 in 100k step
+│     1. make_pong() - crea env con preprocessing
+│     2. train_dqn() - training loop (200k step)
+│        - Epsilon decay lineare: 1.0 - 0.02 in 100k step
 │        - Ogni step: salva transizione nel buffer
 │        - Se buffer abbastanza pieno: campiona batch, gradient step
 │        - Ogni 1000 step: copia pesi nella target net
 │     3. Salva modello (.pt)
 │   Ripete per seed 42, 123, 456
 │
-├── run_config("No target net", ...)      ← ablazione
-├── run_config("No replay", ...)          ← ablazione
-├── run_config("No target + no replay")   ← ablazione
-├── run_config("Double DQN", ...)         ← bonus
+├── run_config("No target net", ...) - ablazione
+├── run_config("No replay", ...) - ablazione
+├── run_config("No target + no replay") - ablazione
+├── run_config("Double DQN", ...) - bonus
 │
 └── Genera plot:
-    ablation_replay.png     — con vs senza replay
-    ablation_target.png     — con vs senza target net
-    full_comparison.png     — tutte e 5 le configurazioni
+    ablation_replay.png - con vs senza replay
+    ablation_target.png - con vs senza target net
+    full_comparison.png - tutte e 5 le configurazioni
 ```
 
-### Dentro `train_dqn()` — il training loop step by step
+### Dentro `train_dqn()` - il training loop step by step
 
 ```python
 while step < total_steps:
@@ -161,7 +161,7 @@ while step < total_steps:
 
         # 5. Periodicamente: aggiorna la target network
         if step % 1000 == 0:
-            θ⁻ ← θ    (hard update = copia completa)
+            θ⁻ - θ    (hard update = copia completa)
 
         step += 1
 ```
@@ -190,8 +190,8 @@ while step < total_steps:
   fa hard update ogni 10k step. Qui 1000 è proporzionale ai 200k step totali.
 
 - **NatureCNN automatica vs MLP**: `train_dqn` sceglie la rete in base alla
-  forma dell'osservazione. Se `obs.ndim == 1` → MLP (per debug su CartPole).
-  Se `obs.ndim >= 3` → NatureCNN (per Atari).
+  forma dell'osservazione. Se `obs.ndim == 1` - MLP (per debug su CartPole).
+  Se `obs.ndim >= 3` - NatureCNN (per Atari).
 
 - **senza replay: batch_size=1 equivalente**: quando `use_replay=False`,
   il buffer ha capacità batch_size e si "campiona" la transizione appena inserita.
@@ -201,11 +201,11 @@ while step < total_steps:
 
 | Componente | Origine |
 |---|---|
-| `networks.py` — `NatureCNN` | **Nuovo**, ma l'architettura replica il paper (Mnih et al. 2015, Table 1). I numeri (32@8×8/4, 64@4×4/2, 64@3×3/1, FC 512) sono esattamente quelli del paper. |
-| `networks.py` — `MLP` | **Nuovo.** Rete semplice per debug su CartPole prima di passare ad Atari. |
+| `networks.py` - `NatureCNN` | **Nuovo**, ma l'architettura replica il paper (Mnih et al. 2015, Table 1). I numeri (32@8×8/4, 64@4×4/2, 64@3×3/1, FC 512) sono esattamente quelli del paper. |
+| `networks.py` - `MLP` | **Nuovo.** Rete semplice per debug su CartPole prima di passare ad Atari. |
 | `replay_buffer.py` | **Nuovo.** Implementazione minimale con `deque`. Il concetto è dal paper; lo stile (store uint8, sample con numpy) è standard. |
-| `dqn.py` — `train_dqn` | **Nuovo.** È la parte più complessa e completamente originale del progetto. Il loop è scritto da zero seguendo il paper. |
-| `dqn.py` — Double DQN | **Nuovo.** ~3 righe di codice aggiuntive: `best_actions = online_net(next_states).argmax()`, poi `target_net.gather(best_actions)`. |
+| `dqn.py` - `train_dqn` | **Nuovo.** È la parte più complessa e completamente originale del progetto. Il loop è scritto da zero seguendo il paper. |
+| `dqn.py` - Double DQN | **Nuovo.** ~3 righe di codice aggiuntive: `best_actions = online_net(next_states).argmax()`, poi `target_net.gather(best_actions)`. |
 | `atari_wrappers.py` | **Adattato** dal `Tutorial_Gymnasium.json` del professore (che mostra come creare env Atari). I wrapper `AtariPreprocessing` e `FrameStack` sono di Gymnasium (non SB3). |
 | `run_pong.py` | **Nuovo.** Design dell'ablation study e gestione multi-seed con padding. |
 
@@ -237,7 +237,7 @@ Atari. Tutto il codice DQN in questo progetto è scritto da zero:
   stabilizza, ma non è indispensabile come il replay.
 
 ### full_comparison.png
-- Tutte e 5 le configurazioni + baseline random. **Ordine osservato** (migliore →
+- Tutte e 5 le configurazioni + baseline random. **Ordine osservato** (migliore - 
   peggiore):
   1. **Full DQN** −12.1 ± 0.9
   2. **Double DQN** −14.2 ± 0.8
@@ -245,7 +245,7 @@ Atari. Tutto il codice DQN in questo progetto è scritto da zero:
   4. **No replay** ≈ −20.5 (non impara)
   5. **No target + no replay** ≈ −20.5 (non impara)
 - Nota onesta: **Double DQN non supera** il Full DQN in questo regime breve
-  (200k step). È normale — il vantaggio del Double DQN (meno maximization bias)
+  (200k step). È normale - il vantaggio del Double DQN (meno maximization bias)
   emerge con addestramenti molto più lunghi. Da non spacciare per miglioria.
 - Segnale indiretto di apprendimento: il Full DQN produce **meno episodi** per
   seed (~134) delle configurazioni fallite (~240), perché imparando gli scambi
@@ -266,7 +266,7 @@ Il salto concettuale dalla Fase 2 è **cosa viene aggiornato**:
   indipendenti.
 - **DQN**: ogni gradient step aggiorna **tutti i pesi θ** della rete. Un update
   su un batch di stati *influenza la stima di tutti gli altri stati* (i pesi sono
-  condivisi). Questa condivisione è ciò che dà la generalizzazione — ma è anche
+  condivisi). Questa condivisione è ciò che dà la generalizzazione - ma è anche
   la causa dell'instabilità che replay e target network servono a domare.
 
 Cosa "vive" durante una run DQN:
@@ -294,13 +294,13 @@ Il DQN è la parte dove i bug sono più insidiosi (non "crashano", semplicemente
 | Sintomo | Causa | Dove guardare |
 |---|---|---|
 | Errore di shape nella CNN, o rete che non impara | Trasposizione errata dei frame: arrivano **già** `(4,84,84)` channel-first da `FrameStackObservation`, **non** vanno trasposti | `dqn.py`: `_obs_to_tensor`/`_batch_to_tensor` (nessun `transpose`) |
-| Episodi troppo lunghi / dinamica strana | Doppio frame-skip: `-v5` ne ha uno interno + `AtariPreprocessing` → serve `frameskip=1` alla `gym.make` | `atari_wrappers.py` |
+| Episodi troppo lunghi / dinamica strana | Doppio frame-skip: `-v5` ne ha uno interno + `AtariPreprocessing` - serve `frameskip=1` alla `gym.make` | `atari_wrappers.py` |
 | `AttributeError: FrameStack` | In Gymnasium 1.x è `FrameStackObservation` | `atari_wrappers.py` |
 | `NamespaceNotFound: ALE` | Manca la registrazione degli env Atari | `atari_wrappers.py`: `gym.register_envs(ale_py)` |
 | La rete non impara mai (loss non scende) | Gradient step prima che il buffer sia pronto, o `learning_starts` mal impostato | `dqn.py`: `if len(buffer) >= min_buffer` |
 | Gira su CPU lentissimo | Build PyTorch sbagliata / device errato | banner in `run_pong.py`; serve la build `cu128` per la RTX 5060 |
 | Out-of-memory (RAM) | Buffer troppo grande o frame in float | `replay_buffer.py`: frame in `uint8`; `buffer_capacity` |
-| "No replay" impara comunque bene | Il buffer di dimensione `batch_size` è ancora un mini-batch: è un'approssimazione dell'online, non online puro | `dqn.py` (`use_replay=False`) — limite noto, dichiarato |
+| "No replay" impara comunque bene | Il buffer di dimensione `batch_size` è ancora un mini-batch: è un'approssimazione dell'online, non online puro | `dqn.py` (`use_replay=False`) - limite noto, dichiarato |
 
 **Come si debugga il DQN**: prima si valida su **CartPole** con la `MLP` (veloce,
 poche righe): se lì non impara, il bug è nel loop, non in Atari. Solo dopo si
@@ -311,10 +311,10 @@ passa alla CNN su Pong. Questo è il motivo per cui esiste la `MLP` in
 
 - **200k step è pochissimo** per Atari. Il paper usa 50M. Il risultato sarà
   parziale, ma sufficiente per mostrare apprendimento. Se c'è tempo, aumentare
-  a 500k–1M step migliorerebbe visibilmente i risultati.
+  a 500k-1M step migliorerebbe visibilmente i risultati.
 
 - **Hard update** della target net (copia completa) è meno smooth del **soft
-  update** (Polyak: θ⁻ ← τθ + (1-τ)θ⁻). Il soft update è più stabile ma
+  update** (Polyak: θ⁻ - τθ + (1-τ)θ⁻). Il soft update è più stabile ma
   il paper originale usa hard update.
 
 - **Buffer in RAM** con `deque` di tuple: funziona ma non è il più efficiente.

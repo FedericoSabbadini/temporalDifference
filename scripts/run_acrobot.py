@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Acrobot experiments — Env 2 (group-specific, assigned by professor).
+"""Acrobot experiments - Env 2 (group-specific, assigned by professor).
 
 Origin: NEW. Experiment design is original, addressing the Env 2 requirements:
 "Applicare gli algoritmi implementati, discutere le difficoltà specifiche."
 
 Key analysis points for the report:
-  - 6-D continuous state → discretization curse (6^6 = 46656 states)
-  - Sparse reward (-1 per step) → hard exploration
-  - Coarse bins lose critical angular information → suboptimal behaviour
+  - 6-D continuous state - discretization curse (6^6 = 46656 states)
+  - Sparse reward (-1 per step) - hard exploration
+  - Coarse bins lose critical angular information - suboptimal behaviour
   - This motivates function approximation (Env 3 / DQN)
 
 The bin_resolution experiment is the most original analysis in the project:
@@ -46,7 +46,7 @@ MAX_STEPS = 500
 def make_acrobot():
     """Create a discretized Acrobot environment (6 bins per dimension)."""
     env = gym.make(ACROBOT["env_name"])  # continuous 6-D observation, 3 actions
-    # 6 bins/dim → 6^6 = 46,656 states (much larger than CartPole's 10^4)
+    # 6 bins/dim - 6^6 = 46,656 states (much larger than CartPole's 10^4)
     return DiscretizedEnv(env, ACROBOT["n_bins"],
                           ACROBOT["clip_low"], ACROBOT["clip_high"])
 
@@ -71,7 +71,7 @@ def exp_control_comparison():
                                epsilon=0.1, max_steps=MAX_STEPS)
     plot_learning_curves(
         {"Q-Learning": ql_ret, "SARSA": sa_ret},
-        title="Acrobot — Q-Learning vs SARSA",
+        title="Acrobot - Q-Learning vs SARSA",
         save_path=f"{FIG_DIR}/control_comparison.png",
     )
     np.savez("results/acrobot/control_comparison.npz",
@@ -83,10 +83,10 @@ def exp_control_comparison():
 # Assignment: "eventuale necessità di discretizzazione o approximation"
 # -----------------------------------------------------------------------
 def exp_bin_resolution():
-    """Show how bin count affects learning — discretization resolution study.
+    """Show how bin count affects learning - discretization resolution study.
 
-    A-priori hypothesis: more bins → worse, because the state space grows
-    exponentially (10 bins → 10^6 states, "hopelessly sparse" at 10k episodes).
+    A-priori hypothesis: more bins - worse, because the state space grows
+    exponentially (10 bins - 10^6 states, "hopelessly sparse" at 10k episodes).
 
     ACTUAL RESULT (see report Sec. Results / figures/acrobot/bin_resolution.png):
     the OPPOSITE. Within 10k episodes, 10 bins is the BEST (~-300) and 4 bins
@@ -104,7 +104,7 @@ def exp_bin_resolution():
     for n_bins in [4, 6, 8, 10]:
         bins = [n_bins] * 6  # same resolution on all 6 dimensions
         total_states = n_bins ** 6  # exponential growth: this IS the curse
-        print(f"  n_bins={n_bins} → {total_states} states")
+        print(f"  n_bins={n_bins} - {total_states} states")
 
         # b=bins captures the current `bins` value (closure default arg trick)
         # Without it, all closures would use the last loop's value of `bins`
@@ -121,7 +121,7 @@ def exp_bin_resolution():
 
     plot_learning_curves(
         results,
-        title="Acrobot — Q-Learning: effect of bin resolution",
+        title="Acrobot - Q-Learning: effect of bin resolution",
         save_path=f"{FIG_DIR}/bin_resolution.png",
     )
 
@@ -133,7 +133,7 @@ def exp_bin_resolution():
 def exp_sensitivity_epsilon():
     """Show how ε affects learning on Acrobot (sparse reward).
 
-    A-priori hypothesis: sparse reward → needs MORE exploration.
+    A-priori hypothesis: sparse reward - needs MORE exploration.
 
     ACTUAL RESULT (see figures/acrobot/sensitivity_epsilon.png): low ε
     (0.05-0.1) performs BEST (~-320), high ε=0.4 performs WORST (~-440).
@@ -151,7 +151,7 @@ def exp_sensitivity_epsilon():
         results[eps] = ret
     plot_sensitivity(
         results, "ε", "Q-Learning",
-        title="Acrobot — exploration difficulty (ε sensitivity)",
+        title="Acrobot - exploration difficulty (ε sensitivity)",
         save_path=f"{FIG_DIR}/sensitivity_epsilon.png",
     )
 
@@ -164,7 +164,7 @@ def exp_prediction():
 
     Same approach as CartPole (see run_cartpole.py for the full rationale):
     train Q-Learning, extract the greedy policy, evaluate it with MC and TD(0).
-    Two views are produced — the episode return (identical by construction,
+    Two views are produced - the episode return (identical by construction,
     same policy) and the value estimate V(reference state) over episodes, which
     is where MC (noisy) and TD(0) (smooth) actually differ.
     """
@@ -177,7 +177,7 @@ def exp_prediction():
                          epsilon=0.1, max_steps=MAX_STEPS)
     env.close()
 
-    # Extract the greedy policy: π(s) = argmax_a Q(s,a) — this is now FIXED
+    # Extract the greedy policy: π(s) = argmax_a Q(s,a) - this is now FIXED
     def learned_policy(state):
         return greedy_action(Q, state)
 
@@ -190,7 +190,7 @@ def exp_prediction():
     # Instead of using a geometric centre bin (which is unreachable), we use the discretized reset state as the reference state for value estimation.
 
     # MC prediction: higher variance on Acrobot because episodes are up to 500 steps long
-    # → the return G = R1 + γR2 + ... + γ^499 R500 depends on 500 random transitions
+    # - the return G = R1 + γR2 + ... + γ^499 R500 depends on 500 random transitions
     mc_ret, mc_res = run_multi_seed(make_acrobot, mc_prediction, SEEDS,
                                     policy_fn=learned_policy, episodes=3000,
                                     gamma=0.99, max_steps=MAX_STEPS,
@@ -201,20 +201,20 @@ def exp_prediction():
                                     alpha=0.1, gamma=0.99, max_steps=MAX_STEPS,
                                     track_state=anchor)
 
-    # View 1: episode return (identical by construction — kept for honesty)
+    # View 1: episode return (identical by construction - kept for honesty)
     plot_learning_curves(
         {"MC Prediction": mc_ret, "TD(0) Prediction": td_ret},
-        title="Acrobot — MC vs TD(0): episode return (learned policy)",
+        title="Acrobot - MC vs TD(0): episode return (learned policy)",
         save_path=f"{FIG_DIR}/prediction_return.png",
         ylabel="Episode return (under evaluated policy)",
     )
 
-    # View 2: value estimate of the reference state — the meaningful comparison
+    # View 2: value estimate of the reference state - the meaningful comparison
     mc_vhist = np.array([r[2] for r in mc_res])
     td_vhist = np.array([r[2] for r in td_res])
     plot_learning_curves(
         {"MC estimate": mc_vhist, "TD(0) estimate": td_vhist},
-        title="Acrobot — MC vs TD(0): value estimate V(s_ref) (learned policy)",
+        title="Acrobot - MC vs TD(0): value estimate V(s_ref) (learned policy)",
         save_path=f"{FIG_DIR}/prediction_value.png",
         ylabel="V(reference state) estimate",
         window=1,  # no smoothing: show MC's raw variance vs TD's smoothness

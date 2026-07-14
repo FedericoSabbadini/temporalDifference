@@ -23,4 +23,4 @@ def set_seed(seed):
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)  # seed ALL GPU RNGs (for multi-GPU setups)
     except ImportError:
-        pass  # torch not installed — tabular-only mode (CartPole/Acrobot)
+        pass  # torch not installed - tabular-only mode (CartPole/Acrobot)

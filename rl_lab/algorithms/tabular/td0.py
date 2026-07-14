@@ -5,11 +5,11 @@ random_walk_incomplete.json. Same step-by-step update. Adapted to Gymnasium
 API and added episode return tracking for plotting.
 
 TD(0) estimates the state-value function V(s) for a FIXED policy π.
-Like MC, it is a PREDICTION algorithm — does not learn or improve the policy.
+Like MC, it is a PREDICTION algorithm - does not learn or improve the policy.
 
 Update rule:
-    V(S) ← V(S) + α [ R + γ V(S') - V(S) ]
-                      ↑___________________↑
+    V(S) += α [ R + γ V(S') - V(S) ]
+                      |___________________|
                            TD target
 
 The term δ = R + γ V(S') - V(S) is called the TD error.
@@ -20,7 +20,7 @@ Key properties vs MC (S&B §6.2):
   - TD(0) is BIASED: the target uses the current estimate V(S'), which
     may be wrong. The bias decreases as V converges.
   - TD(0) has LOWER VARIANCE: only one step of actual reward (R), not
-    the entire trajectory. Less randomness → smoother updates.
+    the entire trajectory. Less randomness - smoother updates.
   - TD(0) can learn ONLINE: updates at every step, no need to wait for
     episode end. This is crucial for continuing (non-episodic) tasks.
   - TD(0) BOOTSTRAPS: it uses its own estimate V(S') in the target.
@@ -40,9 +40,9 @@ def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
 
     Args:
         env: Gymnasium environment (discrete observations).
-        policy_fn: callable(state) → action. The fixed policy to evaluate.
+        policy_fn: callable(state) - action. The fixed policy to evaluate.
         episodes: number of episodes.
-        alpha: learning rate — controls how much V(s) changes per step.
+        alpha: learning rate - controls how much V(s) changes per step.
                Unlike MC (which uses exact averages), TD(0) uses a fixed α
                which means recent experiences weigh more (exponential recency).
         gamma: discount factor.
@@ -54,7 +54,7 @@ def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
                bias/variance trade-off; the episode return cannot.
 
     Returns:
-        V: estimated state-value function (defaultdict: state → float).
+        V: estimated state-value function (defaultdict mapping state to float).
         episode_returns: list of total returns per episode (for plotting).
         value_history: list of V(track_state) after each episode (empty if
                track_state is None).
@@ -74,12 +74,12 @@ def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
             ep_return += reward
 
             # === TD(0) update (S&B §6.1, Eq. 6.2) ===
-            # target = R + γ V(S') — uses the CURRENT estimate V(S') (bootstrapping)
-            # At terminal states, there is no S' → the γ V(S') term must be 0
+            # target = R + γ V(S') - uses the CURRENT estimate V(S') (bootstrapping)
+            # At terminal states, there is no S' - the γ V(S') term must be 0
             td_target = reward + gamma * V[next_state] * (not done)
             # TD error δ = target - current estimate
-            # δ > 0 means "S was better than we thought" → increase V(S)
-            # δ < 0 means "S was worse than we thought" → decrease V(S)
+            # δ > 0 means "S was better than we thought" - increase V(S)
+            # δ < 0 means "S was worse than we thought" - decrease V(S)
             td_error = td_target - V[state]
             # Update V(S) by a fraction α of the error
             V[state] += alpha * td_error

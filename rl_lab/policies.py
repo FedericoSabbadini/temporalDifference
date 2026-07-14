@@ -5,7 +5,7 @@ Same ε-greedy logic, adapted for defaultdict Q-tables with np.flatnonzero
 for random tie-breaking among maximum Q-values.
 
 Theory: these implement the exploration/exploitation trade-off (S&B §2.1).
-- greedy_action: pure exploitation — always picks argmax Q(s,a)
+- greedy_action: pure exploitation - always picks argmax Q(s,a)
 - epsilon_greedy_action: with prob ε explores (random), otherwise exploits (greedy)
 """
 

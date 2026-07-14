@@ -1,11 +1,11 @@
-"""DQN training loop — from scratch in PyTorch (Mnih et al. 2015).
+"""DQN training loop - from scratch in PyTorch (Mnih et al. 2015).
 
 Origin: NEW. This is the most complex and entirely original part of the project.
 The training loop is written from scratch following the Nature DQN paper.
 
 Implements Deep Q-Network with:
-  1. Experience Replay — random mini-batch sampling (breaks temporal correlations)
-  2. Target Network — separate, slowly-updated copy of Q-net (stabilizes targets)
+  1. Experience Replay - random mini-batch sampling (breaks temporal correlations)
+  2. Target Network - separate, slowly-updated copy of Q-net (stabilizes targets)
 
 Ablation flags allow disabling each component independently (required by
 the assignment: "confrontare DQN con vs senza target network / replay").
@@ -37,33 +37,33 @@ from rl_lab.algorithms.deep.networks import MLP, NatureCNN
 def _obs_to_tensor(obs, device):
     """Convert a single observation to a batched float tensor.
 
-    For images (C,H,W uint8): normalise to [0,1] → (1,C,H,W).
-    For vectors (float): just wrap and add batch dim → (1,D).
+    For images (C,H,W uint8): normalise to [0,1] - (1,C,H,W).
+    For vectors (float): just wrap and add batch dim - (1,D).
 
     Atari frames arrive already channel-first (4,84,84) from
     FrameStackObservation, so no transpose is needed here.
     """
     obs = np.asarray(obs)
     if obs.ndim >= 3:
-        # Image observation (C, H, W) uint8 → normalise
+        # Image observation (C, H, W) uint8 - normalise
         obs = obs.astype(np.float32) / 255.0
-    else:  # vector observation (D,) — e.g. CartPole state
+    else:  # vector observation (D,) - e.g. CartPole state
         obs = obs.astype(np.float32)
-    # unsqueeze(0) adds batch dimension: (C,H,W) → (1,C,H,W) for a single-sample forward pass
+    # unsqueeze(0) adds batch dimension: (C,H,W) - (1,C,H,W) for a single-sample forward pass
     return torch.from_numpy(obs).unsqueeze(0).to(device)
 
 
 def _batch_to_tensor(batch, device):
     """Convert a batch of observations to a float tensor.
 
-    For images (B,C,H,W uint8): normalise → (B,C,H,W).
+    For images (B,C,H,W uint8): normalise - (B,C,H,W).
     For vectors (B,D): just convert.
 
     Frames are already channel-first, so no transpose is needed.
     """
     arr = np.asarray(batch)
     if arr.ndim >= 4:  # batch of images: (B, C, H, W)
-        arr = arr.astype(np.float32) / 255.0       # normalize uint8 → [0, 1]
+        arr = arr.astype(np.float32) / 255.0       # normalize uint8 - [0, 1]
     else:  # batch of vectors: (B, D)
         arr = arr.astype(np.float32)
     return torch.from_numpy(arr).to(device)  # move to CPU or GPU
@@ -101,15 +101,15 @@ def _update_network(online_net, target_net, buffer, optimizer, batch_size,
     # Convert numpy arrays to PyTorch tensors on the correct device (CPU/GPU)
     states_t = _batch_to_tensor(states, device)
     next_states_t = _batch_to_tensor(next_states, device)
-    actions_t = torch.from_numpy(actions).to(device)   # (batch,) — action indices
-    rewards_t = torch.from_numpy(rewards).to(device)   # (batch,) — scalar rewards
-    dones_t = torch.from_numpy(dones).to(device)       # (batch,) — 0.0 or 1.0
+    actions_t = torch.from_numpy(actions).to(device)   # (batch,) - action indices
+    rewards_t = torch.from_numpy(rewards).to(device)   # (batch,) - scalar rewards
+    dones_t = torch.from_numpy(dones).to(device)       # (batch,) - 0.0 or 1.0
 
     # --- Compute current Q(s, a) ---
     # Forward pass gives Q-values for ALL actions: shape (batch, n_actions)
     q_values = online_net(states_t)
     # gather picks the Q-value of the action that was actually taken
-    # unsqueeze/squeeze: gather needs 2D index → result back to 1D
+    # unsqueeze/squeeze: gather needs 2D index - result back to 1D
     q_value = q_values.gather(1, actions_t.unsqueeze(1)).squeeze(1)  # (batch,)
 
     # --- Compute target: r + γ * max_a' Q_target(s', a') ---
@@ -131,7 +131,7 @@ def _update_network(online_net, target_net, buffer, optimizer, batch_size,
         td_target = rewards_t + gamma * next_q * (1.0 - dones_t)
 
     # --- Gradient descent step ---
-    # MSE loss: (Q_predicted - Q_target)² — same idea as the tabular TD error²
+    # MSE loss: (Q_predicted - Q_target)² - same idea as the tabular TD error²
     loss = F.mse_loss(q_value, td_target)
 
     optimizer.zero_grad()  # clear old gradients from previous step
@@ -172,7 +172,7 @@ def train_dqn(
         lr: learning rate for Adam optimizer.
         buffer_capacity: replay buffer size (ignored if use_replay=False).
         batch_size: mini-batch size for gradient updates.
-        target_update_freq: steps between target-net hard updates (θ⁻ ← θ).
+        target_update_freq: steps between target-net hard updates (θ⁻ - θ).
         epsilon_start/end/decay_steps: linear ε-decay schedule.
             Starts at epsilon_start (full exploration), decays linearly to
             epsilon_end over decay_steps, then stays at epsilon_end.
@@ -204,12 +204,12 @@ def train_dqn(
         # Deep copy creates a SEPARATE network with the same initial weights.
         # The target net's weights are frozen and only updated periodically (hard update).
         # This prevents the "moving target" problem: without it, every gradient step
-        # changes both the prediction AND the target simultaneously → instability.
+        # changes both the prediction AND the target simultaneously - instability.
         target_net = copy.deepcopy(online_net)
         target_net.eval()  # eval mode: disables dropout/batchnorm (not used here, but good practice)
     else:
-        # Ablation: target net IS the online net (same Python object → same weights)
-        # Every gradient step changes the target too → the "moving target" problem
+        # Ablation: target net IS the online net (same Python object - same weights)
+        # Every gradient step changes the target too - the "moving target" problem
         target_net = online_net # pointer to the same object, not a copy
 
     # Adam optimizer: adaptive learning rate per parameter (better than plain SGD for RL)
@@ -222,7 +222,7 @@ def train_dqn(
         min_buffer = max(learning_starts, batch_size)
     else:
         # Without replay: buffer holds only batch_size transitions (essentially online learning).
-        # Each update uses the most recent transitions → correlated data, less stable.
+        # Each update uses the most recent transitions - correlated data, less stable.
         buffer = ReplayBuffer(batch_size)
         min_buffer = batch_size  # start learning as soon as one batch is available/stored
 
@@ -241,8 +241,8 @@ def train_dqn(
         while True:
             # Linear ε-decay: ε decreases linearly from epsilon_start to epsilon_end
             # over epsilon_decay_steps, then stays at epsilon_end forever.
-            # Early training → high ε → mostly random (exploration)
-            # Late training  → low ε  → mostly greedy (exploitation)
+            # Early training - high ε - mostly random (exploration)
+            # Late training - low ε - mostly greedy (exploitation)
             epsilon = max(
                 epsilon_end,
                 epsilon_start - step * (epsilon_start - epsilon_end)
@@ -275,9 +275,9 @@ def train_dqn(
                     batch_size, gamma, device, use_double_dqn,
                 )
 
-            # Periodically sync target network: θ⁻ ← θ (hard update)
+            # Periodically sync target network: θ⁻ - θ (hard update)
             # This copies ALL weights from online net to target net at once.
-            # Between syncs, the target net is frozen → stable TD targets.
+            # Between syncs, the target net is frozen - stable TD targets.
             if use_target_network and step % target_update_freq == 0:
                 target_net.load_state_dict(online_net.state_dict())
 

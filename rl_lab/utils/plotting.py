@@ -1,4 +1,4 @@
-"""Plotting utilities — learning curves with std bands, sensitivity plots.
+"""Plotting utilities - learning curves with std bands, sensitivity plots.
 
 Origin: moving_average is ADAPTED from the course exercises.
 plot_learning_curves (mean + std bands) and plot_sensitivity are NEW.
@@ -30,7 +30,7 @@ def moving_average(x, window=20):
     Returns an array shorter by (window-1) elements ('valid' mode).
     """
     if len(x) < window:
-        return np.array(x)  # not enough data to smooth — return as-is
+        return np.array(x)  # not enough data to smooth - return as-is
     # np.convolve with a uniform kernel [1/w, 1/w, ..., 1/w] computes the running mean.
     # mode="valid" means output length = len(x) - window + 1 (no padding artifacts).
     return np.convolve(x, np.ones(window) / window, mode="valid")
@@ -56,10 +56,10 @@ def plot_learning_curves(results_dict, title, save_path=None, window=20,
 
     for label, data in results_dict.items(): # label is the seed, data is the array of linked rewards
         if data.ndim == 1:
-            data = data.reshape(1, -1)  # single seed → treat as 1-row matrix
+            data = data.reshape(1, -1)  # single seed - treat as 1-row matrix
         # axis=0 computes mean/std ACROSS seeds (each row is one seed's returns)
-        mean = np.mean(data, axis=0)  # (n_episodes,) — average performance
-        std = np.std(data, axis=0)    # (n_episodes,) — variability across seeds
+        mean = np.mean(data, axis=0)  # (n_episodes,) - average performance
+        std = np.std(data, axis=0)    # (n_episodes,) - variability across seeds
         # Smooth both mean and std for readability (raw curves are very noisy)
         sm_mean = moving_average(mean, window)
         sm_std = moving_average(std, window)
@@ -107,7 +107,7 @@ def plot_sensitivity(results_by_param, param_name, algo_name, title=None,
 
     plt.xlabel(f"Episode (smoothed, window={window})")
     plt.ylabel("Return")
-    plt.title(title or f"{algo_name} — sensitivity to {param_name}")
+    plt.title(title or f"{algo_name} - sensitivity to {param_name}")
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()

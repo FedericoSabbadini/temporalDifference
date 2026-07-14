@@ -1,4 +1,4 @@
-# Prima dell'orale — ripasso rapido
+# Prima dell'orale - ripasso rapido
 
 > Domande probabili con risposte sintetiche. Pensato per l'ultimo ripasso.
 > Include i punti "scomodi" (risultati che smentiscono le ipotesi, limiti,
@@ -38,11 +38,11 @@ prob. ε azione casuale, altrimenti greedy.
 
 **Perché discretizzi?**
 I metodi tabular indicizzano `Q[s]`: serve uno spazio di stati finito e
-hashable. CartPole/Acrobot hanno stato continuo → binning per ogni dimensione →
+hashable. CartPole/Acrobot hanno stato continuo - binning per ogni dimensione - 
 tupla di indici. Concetto: *state aggregation* (S&B §9.4).
 
 **Qual è il trade-off dei bin?**
-Pochi bin → si perde informazione (policy grossolana). Molti bin → lo spazio
+Pochi bin - si perde informazione (policy grossolana). Molti bin - lo spazio
 esplode come `(bin)^dim` (curse of dimensionality), servono più episodi.
 
 **Sorpresa su Acrobot (preparati, te lo chiederanno):**
@@ -52,7 +52,7 @@ L'ipotesi era "più bin = peggio". I dati mostrano il contrario a 10k episodi:
 domina sulla sparsità. La curse è reale *in principio*, ma non è il collo di
 bottiglia a questo budget. **Lezione**: le ipotesi vanno verificate sui dati.
 
-**Fix #2 su CartPole — cosa hai cambiato e con quale effetto?**
+**Discretizzazione di CartPole - cosa cambia e con quale effetto?**
 Ho ristretto i range di clipping di posizione e angolo dai bound
 dell'osservazione (`±4.8`/`±0.418`) ai limiti di **terminazione** (`±2.4`/`±0.21`):
 metà dei bin era sprecata su stati impossibili. Effetto **a doppio taglio**:
@@ -71,14 +71,14 @@ con una rete: `Q(s,·;θ)`.
 Le transizioni consecutive sono correlate; il gradient descent assume campioni
 i.i.d. Il buffer + il campionamento casuale rompono la correlazione e permettono
 di riusare le esperienze. **Nel nostro ablation: senza replay il DQN non impara
-affatto** (resta a ~−20.5) — è il componente più critico.
+affatto** (resta a ~−20.5) - è il componente più critico.
 
 **A cosa serve la target network?**
 A dare un target stabile: usare la stessa rete per predizione e target crea un
 "moving target". La copia `θ⁻` viene sincronizzata ogni 1000 step. Nel nostro
 ablation: senza target net impara comunque, ma più lentamente e con più varianza.
 
-**Double DQN — cosa risolve?**
+**Double DQN - cosa risolve?**
 Il maximization bias (S&B §6.7): il `max` sovrastima su stime rumorose. Double
 DQN separa selezione (rete online) e valutazione (rete target) dell'azione.
 Nel nostro regime breve (200k step) **non supera** il DQN base (−14.2 vs −12.1):
@@ -105,14 +105,14 @@ tabelle del report sono generate da quei dati (nessun numero a mano).
 
 **Il confronto MC vs TD(0): perché due grafici?**
 Il grafico del *return* è identico per costruzione (stessa policy) e non mostra
-la differenza. Il grafico della *stima V(s)* (fix #1) sì: MC converge subito con
+la differenza. Il grafico della *stima V(s)* sì: MC converge subito con
 alta varianza, TD sale lentamente ed è distorta all'inizio. Su Acrobot il bias
 di TD è ancora più evidente (a 3000 episodi TD è a −57, MC a −92).
 Limite: è una misura *locale* (un solo stato di riferimento).
 
 **Failure case: quali e perché obbligatori?**
 La consegna chiede di analizzare i risultati negativi. Due casi: α=1.0 (update
-troppo aggressivo → bloccato ~65) e ε=0 (nessuna esplorazione → bloccato ~40).
+troppo aggressivo - bloccato ~65) e ε=0 (nessuna esplorazione - bloccato ~40).
 
 **Cosa è tuo e cosa dal corso?**
 I 4 algoritmi tabular sono *adattati* dalle esercitazioni. Il DQN, il
@@ -121,7 +121,7 @@ core. Dettaglio in [`origine_codice.md`](origine_codice.md).
 
 ---
 
-## 5. Mappa consegna → dove l'ho soddisfatta
+## 5. Mappa consegna - dove l'ho soddisfatta
 
 | Requisito | Dove |
 |---|---|
@@ -139,8 +139,8 @@ core. Dettaglio in [`origine_codice.md`](origine_codice.md).
 ## 6. Le tre cose da non dimenticare
 
 1. **Onestà sui risultati**: due esperimenti Acrobot smentiscono le ipotesi e
-   il fix #2 è un trade-off — dirlo è un punto di forza, non di debolezza.
+   questa scelta è un trade-off - dirlo è un punto di forza, non di debolezza.
 2. **Generalità del codice**: gli stessi algoritmi girano su CartPole e Acrobot
-   senza modifiche — è il senso della separazione `rl_lab/` vs `scripts/`.
+   senza modifiche - è il senso della separazione `rl_lab/` vs `scripts/`.
 3. **Il filo teorico**: tutto ruota attorno allo stesso target di Bellman, dal
    Q-Learning tabellare al DQN.

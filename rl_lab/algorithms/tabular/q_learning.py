@@ -5,7 +5,7 @@ Same update rule, adapted to: (1) Gymnasium API (terminated/truncated),
 (2) discretized states (tuple keys), (3) episode_returns tracking.
 
 Update rule (Bellman optimality equation):
-    Q(S,A) ← Q(S,A) + α [ R + γ max_a Q(S',a) - Q(S,A) ]
+    Q(S,A) += α [ R + γ max_a Q(S',a) - Q(S,A) ]
 
 Key property: the target uses max over NEXT-STATE actions (greedy w.r.t. Q),
 regardless of the action actually taken by the ε-greedy behavior policy.
@@ -28,21 +28,21 @@ def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
     Args:
         env: Gymnasium environment (observation must be hashable, e.g. tuple).
         episodes: number of training episodes.
-        alpha: learning rate — controls how much each update changes Q.
-               Too high → instability; too low → slow convergence.
-        gamma: discount factor — how much future rewards matter.
+        alpha: learning rate - controls how much each update changes Q.
+               Too high - instability; too low - slow convergence.
+        gamma: discount factor - how much future rewards matter.
                gamma=1 treats all future rewards equally; gamma<1 is "myopic".
         epsilon: exploration rate for ε-greedy (constant, no decay).
         max_steps: safety cap on episode length.
 
     Returns:
-        Q: learned Q-table (defaultdict: state → np.array of Q-values per action).
+        Q: learned Q-table (defaultdict mapping state to an np.array of Q-values per action).
         episode_returns: list of total rewards per episode (for learning curves).
         episode_lengths: list of steps per episode.
     """
     n_actions = env.action_space.n  # number of discrete actions (e.g. 2 for CartPole)
     # defaultdict: unseen states automatically get Q=0 for all actions.
-    # This means every state starts with equal value → no initial bias toward any action.
+    # This means every state starts with equal value - no initial bias toward any action.
     Q = defaultdict(lambda: np.zeros(n_actions, dtype=np.float64))
     episode_returns = []  # total reward per episode (for learning curves)
     episode_lengths = []  # steps per episode (for diagnostics)
@@ -66,8 +66,8 @@ def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
             # === Q-Learning update (S&B §6.5, Eq. 6.8) ===
             # target = R + γ max_a Q(S', a)
             # The target uses max (greedy) over NEXT-STATE actions,
-            # regardless of the action the ε-greedy policy actually chose → OFF-POLICY.
-            # (not done) multiplier: at terminal states S' has no future → γ term = 0
+            # regardless of the action the ε-greedy policy actually chose - OFF-POLICY.
+            # (not done) multiplier: at terminal states S' has no future - γ term = 0
             td_target = reward + gamma * np.max(Q[next_state]) * (not done)
             # α controls the step size: Q moves toward the target by fraction α
             Q[state][action] += alpha * (td_target - Q[state][action])

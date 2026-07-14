@@ -1,4 +1,4 @@
-# Report — TemporalDifference
+# Report - TemporalDifference
 
 Final report (in Italian) for the Reinforcement Learning project.
 
@@ -15,7 +15,7 @@ report/
 │   ├── experiments.tex
 │   ├── results.tex
 │   ├── discussion.tex    # critical analysis (incl. limitations)
-│   ├── compliance.tex    # requirement → deliverable matrix
+│   ├── compliance.tex    # requirement - deliverable matrix
 │   ├── code_origin.tex
 │   └── conclusions.tex
 ├── figures/              # PNGs copied from ../figures (env-prefixed)

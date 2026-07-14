@@ -1,6 +1,6 @@
 # TemporalDifference
 
-Reinforcement Learning course project — M.Sc. Computer Engineering, University of Brescia (A.Y. 2025/26).
+Reinforcement Learning course project - M.Sc. Computer Engineering, University of Brescia (A.Y. 2025/26).
 
 Implements and compares RL algorithms **from scratch** across three environments, with full experimental analysis, failure cases, and ablation study.
 
@@ -25,18 +25,18 @@ Every result is averaged over **3 seeds** (42, 123, 456) with standard-deviation
 
 ## Project phases
 
-The project is organized into 4 phases. Detailed guides are in [`docs/`](docs/) — start from the **documentation index** [`docs/README.md`](docs/README.md), which also links a 10-minute overview, a 1-hour guided walkthrough, an oral-exam review, a glossary, and a symbol/parameter reference. The guides are meant to be read *with the source code open alongside*.
+The project is organized into 4 phases. Detailed guides are in [`docs/`](docs/) - start from the **documentation index** [`docs/README.md`](docs/README.md), which also links a 10-minute overview, a 1-hour guided walkthrough, an oral-exam review, a glossary, and a symbol/parameter reference. The guides are meant to be read *with the source code open alongside*.
 
-### Phase 1 — Infrastructure ([guide](docs/guida_fase1_introduzione.md))
-Base infrastructure: state discretization (`DiscretizedEnv`), ε-greedy policies, multi-seed runner, plotting utilities, seeding. No experiments — prepares the ground for phases 2–4.
+### Phase 1 - Infrastructure ([guide](docs/guida_fase1_introduzione.md))
+Base infrastructure: state discretization (`DiscretizedEnv`), ε-greedy policies, multi-seed runner, plotting utilities, seeding. No experiments - prepares the ground for phases 2-4.
 
-### Phase 2 — CartPole ([guide](docs/guida_fase2_cartpole.md))
-All 4 tabular algorithms on CartPole-v1 with discretized state (10 bins/dim → 10,000 states). Produces: control comparison (Q-Learning vs SARSA), ε/α/γ sensitivity (6 plots), MC vs TD(0) prediction, failure cases (high α, ε=0).
+### Phase 2 - CartPole ([guide](docs/guida_fase2_cartpole.md))
+All 4 tabular algorithms on CartPole-v1 with discretized state (10 bins/dim - 10,000 states). Produces: control comparison (Q-Learning vs SARSA), ε/α/γ sensitivity (6 plots), MC vs TD(0) prediction, failure cases (high α, ε=0).
 
-### Phase 3 — Acrobot ([guide](docs/guida_fase3_acrobot.md))
-Same algorithms on Acrobot-v1 (6-D state, 6 bins/dim → 46,656 states). Key experiments: bin resolution analysis (4/6/8/10 bins showing curse of dimensionality), exploration difficulty (ε sensitivity with sparse reward).
+### Phase 3 - Acrobot ([guide](docs/guida_fase3_acrobot.md))
+Same algorithms on Acrobot-v1 (6-D state, 6 bins/dim - 46,656 states). Key experiments: bin resolution analysis (4/6/8/10 bins showing curse of dimensionality), exploration difficulty (ε sensitivity with sparse reward).
 
-### Phase 4 — Pong / DQN ([guide](docs/guida_fase4_pong.md))
+### Phase 4 - Pong / DQN ([guide](docs/guida_fase4_pong.md))
 DQN from scratch in PyTorch on ALE/Pong-v5. Experience replay + target network + Double DQN (bonus). Ablation study: 5 configurations × 3 seeds. Goal: show learning vs random policy, not high performance.
 
 ## Setup
@@ -57,13 +57,13 @@ On Linux/Windows with the RTX 5060, `uv sync` automatically pulls the CUDA 12.8 
 ## Running experiments
 
 ```bash
-# Phase 2: CartPole (tabular, CPU) — ~15 min
+# Phase 2: CartPole (tabular, CPU) - ~15 min
 uv run python scripts/run_cartpole.py
 
-# Phase 3: Acrobot (tabular, CPU) — ~30 min
+# Phase 3: Acrobot (tabular, CPU) - ~30 min
 uv run python scripts/run_acrobot.py
 
-# Phase 4: Pong (DQN, GPU recommended) — several hours
+# Phase 4: Pong (DQN, GPU recommended) - several hours
 uv run python scripts/run_pong.py
 ```
 
@@ -73,14 +73,14 @@ Figures are saved to `figures/`, raw data to `results/`.
 
 - **Learning curves**: reward (y) vs episode (x), smoothed with moving average. Solid line = mean over 3 seeds, shaded band = ±1 std.
 - **Sensitivity plots**: one curve per hyperparameter value. Shows how changing ε, α, or γ affects learning speed and final performance.
-- **Ablation plots** (Pong): compare DQN with/without each component. The random baseline (≈ -20.4) is the reference — anything above it means the agent learned something.
+- **Ablation plots** (Pong): compare DQN with/without each component. The random baseline (≈ -20.4) is the reference - anything above it means the agent learned something.
 
 ## Report
 
-The final report (Italian, LaTeX) is in [`report/`](report/) — see [report/README.md](report/README.md) to compile it (`latexmk -pdf main.tex`). Result tables are generated from the saved `.npz` data, not hand-written:
+The final report (Italian, LaTeX) is in [`report/`](report/) - see [report/README.md](report/README.md) to compile it (`latexmk -pdf main.tex`). Result tables are generated from the saved `.npz` data, not hand-written:
 
 ```bash
-uv run python scripts/make_report_tables.py   # → report/tables/*.tex
+uv run python scripts/make_report_tables.py   # - report/tables/*.tex
 ```
 
 Two experimental results deliberately **contradict** the initial hypotheses (finer Acrobot bins are *better*; lower ε is *better* on Acrobot). These are analyzed honestly in the report's critical-analysis section rather than hidden.
@@ -95,7 +95,7 @@ TemporalDifference/
 │   ├── configs.py                # environment configs (Python dicts)
 │   ├── policies.py               # greedy, ε-greedy action selection
 │   ├── envs/
-│   │   ├── discretizer.py        # continuous → discrete state wrapper
+│   │   ├── discretizer.py        # continuous - discrete state wrapper
 │   │   └── atari_wrappers.py     # Atari preprocessing (84×84, frame stack)
 │   ├── algorithms/
 │   │   ├── tabular/              # Q-Learning, SARSA, MC prediction, TD(0)
@@ -111,7 +111,7 @@ TemporalDifference/
 │   ├── panoramica_10_minuti.md   # project in 10 minutes
 │   ├── walkthrough_1_ora.md      # guided 1-hour tour (guides + code)
 │   ├── ripasso_orale.md          # before-the-oral quick review
-│   ├── glossario.md              # RL terms → where they live in code
+│   ├── glossario.md              # RL terms - where they live in code
 │   ├── simboli_e_parametri.md    # variables, tensors, hyperparameters
 │   ├── guida_fase1_introduzione.md
 │   ├── guida_fase2_cartpole.md
@@ -120,8 +120,7 @@ TemporalDifference/
 │   └── origine_codice.md         # code origin tracking
 ├── figures/                      # generated plots for report
 ├── results/                      # raw experiment data (.npz)
-├── report/                       # LaTeX report (10-15 pages, Italian)
-└── CLAUDE.md                     # full project context and memory
+└── report/                       # LaTeX report (10-15 pages, Italian)
 ```
 
 ## Code origin

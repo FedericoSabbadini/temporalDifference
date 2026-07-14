@@ -1,4 +1,4 @@
-# Riferimento librerie — cosa usiamo e perché
+# Riferimento librerie - cosa usiamo e perché
 
 > Per ogni dipendenza: **cos'è**, **perché la usiamo qui**, e le **API concrete**
 > effettivamente usate nel progetto (con il file dove cercarle). Non è la
@@ -9,10 +9,10 @@ Installazione: `uv sync`.
 
 ---
 
-## Gymnasium — gli ambienti
+## Gymnasium - gli ambienti
 
 **Cos'è**: la libreria standard per ambienti RL (erede di OpenAI Gym). Fornisce
-l'interfaccia MDP: `reset` → stato iniziale, `step(azione)` → transizione.
+l'interfaccia MDP: `reset` - stato iniziale, `step(azione)` - transizione.
 
 **Perché qui**: è l'unica libreria di ambienti consentita dalla consegna.
 Fornisce CartPole, Acrobot e (con `ale-py`) gli Atari.
@@ -22,8 +22,8 @@ Fornisce CartPole, Acrobot e (con `ale-py`) gli Atari.
 | API | A cosa serve | Dove |
 |---|---|---|
 | `gym.make(name)` | crea l'ambiente | ogni `make_*` negli script |
-| `env.reset(seed=…)` → `(obs, info)` | stato iniziale (riproducibile) | tutti gli algoritmi, `runner.py` |
-| `env.step(a)` → `(obs, reward, terminated, truncated, info)` | esegue un'azione | tutti gli algoritmi |
+| `env.reset(seed=…)` - `(obs, info)` | stato iniziale (riproducibile) | tutti gli algoritmi, `runner.py` |
+| `env.step(a)` - `(obs, reward, terminated, truncated, info)` | esegue un'azione | tutti gli algoritmi |
 | `env.action_space.n` | numero di azioni | `q_learning`, `dqn`, … |
 | `env.observation_space.shape` | forma dell'osservazione (sceglie MLP vs CNN) | `dqn.py` |
 | `gym.ObservationWrapper` | classe base per trasformare le osservazioni | `envs/discretizer.py` |
@@ -37,7 +37,7 @@ rispetto al codice del corso.
 
 ---
 
-## ale-py — il backend Atari
+## ale-py - il backend Atari
 
 **Cos'è**: l'Arcade Learning Environment, il motore che esegue i giochi Atari.
 
@@ -45,16 +45,16 @@ rispetto al codice del corso.
 includono le ROM.
 
 **API usate**: solo `import ale_py` + `gym.register_envs(ale_py)`
-(📄 `atari_wrappers.py`). Senza la registrazione, `gym.make("ALE/Pong-v5")`
+(`atari_wrappers.py`). Senza la registrazione, `gym.make("ALE/Pong-v5")`
 fallisce con `NamespaceNotFound`.
 
 ---
 
-## NumPy — array, RNG, matematica
+## NumPy - array, RNG, matematica
 
 **Cos'è**: la libreria numerica di base di Python.
 
-**Perché qui**: è il "linguaggio" dei dati del progetto — Q-values, batch di
+**Perché qui**: è il "linguaggio" dei dati del progetto - Q-values, batch di
 osservazioni, array di return multi-seed, salvataggi.
 
 **API usate nel progetto**:
@@ -76,13 +76,13 @@ stati visitati (spazio sparso) e restituisce Q=0 per gli stati mai visti.
 
 ---
 
-## PyTorch — la rete del DQN
+## PyTorch - la rete del DQN
 
 **Cos'è**: il framework di deep learning usato per il DQN. Scelto perché è lo
 standard RL e tutti i riferimenti (paper Nature, SB3) sono PyTorch.
 
 **Perché qui**: implementa la rete `Q(s,·;θ)`, il gradient descent e la GPU.
-Usato **solo** nella Fase 4 (i tabular non lo toccano — per questo l'import è
+Usato **solo** nella Fase 4 (i tabular non lo toccano - per questo l'import è
 "lazy" in `algorithms/deep/__init__.py`).
 
 **API usate nel progetto**:
@@ -96,9 +96,9 @@ Usato **solo** nella Fase 4 (i tabular non lo toccano — per questo l'import è
 | `torch.no_grad()` | disattiva i gradienti (calcolo del target) | `dqn.py` |
 | `tensor.gather(1, idx)` | seleziona Q dell'azione presa | `dqn.py` (`_update_network`) |
 | `tensor.max(dim=1)` / `argmax` | target greedy / Double DQN | `dqn.py` |
-| `torch.from_numpy(...).to(device)` | numpy → tensore su CPU/GPU | `dqn.py` |
+| `torch.from_numpy(...).to(device)` | numpy - tensore su CPU/GPU | `dqn.py` |
 | `copy.deepcopy(net)` | crea la target network | `dqn.py` |
-| `net.load_state_dict(...)` | sync `θ⁻ ← θ` | `dqn.py` |
+| `net.load_state_dict(...)` | sync `θ⁻ - θ` | `dqn.py` |
 | `torch.save(net.state_dict())` | checkpoint del modello | `run_pong.py` |
 | `torch.manual_seed`, `torch.cuda.manual_seed_all` | riproducibilità | `utils/seeding.py` |
 | `torch.cuda.is_available()` | scelta device | `run_pong.py` |
@@ -108,7 +108,7 @@ la seleziona automaticamente su Linux/Windows (su macOS ripiega su CPU).
 
 ---
 
-## Matplotlib — i grafici
+## Matplotlib - i grafici
 
 **Cos'è**: la libreria di plotting di Python.
 
@@ -116,7 +116,7 @@ la seleziona automaticamente su Linux/Windows (su macOS ripiega su CPU).
 
 **API usate**: `matplotlib.use("Agg")` (backend non interattivo, salva su file
 senza GUI), poi `pyplot`: `figure`, `plot`, `fill_between` (la banda ±σ),
-`savefig`, `close`. Tutto in 📄 `utils/plotting.py`.
+`savefig`, `close`. Tutto in `utils/plotting.py`.
 
 ---
 

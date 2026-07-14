@@ -9,7 +9,7 @@ the order they are experienced. This causes two problems:
 
 1. TEMPORAL CORRELATION: consecutive transitions are strongly correlated
    (state S' at step t becomes state S at step t+1). Gradient descent
-   assumes i.i.d. samples → correlated data destabilizes learning.
+   assumes i.i.d. samples - correlated data destabilizes learning.
 
 2. CATASTROPHIC FORGETTING: the agent only trains on recent experiences.
    It "forgets" earlier behavior patterns as new ones overwrite them.

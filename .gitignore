@@ -238,3 +238,8 @@ chronos/outputs/models/
 
 # Local training-corpus subset (downloaded by chronos/models/download_data.py)
 chronos/data/corpus/
+
+# AI-assistant artifacts (kept local, not part of the submitted project)
+.claude/
+CLAUDE.md
+.cursor/

@@ -144,7 +144,7 @@ def make_atari_env(env_name="ALE/Pong-v5", render_mode=None):
     #     (4, 84, 84)
     #
     # where:
-    #     axis 0 -> time (oldest → newest observation)
+    #     axis 0 -> time (oldest - newest observation)
     #     axis 1 -> image height
     #     axis 2 -> image width
     env = gym.wrappers.FrameStackObservation(

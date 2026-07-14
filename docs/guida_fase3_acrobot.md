@@ -1,11 +1,11 @@
-# Fase 3 — Acrobot (Env 2, assegnato dal professore)
+# Fase 3 - Acrobot (Env 2, assegnato dal professore)
 
-> ### 📖 Percorso di lettura
-> - **Prerequisiti**: [Fase 2](guida_fase2_cartpole.md) — Acrobot **riusa gli stessi algoritmi** senza modifiche. Teoria: state aggregation, curse of dimensionality (S&B §9.1).
+> ### Percorso di lettura
+> - **Prerequisiti**: [Fase 2](guida_fase2_cartpole.md) - Acrobot **riusa gli stessi algoritmi** senza modifiche. Teoria: state aggregation, curse of dimensionality (S&B §9.1).
 > - **Guida precedente**: [Fase 2](guida_fase2_cartpole.md). **Successiva**: [Fase 4](guida_fase4_pong.md) (indipendente).
 > - **Tempo stimato**: ~8 minuti.
 > - **Apri in parallelo**: `scripts/run_acrobot.py` e `rl_lab/configs.py` (blocco `ACROBOT`). Gli algoritmi sono quelli già letti in Fase 2.
-> - **Requisito consegna coperto**: Env 2 — applicare gli algoritmi implementati e **discutere le difficoltà specifiche**: esplorazione (reward sparso) e limiti della discretizzazione. Vale ~9 pt (parte dell'analisi sperimentale).
+> - **Requisito consegna coperto**: Env 2 - applicare gli algoritmi implementati e **discutere le difficoltà specifiche**: esplorazione (reward sparso) e limiti della discretizzazione. Vale ~9 pt (parte dell'analisi sperimentale).
 
 ## Obiettivo della fase
 
@@ -13,9 +13,9 @@ Applicare gli **stessi algoritmi** della Fase 2 a un ambiente più complesso:
 Acrobot-v1. L'obiettivo non è solo ripetere gli esperimenti, ma **discutere le
 difficoltà specifiche** che emergono:
 
-1. **Spazio degli stati 6-dimensionale** → esplosione combinatoria della Q-table
-2. **Reward sparso** (-1 per step) → esplorazione difficile
-3. **Necessità di discretizzazione** e i suoi limiti → motivazione per function approximation
+1. **Spazio degli stati 6-dimensionale** - esplosione combinatoria della Q-table
+2. **Reward sparso** (-1 per step) - esplorazione difficile
+3. **Necessità di discretizzazione** e i suoi limiti - motivazione per function approximation
 
 Questa fase dimostra concretamente **perché i metodi tabular non scalano** e
 perché servono i metodi con approssimazione (DQN, Fase 4).
@@ -26,7 +26,7 @@ perché servono i metodi con approssimazione (DQN, Fase 4).
 
 Con CartPole: 4 dimensioni × 10 bin = 10^4 = **10.000 stati**. Gestibile.
 Con Acrobot: 6 dimensioni × 6 bin = 6^6 = **46.656 stati**. Già grande.
-Con 10 bin: 10^6 = **1.000.000 stati** — in *principio* impraticabile per tabular.
+Con 10 bin: 10^6 = **1.000.000 stati** - in *principio* impraticabile per tabular.
 (In pratica, però, l'esperimento `bin_resolution` mostra che entro 10.000 episodi
 10 bin resta la scelta migliore: la sparsità non è ancora il collo di bottiglia a
 questo budget. Vedi la sezione "Come leggere i risultati".)
@@ -67,7 +67,7 @@ sincronizzate, simile a come ci si dondola su un'altalena.
 
 | File | Ruolo |
 |---|---|
-| `rl_lab/configs.py` → `ACROBOT` | Configurazione: 6 bin/dim, range di clipping |
+| `rl_lab/configs.py` - `ACROBOT` | Configurazione: 6 bin/dim, range di clipping |
 | `scripts/run_acrobot.py` | Orchestratore: 4 esperimenti specifici per Acrobot |
 | + tutti i file tabular della Fase 2 | Stessi algoritmi, diverso ambiente |
 
@@ -78,20 +78,20 @@ run_acrobot.py
 │
 ├── exp_control_comparison()
 │   Q-Learning × 3 seed (10000 ep)  ──┐
-│   SARSA × 3 seed (10000 ep)  ───────┤→ control_comparison.png
+│   SARSA × 3 seed (10000 ep)  ───────┤ - control_comparison.png
 │
-├── exp_bin_resolution()               ← ESPERIMENTO CHIAVE
+├── exp_bin_resolution() - ESPERIMENTO CHIAVE
 │   Per n_bins in [4, 6, 8, 10]:
-│     Q-Learning × 3 seed  → bin_resolution.png
+│     Q-Learning × 3 seed - bin_resolution.png
 │   Mostra la curse of dimensionality in azione
 │
 ├── exp_sensitivity_epsilon()
-│   Q-Learning con ε ∈ [0.05, 0.1, 0.2, 0.4]  → sensitivity_epsilon.png
+│   Q-Learning con ε ∈ [0.05, 0.1, 0.2, 0.4] - sensitivity_epsilon.png
 │   Mostra quanto l'esplorazione impatta su Acrobot
 │
 └── exp_prediction()
-    1. Allena Q-Learning → greedy policy
-    2. Valuta con MC e TD(0)  → prediction_return.png (return, identico) +
+    1. Allena Q-Learning - greedy policy
+    2. Valuta con MC e TD(0) - prediction_return.png (return, identico) +
        prediction_value.png (stima V, il confronto vero)
 ```
 
@@ -105,7 +105,7 @@ run_acrobot.py
 
 - **6 bin per dimensione** come default: compromesso tra risoluzione e dimensionalità.
   L'esperimento `exp_bin_resolution` mostra esplicitamente cosa succede con 4, 6, 8, 10 bin.
-  (Nota: i risultati indicano che 6 bin non è in realtà l'ottimo a 10k episodi — vedi
+  (Nota: i risultati indicano che 6 bin non è in realtà l'ottimo a 10k episodi - vedi
   "Come leggere i risultati"; resta un default ragionevole per gli altri esperimenti.)
 
 - **ε = 0.2 nell'esperimento bin_resolution**: scelta a priori (più alto del default 0.1).
@@ -123,7 +123,7 @@ run_acrobot.py
 | Algoritmi (Q-Learning, SARSA, MC, TD(0)) | **Stessi** della Fase 2, nessuna modifica. Questo è il punto: la generalità degli algoritmi. |
 | `ACROBOT` config in `configs.py` | **Nuovo.** I range di clipping sono presi dalla documentazione Gymnasium di Acrobot-v1. |
 | `run_acrobot.py` | **Nuovo.** Struttura ispirata a `run_cartpole.py` ma con esperimenti specifici: bin_resolution e focus su esplorazione. |
-| `exp_bin_resolution()` | **Nuovo.** Non ha equivalente nel corso. È l'analisi più originale del progetto — mostra la curse of dimensionality in modo concreto. |
+| `exp_bin_resolution()` | **Nuovo.** Non ha equivalente nel corso. È l'analisi più originale del progetto - mostra la curse of dimensionality in modo concreto. |
 
 ## Come leggere i risultati
 
@@ -140,10 +140,10 @@ run_acrobot.py
 - **Q-Learning vs SARSA**: come atteso, Q-Learning è più stabile tra i seed
   (±10 contro ±31 di SARSA). Il livello medio finale è simile.
 - **Confronto con CartPole**: convergenza più lenta, più rumorosa e più lontana
-  dall'ottimo — coerente con reward sparso e spazio degli stati grande.
+  dall'ottimo - coerente con reward sparso e spazio degli stati grande.
 
-### bin_resolution.png — ⚠️ risultato che smentisce l'ipotesi
-- **Ipotesi iniziale** (annotata anche nel codice): più bin → peggio, per la
+### bin_resolution.png - risultato che smentisce l'ipotesi
+- **Ipotesi iniziale** (annotata anche nel codice): più bin - peggio, per la
   sparsità (10 bin = 10^6 stati "impraticabili").
 - **Osservato**: **l'opposto**. Entro 10.000 episodi, **10 bin è la
   configurazione MIGLIORE** (≈-300) e **4 bin la PEGGIORE** (≈-420); 6 e 8 bin
@@ -157,39 +157,39 @@ run_acrobot.py
   resta comunque la via giusta per spazi molto più grandi, ma non è ciò che
   questo esperimento dimostra in queste condizioni.
 
-### sensitivity_epsilon.png — ⚠️ risultato che smentisce l'ipotesi
-- **Ipotesi iniziale**: reward sparso → serve *più* esplorazione.
-- **Osservato**: i valori **bassi** (ε=0.05–0.1) danno i risultati migliori
+### sensitivity_epsilon.png - risultato che smentisce l'ipotesi
+- **Ipotesi iniziale**: reward sparso - serve *più* esplorazione.
+- **Osservato**: i valori **bassi** (ε=0.05-0.1) danno i risultati migliori
   (≈-320); ε=0.4 è nettamente il peggiore (≈-440).
 - **Interpretazione**: con ε **costante** (non decrescente), un valore alto
   disturba continuamente la policy greedy e impedisce di sfruttare lo swing-up
   appreso. Servirebbe esplorazione alta solo all'inizio (annealing), non
   costante. Questo spiega perché "più esplorazione" qui peggiora.
 
-### prediction_return.png e prediction_value.png (dopo il fix #1)
+### prediction_return.png e prediction_value.png
 - **prediction_return.png**: return della policy, identico per MC e TD(0)
-  (stessa policy) — non distingue gli stimatori.
+  (stessa policy) - non distingue gli stimatori.
 - **prediction_value.png**: stima V(stato di reset) nel tempo. Su Acrobot il
   **bias di TD è ancora più netto** che su CartPole: MC converge subito a
   ~-92 (vicino al valore vero), mentre TD(0) parte da 0 e scende lentamente,
   a 3000 episodi è solo a ~-57. Lo stato di riferimento è ~90 passi
-  dall'obiettivo e TD propaga il valore un passo alla volta → bootstrap lento,
+  dall'obiettivo e TD propaga il valore un passo alla volta - bootstrap lento,
   stima distorta verso l'inizializzazione (0). MC usa il return completo e non
   ha questo problema.
 - **Nota anchor**: lo stato di riferimento è lo stato di reset discretizzato.
   Un "bin centrale" sarebbe impossibile su Acrobot (cos e sin non possono
-  essere entrambi ~0) → V resterebbe piatta a 0.
+  essere entrambi ~0) - V resterebbe piatta a 0.
 
 ## Modello mentale (perché qui è tutto più difficile)
 
 Rispetto a CartPole, immagina la differenza dal punto di vista dell'agente:
 
-- **Il segnale**: su CartPole ricevo `+1` ad ogni step — so *subito* se sto
+- **Il segnale**: su CartPole ricevo `+1` ad ogni step - so *subito* se sto
   andando bene. Su Acrobot ricevo `-1` ad ogni step *qualunque cosa faccia*,
   finché per caso non raggiungo il goal. Per centinaia di step non ho **nessuna
   informazione** su quali azioni siano migliori: tutte danno `-1`.
 - **Cosa cambia dopo un episodio "fallito"** (che non raggiunge il goal): quasi
-  nulla di utile — ho solo imparato che tanti stati valgono `≈ -500`. Il vero
+  nulla di utile - ho solo imparato che tanti stati valgono `≈ -500`. Il vero
   apprendimento parte solo dopo il *primo* episodio che, per esplorazione,
   inciampa nel goal e ottiene un return meno negativo.
 - **Cosa è memorizzato**: una Q-table potenzialmente enorme (46 656 stati con 6
@@ -214,7 +214,7 @@ spazio grande). È esattamente ciò che la consegna chiede di **discutere**.
 | Return "migliore" con meno bin | **Non per forza un bug**: a questo budget bin fini vincono; verifica prima di dubitare | vedi "bin_resolution.png" sopra |
 
 **Come si verifica l'anchor**: dopo `env.reset()`, la tupla dello stato di reset
-deve avere `cos θ ≈ 1` (link in basso) → bin alto su quelle dimensioni, non
+deve avere `cos θ ≈ 1` (link in basso) - bin alto su quelle dimensioni, non
 centrale. Se stampi l'anchor e vedi tutti indici centrali, è il bug del bin
 centrale.
 
@@ -226,7 +226,7 @@ centrale.
 
 - **10.000 episodi possono non bastare**: con 46.656 stati e reward sparso,
   l'agente potrebbe non aver converguto completamente. Ma il punto non è
-  ottenere la performance ottimale — è mostrare i limiti del tabular.
+  ottenere la performance ottimale - è mostrare i limiti del tabular.
 
 - **Non c'è α-decay**: un α decrescente nel tempo migliorerebbe la convergenza
   finale ma complicherebbe il confronto tra configurazioni.

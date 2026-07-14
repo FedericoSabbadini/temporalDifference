@@ -1,17 +1,17 @@
-# Fase 1 — Introduzione pratica e infrastruttura
+# Fase 1 - Introduzione pratica e infrastruttura
 
-> ### 📖 Percorso di lettura
+> ### Percorso di lettura
 > - **Prerequisiti**: [`panoramica_10_minuti.md`](panoramica_10_minuti.md). Teoria: nozione di MDP, policy, ε-greedy (già dal corso).
-> - **Guida precedente**: nessuna — è la prima. **Successiva**: [Fase 2](guida_fase2_cartpole.md).
+> - **Guida precedente**: nessuna - è la prima. **Successiva**: [Fase 2](guida_fase2_cartpole.md).
 > - **Tempo stimato**: ~12 minuti (guida) + sfogliare i file.
-> - **Apri in parallelo** (in quest'ordine): `rl_lab/configs.py` → `rl_lab/envs/discretizer.py` → `rl_lab/policies.py` → `rl_lab/experiments/runner.py` → `rl_lab/utils/{seeding,plotting}.py`.
-> - **Requisito consegna coperto**: nessuno *direttamente*. Questa fase costruisce l'infrastruttura che *abilita* tutti i requisiti delle fasi 2–4 (discretizzazione, riproducibilità multi-seed, plotting con bande std).
+> - **Apri in parallelo** (in quest'ordine): `rl_lab/configs.py` - `rl_lab/envs/discretizer.py` - `rl_lab/policies.py` - `rl_lab/experiments/runner.py` - `rl_lab/utils/{seeding,plotting}.py`.
+> - **Requisito consegna coperto**: nessuno *direttamente*. Questa fase costruisce l'infrastruttura che *abilita* tutti i requisiti delle fasi 2-4 (discretizzazione, riproducibilità multi-seed, plotting con bande std).
 
 ## Obiettivo della fase
 
 Costruire le fondamenta del progetto: l'infrastruttura che permette di eseguire
 algoritmi tabular RL su ambienti Gymnasium con stato continuo.
-Questa fase non produce risultati sperimentali: prepara il terreno per le fasi 2–4.
+Questa fase non produce risultati sperimentali: prepara il terreno per le fasi 2-4.
 
 I componenti principali sono:
 - **Discretizzazione** dello spazio degli stati (da continuo a discreto)
@@ -23,25 +23,25 @@ I componenti principali sono:
 
 | Concetto teorico (Sutton & Barto) | Dove nel codice |
 |---|---|
-| **MDP con stati continui** — la Q-table richiede stati finiti e hashable | `envs/discretizer.py` |
-| **Policy ε-greedy** — bilancia exploration (azione casuale con prob. ε) ed exploitation (azione greedy) | `policies.py` |
-| **Greedy policy con tie-breaking** — π(s) = argmax_a Q(s,a), con scelta casuale tra i massimi | `policies.py` |
-| **Riproducibilità** — fissare il seed per numpy, torch e l'env | `utils/seeding.py` |
-| **Media su più seed + deviazione standard** — requisito sperimentale della consegna | `experiments/runner.py` |
-| **Learning curve** — reward vs episodi, smoothed con moving average | `utils/plotting.py` |
+| **MDP con stati continui** - la Q-table richiede stati finiti e hashable | `envs/discretizer.py` |
+| **Policy ε-greedy** - bilancia exploration (azione casuale con prob. ε) ed exploitation (azione greedy) | `policies.py` |
+| **Greedy policy con tie-breaking** - π(s) = argmax_a Q(s,a), con scelta casuale tra i massimi | `policies.py` |
+| **Riproducibilità** - fissare il seed per numpy, torch e l'env | `utils/seeding.py` |
+| **Media su più seed + deviazione standard** - requisito sperimentale della consegna | `experiments/runner.py` |
+| **Learning curve** - reward vs episodi, smoothed con moving average | `utils/plotting.py` |
 
 ### Perché serve la discretizzazione?
 
 I metodi tabular (Q-Learning, SARSA, MC, TD) usano una **Q-table** o **V-table**
 indicizzata per stato. Se lo stato è un vettore continuo ℝ^n (come in CartPole o
-Acrobot), servono infiniti stati → impossibile. La soluzione è **binning**: dividere
+Acrobot), servono infiniti stati - impossibile. La soluzione è **binning**: dividere
 ogni dimensione in intervalli uniformi e mappare ogni osservazione continua in un
 indice di bin. Il risultato è una **tupla di interi** usabile come chiave di un dict.
 
 Questo corrisponde al concetto di **state aggregation** (Sutton & Barto §9.4):
 raggruppare stati simili sotto lo stesso valore stimato. Il trade-off è:
-- **Troppi pochi bin** → si perde informazione, policy subottimale
-- **Troppi bin** → spazio degli stati esplode (curse of dimensionality), servono
+- **Troppi pochi bin** - si perde informazione, policy subottimale
+- **Troppi bin** - spazio degli stati esplode (curse of dimensionality), servono
   troppe esperienze per convergere
 
 Questo trade-off è esattamente il tema dell'esperimento `exp_bin_resolution` in Fase 3.
@@ -68,23 +68,23 @@ Metodi più avanzati (UCB, softmax, etc.) non sono richiesti dalla consegna.
 
 ```
 1. configs.py definisce i parametri dell'ambiente (es. CARTPOLE, ACROBOT)
-       ↓
+       |
 2. make_env() crea l'env Gymnasium e lo wrappa con DiscretizedEnv
-       ↓
+       |
 3. DiscretizedEnv.observation() converte ogni osservazione:
-   [cart_pos, cart_vel, angle, ang_vel] → (bin_0, bin_1, bin_2, bin_3)
-       ↓
+   [cart_pos, cart_vel, angle, ang_vel] - (bin_0, bin_1, bin_2, bin_3)
+       |
 4. L'algoritmo (q_learning, sarsa, ...) usa la tupla come chiave del dict Q
-       ↓
+       |
 5. runner.py ripete il tutto per 3 seed diversi
-       ↓
+       |
 6. plotting.py calcola media e std e genera i grafici
 ```
 
 ## Scelte implementative
 
 - **Dict Python come Q-table** (`defaultdict(lambda: np.zeros(n_actions))` = { (1,2,3,4): array([0.,0.])} for state=(1,2,3,4) q(s,a)=[0,0]):
-  scelta del corso. Efficiente per spazi sparsi — alloca solo gli stati visitati.
+  scelta del corso. Efficiente per spazi sparsi - alloca solo gli stati visitati.
   Un array NumPy 2D sarebbe più veloce ma richiederebbe numerare tutti gli stati
   a priori, complicando il codice.
 
@@ -102,7 +102,7 @@ Metodi più avanzati (UCB, softmax, etc.) non sono richiesti dalla consegna.
 
 | Componente | Origine |
 |---|---|
-| `policies.py` — `greedy_action`, `epsilon_greedy_action` | **Adattato** dallo stile dell'Esercitazione_RL del corso. La logica è la stessa (ε-greedy con tie-breaking casuale), adattata per funzionare con `defaultdict` Q-table. |
+| `policies.py` - `greedy_action`, `epsilon_greedy_action` | **Adattato** dallo stile dell'Esercitazione_RL del corso. La logica è la stessa (ε-greedy con tie-breaking casuale), adattata per funzionare con `defaultdict` Q-table. |
 | `envs/discretizer.py` | **Nuovo.** Nelle esercitazioni del corso gli ambienti erano già discreti (gridworld). Il wrapper è necessario perché CartPole e Acrobot hanno stati continui. |
 | `utils/seeding.py` | **Nuovo**, ma il pattern (`np.random.seed + torch.manual_seed`) è standard. |
 | `utils/plotting.py` | **Adattato** dalla funzione `moving_average` usata negli esercizi del corso. `plot_learning_curves` con bande std è nuovo. |
@@ -116,7 +116,7 @@ Questa fase non produce grafici. Il suo output è verificabile importando il pac
 ```python
 from rl_lab.configs import CARTPOLE
 from rl_lab.envs.discretizer import DiscretizedEnv
-# Se l'import funziona → l'infrastruttura è pronta.
+# Se l'import funziona - l'infrastruttura è pronta.
 ```
 
 ## Modello mentale (cosa succede davvero)
@@ -134,8 +134,8 @@ Immagina un singolo esperimento come una catena di montaggio:
 Cosa "vive" tra un pezzo e l'altro:
 - Lo **stato** è effimero: nasce nell'env, viene discretizzato, usato come chiave,
   e dimenticato.
-- La **Q-table** (nelle fasi 2–4) è ciò che *persiste e cresce* durante una run.
-- Il **seed** è ciò che rende la catena ripetibile: stessi seed → stessi numeri.
+- La **Q-table** (nelle fasi 2-4) è ciò che *persiste e cresce* durante una run.
+- Il **seed** è ciò che rende la catena ripetibile: stessi seed - stessi numeri.
 
 Questa fase non "impara" nulla: costruisce solo la catena di montaggio. L'unico
 output verificabile è che il package si importi (vedi sotto).

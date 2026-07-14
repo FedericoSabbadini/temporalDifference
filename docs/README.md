@@ -1,4 +1,4 @@
-# Documentazione — indice e guida allo studio
+# Documentazione - indice e guida allo studio
 
 Benvenuto nel *learning companion* del progetto **TemporalDifference**.
 Queste guide sono pensate per essere lette **con il codice sorgente aperto a
@@ -9,13 +9,13 @@ fianco**: ogni guida è un tour commentato dei file corrispondenti.
 
 ---
 
-## 🚦 Da dove iniziare (in base al tempo che hai)
+## Da dove iniziare (in base al tempo che hai)
 
 | Ho… | Leggi |
 |---|---|
-| **10 minuti** | [`panoramica_10_minuti.md`](panoramica_10_minuti.md) — il quadro d'insieme |
-| **1 ora** | [`walkthrough_1_ora.md`](walkthrough_1_ora.md) — tour guidato guide+codice |
-| **poco, prima dell'orale** | [`ripasso_orale.md`](ripasso_orale.md) — Q&A e punti scomodi |
+| **10 minuti** | [`panoramica_10_minuti.md`](panoramica_10_minuti.md) - il quadro d'insieme |
+| **1 ora** | [`walkthrough_1_ora.md`](walkthrough_1_ora.md) - tour guidato guide+codice |
+| **poco, prima dell'orale** | [`ripasso_orale.md`](ripasso_orale.md) - Q&A e punti scomodi |
 | **una fase intera da studiare** | la `guida_fase*` corrispondente (sotto) |
 | **un termine RL da ritrovare** | [`glossario.md`](glossario.md) |
 | **una classe/funzione/file da ritrovare** | [`mappa_codice.md`](mappa_codice.md) |
@@ -25,54 +25,54 @@ fianco**: ogni guida è un tour commentato dei file corrispondenti.
 
 ---
 
-## 📚 Le guide
+## Le guide
 
 ### Guide di fase (il percorso principale)
 Ognuna ha in cima un **box "Percorso di lettura"** con prerequisiti, tempo,
 file da aprire e guida precedente.
 
-1. [`guida_fase1_introduzione.md`](guida_fase1_introduzione.md) —
+1. [`guida_fase1_introduzione.md`](guida_fase1_introduzione.md) - 
    **Infrastruttura**: discretizzazione, policy, runner multi-seed, plotting.
    *Nessun esperimento: prepara il terreno.*
-2. [`guida_fase2_cartpole.md`](guida_fase2_cartpole.md) —
+2. [`guida_fase2_cartpole.md`](guida_fase2_cartpole.md) - 
    **CartPole**: i 4 algoritmi tabular, sensitivity, MC vs TD, failure cases.
-3. [`guida_fase3_acrobot.md`](guida_fase3_acrobot.md) —
+3. [`guida_fase3_acrobot.md`](guida_fase3_acrobot.md) - 
    **Acrobot**: gli stessi algoritmi su un problema più duro; curse of
    dimensionality; i risultati che smentiscono le ipotesi.
-4. [`guida_fase4_pong.md`](guida_fase4_pong.md) —
+4. [`guida_fase4_pong.md`](guida_fase4_pong.md) - 
    **Pong / DQN**: deep RL da zero, experience replay, target network, ablation,
    Double DQN.
 
 ### Documenti di supporto
-- [`origine_codice.md`](origine_codice.md) — cosa è adattato dal corso, cosa è
+- [`origine_codice.md`](origine_codice.md) - cosa è adattato dal corso, cosa è
   nuovo, cosa è standard da paper.
-- [`glossario.md`](glossario.md) — ogni **termine RL** → dove vive nel codice.
-- [`mappa_codice.md`](mappa_codice.md) — glossario del **codice**: classi,
+- [`glossario.md`](glossario.md) - ogni **termine RL** - dove vive nel codice.
+- [`mappa_codice.md`](mappa_codice.md) - glossario del **codice**: classi,
   funzioni e file con firme e chiamate.
-- [`simboli_e_parametri.md`](simboli_e_parametri.md) — variabili, tensori,
+- [`simboli_e_parametri.md`](simboli_e_parametri.md) - variabili, tensori,
   iperparametri, strutture dati, forme.
-- [`librerie.md`](librerie.md) — ogni dipendenza: cos'è, perché, e le API usate.
-- [`comandi.md`](comandi.md) — cheat sheet dei comandi + workflow completo.
+- [`librerie.md`](librerie.md) - ogni dipendenza: cos'è, perché, e le API usate.
+- [`comandi.md`](comandi.md) - cheat sheet dei comandi + workflow completo.
 - [`panoramica_10_minuti.md`](panoramica_10_minuti.md),
   [`walkthrough_1_ora.md`](walkthrough_1_ora.md),
-  [`ripasso_orale.md`](ripasso_orale.md) — i tre "livelli di zoom".
+  [`ripasso_orale.md`](ripasso_orale.md) - i tre "livelli di zoom".
 
 ---
 
-## 🗺️ Ordine di studio consigliato
+## Ordine di studio consigliato
 
 ```
 panoramica_10_minuti
         │
         ▼
-   guida_fase1 ──────────────► (infrastruttura: la base di tutto)
+   guida_fase1 ──────────────(infrastruttura: la base di tutto)
         │
         ▼
-   guida_fase2 ──────────────► (i 4 algoritmi; la fase più densa)
+   guida_fase2 ──────────────(i 4 algoritmi; la fase più densa)
         │
-        ├──► guida_fase3 ────► (stessi algoritmi, ambiente più duro)
+        ├──guida_fase3 ────(stessi algoritmi, ambiente più duro)
         │
-        └──► guida_fase4 ────► (DQN: parte indipendente dai tabular)
+        └──guida_fase4 ────(DQN: parte indipendente dai tabular)
         │
         ▼
    ripasso_orale (quando serve consolidare)
@@ -82,12 +82,12 @@ panoramica_10_minuti
   plotting usati ovunque).
 - **Fase 2 è prerequisito di Fase 3** (Fase 3 riusa gli stessi algoritmi).
 - **Fase 4 (DQN) è quasi indipendente**: puoi leggerla dopo la Fase 1 senza aver
-  fatto le 2–3, se ti interessa solo il deep RL. Condivide però il *target di
+  fatto le 2-3, se ti interessa solo il deep RL. Condivide però il *target di
   Bellman* con la Fase 2.
 
 ---
 
-## 🔗 Grafo delle dipendenze guide ↔ codice
+## Grafo delle dipendenze guide ↔ codice
 
 Quali file di `rl_lab/` e `scripts/` apre ciascuna guida:
 
@@ -106,13 +106,13 @@ scripts/run_*.py
    ├── rl_lab/configs.py            (parametri)
    ├── rl_lab/envs/*                (ambiente: discretizer / atari)
    ├── rl_lab/algorithms/*          (l'algoritmo)
-   ├── rl_lab/experiments/runner.py (loop multi-seed) ──► rl_lab/utils/seeding.py
+   ├── rl_lab/experiments/runner.py (loop multi-seed) ──rl_lab/utils/seeding.py
    └── rl_lab/utils/plotting.py     (grafici)
 ```
 
 ---
 
-## ✅ Coerenza con il resto del progetto
+## Coerenza con il resto del progetto
 
 - I **numeri** citati nelle guide sono i risultati reali (media su 3 seed) e
   coincidono con `report/tables/` e `results/*.npz`.

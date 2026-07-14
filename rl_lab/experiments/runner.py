@@ -23,7 +23,7 @@ def run_multi_seed(make_env_fn, train_fn, seeds=(42, 123, 456),
     3. The plotting functions compute mean ± std from this array
 
     Args:
-        make_env_fn: callable() → Gymnasium env. Called once per seed
+        make_env_fn: callable() - Gymnasium env. Called once per seed
                      (fresh env each time to avoid cross-contamination).
         train_fn: algorithm function. Must accept env= as first kwarg and
                   return a tuple where index [1] is the episode returns list.
@@ -45,8 +45,8 @@ def run_multi_seed(make_env_fn, train_fn, seeds=(42, 123, 456),
         env.reset(seed=seed)  # seed the env's internal RNG (Gymnasium API)
 
         # Run the algorithm; all algorithms return episode_returns at index [1]:
-        # q_learning → (Q, returns, lengths)
-        # mc_prediction / td0_prediction → (V, returns, value_history)
+        # q_learning - (Q, returns, lengths)
+        # mc_prediction / td0_prediction - (V, returns, value_history)
         result = train_fn(env=env, **train_kwargs)
         all_returns.append(result[1])  # index [1] = episode_returns list
         all_results.append(result)

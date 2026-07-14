@@ -41,20 +41,21 @@ l'addestramento usa **experience replay** (mini-batch casuali dal buffer) e una
 
 ## I risultati in una riga ciascuno
 
-- **CartPole**: entrambi apprendono; con la discretizzazione fine (fix #2) SARSA
+- **CartPole**: entrambi apprendono; con la discretizzazione fine SARSA
   supera Q-Learning ma le curve sono più rumorose e ancora in salita a 5000 ep.
 - **Acrobot**: apprendimento parziale (~−345), lontano dall'ottimo. **Due
-  sorprese**: bin più fini vanno *meglio* e ε basso va *meglio* — contro le
+  sorprese**: bin più fini vanno *meglio* e ε basso va *meglio* - contro le
   ipotesi iniziali, mantenute e analizzate.
 - **Pong**: l'**experience replay è essenziale** (senza, non impara affatto); la
   target network accelera. Full DQN −12.1, Double DQN −14.2 (random ≈ −20.4).
 
-## Le due correzioni chiave (fix)
+## Due scelte di progettazione da capire
 
-- **Fix #1**: il confronto MC vs TD(0) ora traccia la **stima V(s)** nel tempo
-  (non solo il return, che è identico tra i due) → mostra davvero bias/varianza.
-- **Fix #2**: i bin di CartPole ristretti ai limiti di *terminazione* → più
-  risoluzione utile, ma convergenza più lenta (trade-off, non miglioria netta).
+- **Confronto MC vs TD(0)**: si traccia la **stima V(s)** nel tempo (non solo il
+  return, che è identico tra i due), perché è lì che si vede il bias/varianza.
+- **Discretizzazione CartPole**: i bin sono ristretti ai limiti di
+  *terminazione*, quindi più risoluzione utile, ma convergenza più lenta
+  (un compromesso, non una miglioria netta).
 
 ## Com'è organizzato il codice
 
@@ -63,7 +64,7 @@ rl_lab/          il "motore": algoritmi + ambienti + utilità (codice riutilizza
 scripts/         un file per ambiente: orchestrano gli esperimenti
 results/         array grezzi .npz + checkpoint DQN
 figures/         grafici generati
-report/          report LaTeX (16→20 pagine, in italiano)
+report/          report LaTeX (16 - 20 pagine, in italiano)
 docs/            queste guide
 ```
 
@@ -79,7 +80,7 @@ uscita); **`scripts/` orchestra**; **il plotting è separato** dagli algoritmi.
 
 ## Dove andare adesso
 
-- Vuoi il percorso guidato di 1 ora? → [`walkthrough_1_ora.md`](walkthrough_1_ora.md)
-- Ripasso mirato per l'orale? → [`ripasso_orale.md`](ripasso_orale.md)
-- Studiare una fase col codice a fianco? → guide `guida_fase1…4`
-- Indice completo e ordine di studio → [`README.md`](README.md)
+- Vuoi il percorso guidato di 1 ora? - [`walkthrough_1_ora.md`](walkthrough_1_ora.md)
+- Ripasso mirato per l'orale? - [`ripasso_orale.md`](ripasso_orale.md)
+- Studiare una fase col codice a fianco? - guide `guida_fase1…4`
+- Indice completo e ordine di studio - [`README.md`](README.md)

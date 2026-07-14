@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pong DQN experiments — Env 3 (Atari / Deep RL).
+"""Pong DQN experiments - Env 3 (Atari / Deep RL).
 
 Origin: NEW. Ablation study design follows the assignment requirements:
 "confrontare DQN con vs senza target network / experience replay."
@@ -7,7 +7,7 @@ Double DQN (bonus) added as a 5th configuration.
 
 Implements the required DQN ablation study:
   1. Full DQN (experience replay + target network)
-  2. No target network (same object for online and target → moving target)
+  2. No target network (same object for online and target - moving target)
   3. No experience replay (online learning, correlated updates)
   4. No target + no replay (worst case: both problems at once)
 
@@ -15,7 +15,7 @@ Plus the bonus:
   5. Double DQN (decouples action selection from evaluation)
 
 Each configuration is run for 3 seeds.
-The goal is NOT high performance — just showing learning vs random.
+The goal is NOT high performance - just showing learning vs random.
 Assignment: "Non è richiesto ottenere performance elevate. È sufficiente
 mostrare apprendimento rispetto a policy casuale."
 
@@ -39,7 +39,7 @@ FIG_DIR = "figures/pong"
 # Use GPU if available (RTX 5060); falls back to CPU otherwise
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Startup banner — makes it obvious which interpreter/device is actually in use.
+# Startup banner - makes it obvious which interpreter/device is actually in use.
 # If DEVICE prints "cpu", you launched with the wrong Python; use the cu128 venv.
 print(f"[run_pong] python     : {sys.executable}")
 print(f"[run_pong] torch      : {torch.__version__}  (cuda build: {torch.version.cuda})")
@@ -47,9 +47,9 @@ print(f"[run_pong] cuda avail : {torch.cuda.is_available()}")
 print(f"[run_pong] DEVICE     : {DEVICE}"
       + (f"  ({torch.cuda.get_device_name(0)})" if torch.cuda.is_available() else ""))
 if DEVICE == "cpu":
-    print("[run_pong] WARNING: running on CPU — training will be slow.")
+    print("[run_pong] WARNING: running on CPU - training will be slow.")
 
-# Training budget — short enough to be feasible, long enough to show learning.
+# Training budget - short enough to be feasible, long enough to show learning.
 # Nature paper uses 50M steps; 200k is ~0.4% of that.
 TOTAL_STEPS = 200_000  # ~50 min on RTX 5060; increase if time allows
 
@@ -92,14 +92,14 @@ def run_config(label, seeds=SEEDS, **dqn_kwargs):
         # Save model weights for potential later analysis or visualization
         ckpt_dir = f"results/pong/{label.replace(' ', '_')}"
         os.makedirs(ckpt_dir, exist_ok=True)
-        # state_dict() saves only the weights (not optimizer state) — smaller file
+        # state_dict() saves only the weights (not optimizer state) - smaller file
         torch.save(model.state_dict(),
                    f"{ckpt_dir}/model_seed{seed}.pt")
 
     # Pad to same length: different seeds may produce different episode counts
     # (the step budget is fixed at TOTAL_STEPS, but episode lengths vary)
     max_len = max(len(r) for r in all_returns)
-    # np.nan for missing values → nanmean/nanstd in plotting will ignore them
+    # np.nan for missing values - nanmean/nanstd in plotting will ignore them
     padded = np.full((len(seeds), max_len), np.nan) # it will full a matrix of shape (num_seeds, max_len) with NaN values
     for i, r in enumerate(all_returns):
         padded[i, :len(r)] = r  # fill in actual data, leave rest as NaN
@@ -152,14 +152,14 @@ def main():
     os.makedirs(FIG_DIR, exist_ok=True)
     os.makedirs("results/pong", exist_ok=True)
 
-    # Shared hyperparameters — SAME across all configurations for a fair ablation.
+    # Shared hyperparameters - SAME across all configurations for a fair ablation.
     # Only the ablation flags (use_target_network, use_replay, use_double_dqn) differ.
     common = dict(
         gamma=0.99,                 # discount factor (standard for Atari)
         lr=1e-4,                    # Adam learning rate (Nature paper uses RMSprop 2.5e-4)
         buffer_capacity=100_000,    # 100k transitions; Nature uses 1M but that needs ~28 GB RAM
         batch_size=32,              # mini-batch size for gradient updates (same as Nature)
-        target_update_freq=1000,    # hard update θ⁻ ← θ every 1000 steps (Nature: 10k)
+        target_update_freq=1000,    # hard update θ⁻ - θ every 1000 steps (Nature: 10k)
         epsilon_start=1.0,          # start with 100% random actions (full exploration)
         epsilon_end=0.02,           # end with 2% random actions (mostly exploitation)
         epsilon_decay_steps=100_000,  # linear decay over 50% of training steps
@@ -181,7 +181,7 @@ def main():
 
     # --- 3. No experience replay (ablation: correlated updates) ---
     no_replay_common = dict(common)
-    # Without replay, there's no large buffer to fill → can start learning immediately
+    # Without replay, there's no large buffer to fill - can start learning immediately
     no_replay_common["learning_starts"] = 32
     no_replay = run_config("No replay",
                            use_target_network=True, use_replay=False,
@@ -205,7 +205,7 @@ def main():
     # Expected: without replay, learning is slower/noisier due to correlated updates
     plot_learning_curves(
         {"Full DQN": full, "No replay": no_replay},
-        title="Pong — DQN: with vs without experience replay",
+        title="Pong - DQN: with vs without experience replay",
         save_path=f"{FIG_DIR}/ablation_replay.png",
         window=10,
     )
@@ -214,7 +214,7 @@ def main():
     # Expected: without target net, the "moving target" causes oscillation
     plot_learning_curves(
         {"Full DQN": full, "No target net": no_target},
-        title="Pong — DQN: with vs without target network",
+        title="Pong - DQN: with vs without target network",
         save_path=f"{FIG_DIR}/ablation_target.png",
         window=10,
     )
@@ -229,7 +229,7 @@ def main():
             "No target + no replay": no_both,
             "Double DQN (bonus)": double,
         },
-        title=f"Pong — DQN ablation study (random baseline ≈ {random_mean:.0f})",
+        title=f"Pong - DQN ablation study (random baseline ≈ {random_mean:.0f})",
         save_path=f"{FIG_DIR}/full_comparison.png",
         window=10,
     )
