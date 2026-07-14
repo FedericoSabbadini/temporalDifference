@@ -55,7 +55,7 @@ def exp_control_comparison():
     Q-Learning uses max (greedy target), SARSA uses the actual next action.
     On CartPole the difference is subtle - no "cliff" to make it dramatic.
     """
-    print("\n=== 1. Q-Learning vs SARSA ===")
+    print("\n=== 1. Q-Learning vs SARSA (CartPole) ===")
     # Run each algorithm with the SAME hyperparameters for a fair comparison
     ql_ret, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
                                episodes=10000, alpha=0.1, gamma=0.99,
