@@ -51,3 +51,23 @@ def epsilon_greedy_action(Q, state, epsilon, n_actions):
     if np.random.rand() < epsilon:  # with probability ε...
         return np.random.randint(n_actions)  # ...pick a random action (exploration)
     return greedy_action(Q, state)  # otherwise pick the best known action (exploitation)
+
+
+def linear_epsilon(start, end, current, horizon):
+    """Single shared ε schedule used by BOTH the tabular algorithms and the DQN.
+
+    Linear decay from `start` (at current=0) down to `end` (once current reaches
+    `horizon`), then held constant at `end`:
+
+        frac   = min(1, current / horizon)
+        eps    = start + (end - start) * frac
+
+    The formula is the same everywhere; only the UNIT of (current, horizon)
+    differs by necessity, because the training loops are different:
+      - tabular (episode-based): current = episode index, horizon = episodes // 2
+      - DQN (step-based):        current = env step,     horizon = decay steps
+
+    This keeps one decay implementation instead of two.
+    """
+    frac = min(1.0, current / horizon)
+    return start + (end - start) * frac

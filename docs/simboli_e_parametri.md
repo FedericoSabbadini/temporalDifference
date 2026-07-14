@@ -68,6 +68,30 @@ metà risoluzione su stati impossibili. `configs.py` (commento).
 
 ---
 
+### Formula dello schedule di epsilon (decay / annealing)
+
+C'è **un'unica** implementazione condivisa: `linear_epsilon(start, end, current,
+horizon)` in `policies.py`. Decadimento lineare da `start` (a `current=0`) fino a
+`end` (quando `current` raggiunge `horizon`), poi tenuto costante:
+
+```
+frac      = min(1, current / horizon)
+eps       = start + (end - start) * frac
+```
+
+La formula è la stessa ovunque; cambia solo l'**unità** di `(current, horizon)`,
+perché i loop di training sono diversi:
+
+| Dove | `current` | `horizon` | Note |
+|---|---|---|---|
+| Tabular (Q-Learning, SARSA) | indice episodio `ep` | `episodi // 2` | opt-in via `epsilon_end`; con `epsilon_end=None` epsilon è costante |
+| DQN (Pong) | step ambiente `t` | `epsilon_decay_steps` | sempre attivo |
+
+Quindi il tabular conta in **episodi** e il DQN in **step**, ma usano la stessa
+funzione. (`exp_epsilon_annealing` su CartPole/Acrobot usa la versione tabular.)
+
+---
+
 ## 4. Tensori e forme (DQN)
 
 `dqn.py` (`_obs_to_tensor`, `_batch_to_tensor`, `_update_network`).

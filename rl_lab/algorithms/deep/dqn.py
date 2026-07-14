@@ -28,6 +28,7 @@ import torch.nn.functional as F
 
 from rl_lab.algorithms.deep.replay_buffer import ReplayBuffer
 from rl_lab.algorithms.deep.networks import NatureCNN
+from rl_lab.policies import linear_epsilon
 
 
 # ---------------------------------------------------------------------------
@@ -217,15 +218,12 @@ def train_dqn(
         ep_steps = 0
 
         while True:
-            # Linear ε-decay: ε decreases linearly from epsilon_start to epsilon_end
-            # over epsilon_decay_steps, then stays at epsilon_end forever.
-            # Early training - high ε - mostly random (exploration)
-            # Late training - low ε - mostly greedy (exploitation)
-            epsilon = max(
-                epsilon_end,
-                epsilon_start - step * (epsilon_start - epsilon_end)
-                / epsilon_decay_steps,
-            )
+            # Linear ε-decay via the SAME shared schedule used by the tabular
+            # algorithms (policies.linear_epsilon): here the horizon is in ENV
+            # STEPS (epsilon_decay_steps) rather than episodes. ε decreases from
+            # epsilon_start to epsilon_end over epsilon_decay_steps, then holds.
+            epsilon = linear_epsilon(epsilon_start, epsilon_end, step,
+                                     epsilon_decay_steps)
 
             # ε-greedy action selection using the ONLINE network
             if np.random.rand() < epsilon:

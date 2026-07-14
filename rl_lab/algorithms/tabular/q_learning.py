@@ -18,11 +18,11 @@ The term in brackets [R + γ max Q(S',a) - Q(S,A)] is the TD error (δ).
 import numpy as np
 from collections import defaultdict
 
-from rl_lab.policies import epsilon_greedy_action
+from rl_lab.policies import epsilon_greedy_action, linear_epsilon
 
 
 def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
-               max_steps=1000):
+               max_steps=1000, epsilon_end=None):
     """Train Q-Learning on a discrete (or discretized) Gymnasium env.
 
     Args:
@@ -32,8 +32,12 @@ def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
                Too high - instability; too low - slow convergence.
         gamma: discount factor - how much future rewards matter.
                gamma=1 treats all future rewards equally; gamma<1 is "myopic".
-        epsilon: exploration rate for ε-greedy (constant, no decay).
+        epsilon: exploration rate for ε-greedy. This is the START value.
         max_steps: safety cap on episode length.
+        epsilon_end: if None (default), ε is CONSTANT at `epsilon` (no decay).
+               If set, ε is ANNEALED linearly from `epsilon` down to
+               `epsilon_end` over the first half of training, then held at
+               `epsilon_end` (explore early, exploit late).
 
     Returns:
         Q: learned Q-table (defaultdict mapping state to an np.array of Q-values per action).
@@ -48,13 +52,21 @@ def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
     episode_lengths = []  # steps per episode (for diagnostics)
 
     for ep in range(episodes):
+        # ε schedule: constant if epsilon_end is None (default, identical to
+        # before), otherwise the shared linear anneal over the first half of
+        # training (see policies.linear_epsilon).
+        if epsilon_end is None:
+            eps = epsilon
+        else:
+            eps = linear_epsilon(epsilon, epsilon_end, ep, max(1, episodes // 2))
+
         # Gymnasium API: reset returns (observation, info_dict)
         state, _ = env.reset()
         total_reward = 0.0
 
         for step in range(max_steps):
             # Behavior policy: ε-greedy (explore with prob ε)
-            action = epsilon_greedy_action(Q, state, epsilon, n_actions)
+            action = epsilon_greedy_action(Q, state, eps, n_actions)
 
             # Gymnasium API: step returns (obs, reward, terminated, truncated, info)
             # terminated = reached a terminal state (e.g. pole fell)

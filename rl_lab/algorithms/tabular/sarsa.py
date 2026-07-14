@@ -23,12 +23,16 @@ The name SARSA comes from the quintuple used in each update:
 import numpy as np
 from collections import defaultdict
 
-from rl_lab.policies import epsilon_greedy_action
+from rl_lab.policies import epsilon_greedy_action, linear_epsilon
 
 
 def sarsa(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
-          max_steps=1000):
+          max_steps=1000, epsilon_end=None):
     """Train SARSA on a discrete (or discretized) Gymnasium env.
+
+    Args are the same as q_learning, including `epsilon_end`: if None (default)
+    ε is constant at `epsilon`; if set, ε is annealed linearly from `epsilon` to
+    `epsilon_end` over the first half of training, then held.
 
     Returns:
         Q, episode_returns, episode_lengths (same format as q_learning).
@@ -39,11 +43,18 @@ def sarsa(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
     episode_lengths = []  # steps per episode (for diagnostics)
 
     for ep in range(episodes):
+        # ε schedule: constant if epsilon_end is None (default), else the shared
+        # linear anneal (see policies.linear_epsilon)
+        if epsilon_end is None:
+            eps = epsilon
+        else:
+            eps = linear_epsilon(epsilon, epsilon_end, ep, max(1, episodes // 2))
+
         state, _ = env.reset()
-        # SARSA needs the first action BEFORE entering the loop - 
+        # SARSA needs the first action BEFORE entering the loop -
         # unlike Q-Learning, which only needs the action inside the loop.
         # This is because SARSA uses the (S, A, R, S', A') quintuple.
-        action = epsilon_greedy_action(Q, state, epsilon, n_actions)
+        action = epsilon_greedy_action(Q, state, eps, n_actions)
         total_reward = 0.0
 
         for step in range(max_steps):
@@ -55,7 +66,7 @@ def sarsa(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
             # Choose next action A' BEFORE updating - this is the key SARSA pattern.
             # A' is chosen by the SAME ε-greedy policy the agent is following.
             # The full quintuple (S, A, R, S', A') is now available for the update.
-            next_action = epsilon_greedy_action(Q, next_state, epsilon,
+            next_action = epsilon_greedy_action(Q, next_state, eps,
                                                 n_actions)
 
             # === SARSA update (S&B §6.4, Eq. 6.7) ===

@@ -21,6 +21,8 @@ Parametri come dict Python. Nessuna logica.
   policy da valutare in prediction.
 - `epsilon_greedy_action(Q, state, epsilon, n_actions) - action` - con prob. ε
   azione casuale, altrimenti `greedy_action`.
+- `linear_epsilon(start, end, current, horizon) - eps` - schedule ε lineare
+  condiviso da tabular e DQN (unica implementazione del decay/annealing).
 
 ### `envs/discretizer.py` - stato continuo - discreto
 - `class DiscretizedEnv(gym.ObservationWrapper)`
