@@ -27,7 +27,7 @@ import torch
 import torch.nn.functional as F
 
 from rl_lab.algorithms.deep.replay_buffer import ReplayBuffer
-from rl_lab.algorithms.deep.networks import MLP, NatureCNN
+from rl_lab.algorithms.deep.networks import NatureCNN
 
 
 # ---------------------------------------------------------------------------
@@ -35,37 +35,21 @@ from rl_lab.algorithms.deep.networks import MLP, NatureCNN
 # ---------------------------------------------------------------------------
 
 def _obs_to_tensor(obs, device):
-    """Convert a single observation to a batched float tensor.
+    """Convert a single Atari observation to a batched float tensor.
 
-    For images (C,H,W uint8): normalise to [0,1] - (1,C,H,W).
-    For vectors (float): just wrap and add batch dim - (1,D).
-
-    Atari frames arrive already channel-first (4,84,84) from
-    FrameStackObservation, so no transpose is needed here.
+    Atari frames arrive already channel-first (4, 84, 84) as uint8 from
+    FrameStackObservation, so we only normalise to [0, 1] and add a batch
+    dimension (no transpose needed): (4, 84, 84) becomes (1, 4, 84, 84).
     """
-    obs = np.asarray(obs)
-    if obs.ndim >= 3:
-        # Image observation (C, H, W) uint8 - normalise
-        obs = obs.astype(np.float32) / 255.0
-    else:  # vector observation (D,) - e.g. CartPole state
-        obs = obs.astype(np.float32)
-    # unsqueeze(0) adds batch dimension: (C,H,W) - (1,C,H,W) for a single-sample forward pass
+    obs = np.asarray(obs, dtype=np.float32) / 255.0
     return torch.from_numpy(obs).unsqueeze(0).to(device)
 
 
 def _batch_to_tensor(batch, device):
-    """Convert a batch of observations to a float tensor.
-
-    For images (B,C,H,W uint8): normalise - (B,C,H,W).
-    For vectors (B,D): just convert.
-
-    Frames are already channel-first, so no transpose is needed.
+    """Convert a batch of Atari observations (B, 4, 84, 84) uint8 to a float
+    tensor normalised to [0, 1]. Frames are already channel-first: no transpose.
     """
-    arr = np.asarray(batch)
-    if arr.ndim >= 4:  # batch of images: (B, C, H, W)
-        arr = arr.astype(np.float32) / 255.0       # normalize uint8 - [0, 1]
-    else:  # batch of vectors: (B, D)
-        arr = arr.astype(np.float32)
+    arr = np.asarray(batch, dtype=np.float32) / 255.0
     return torch.from_numpy(arr).to(device)  # move to CPU or GPU
 
 
@@ -188,17 +172,11 @@ def train_dqn(
         episode_lengths: list of per-episode lengths.
         online_net: trained Q-network (can be saved with torch.save).
     """
-    n_actions = env.action_space.n  # e.g. 6 for Pong, 2 for CartPole
-    obs_shape = env.observation_space.shape  # e.g. (84, 84, 4) for Atari, (4,) for CartPole
+    n_actions = env.action_space.n  # 6 for Pong
 
-    # --- Build networks ---
-    # Automatically choose CNN (for images) or MLP (for vectors) based on obs shape
-    if len(obs_shape) == 1:
-        # Vector obs (e.g. CartPole): use simple MLP
-        online_net = MLP(obs_shape[0], n_actions).to(device)
-    else:
-        # Image obs (e.g. Atari 84×84×4): use the Nature CNN architecture
-        online_net = NatureCNN(n_actions).to(device)
+    # --- Build network ---
+    # The Nature CNN architecture, for stacked-frame image observations (Atari).
+    online_net = NatureCNN(n_actions).to(device)
 
     if use_target_network:
         # Deep copy creates a SEPARATE network with the same initial weights.
