@@ -58,10 +58,10 @@ def exp_control_comparison():
     print("\n=== 1. Q-Learning vs SARSA ===")
     # Run each algorithm with the SAME hyperparameters for a fair comparison
     ql_ret, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
-                               episodes=5000, alpha=0.1, gamma=0.99,
+                               episodes=10000, alpha=0.1, gamma=0.99,
                                epsilon=0.1)
     sa_ret, _ = run_multi_seed(make_cartpole, sarsa, SEEDS,
-                               episodes=5000, alpha=0.1, gamma=0.99,
+                               episodes=10000, alpha=0.1, gamma=0.99,
                                epsilon=0.1)
     # Plot both on the same axes for direct visual comparison
     plot_learning_curves(
@@ -103,7 +103,7 @@ def exp_sensitivity():
     This produces 6 plots (3 params × 2 algorithms).
     The default values (α=0.1, γ=0.99, ε=0.1) are standard from S&B.
     """
-    defaults = dict(episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1)
+    defaults = dict(episodes=10000, alpha=0.1, gamma=0.99, epsilon=0.1)
 
     for algo_fn, name in [(q_learning, "QLearning"), (sarsa, "SARSA")]:
         _sweep(algo_fn, name, "epsilon", [0.01, 0.05, 0.1, 0.3], defaults)
@@ -141,7 +141,7 @@ def exp_prediction_comparison():
     # Step 1: Train Q-Learning to get a good Q-table (control - learn a policy)
     set_seed(42)  # fixed seed for reproducibility of the learned policy
     env = make_cartpole()
-    Q, _, _ = q_learning(env, episodes=5000, alpha=0.1, gamma=0.99,
+    Q, _, _ = q_learning(env, episodes=10000, alpha=0.1, gamma=0.99,
                          epsilon=0.1)
     env.close()
     print("  Learned Q-table, extracting greedy policy...")
@@ -168,11 +168,11 @@ def exp_prediction_comparison():
                              (random_policy, "random")]:
         # MC prediction: waits until episode end, then uses the full return G
         mc_ret, mc_res = run_multi_seed(make_cartpole, mc_prediction, SEEDS,
-                                        policy_fn=policy_fn, episodes=3000,
+                                        policy_fn=policy_fn, episodes=6000,
                                         gamma=0.99, track_state=anchor)
         # TD(0) prediction: updates at every step using bootstrap estimate V(S')
         td_ret, td_res = run_multi_seed(make_cartpole, td0_prediction, SEEDS,
-                                        policy_fn=policy_fn, episodes=3000,
+                                        policy_fn=policy_fn, episodes=6000,
                                         alpha=0.1, gamma=0.99, track_state=anchor)
 
         # View 1: episode return (identical by construction - kept for honesty)
@@ -205,7 +205,7 @@ def exp_prediction_comparison():
 #              mancata convergenza, comportamento subottimale"
 # -----------------------------------------------------------------------
 def exp_failure_case():
-    """Demonstrate two common failure modes of tabular RL.
+    """Demonstrate three common failure modes of tabular RL.
 
     1. HIGH α (learning rate): update too aggressive - Q-values oscillate
        without converging. This is the instability failure case.
@@ -214,6 +214,14 @@ def exp_failure_case():
     2. NO EXPLORATION (ε=0): the agent follows the greedy policy from the
        start, never discovers better actions - convergence to suboptimal.
        This is the exploration/exploitation dilemma (S&B §2.1).
+
+    3. NO DISCOUNTING (γ=0): the agent only values the immediate reward. On
+       CartPole the immediate reward is +1 at every non-terminal step whatever
+       the action, so all state-action values collapse to the same value and
+       the agent cannot tell good actions from bad ones - the greedy policy
+       degenerates to random and never learns to balance. This is a myopia
+       failure that shows directly WHY a discount factor > 0 is needed for
+       credit assignment.
     """
     print("\n=== 4. Failure case ===")
 
@@ -223,7 +231,7 @@ def exp_failure_case():
     results = {}
     for alpha in [0.1, 0.5, 1.0]:
         ret, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
-                                episodes=3000, alpha=alpha, gamma=0.99,
+                                episodes=6000, alpha=alpha, gamma=0.99,
                                 epsilon=0.1)
         results[alpha] = ret
     plot_sensitivity(
@@ -238,7 +246,7 @@ def exp_failure_case():
     results2 = {}
     for eps in [0.0, 0.01, 0.1]:
         ret, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
-                                episodes=3000, alpha=0.1, gamma=0.99,
+                                episodes=6000, alpha=0.1, gamma=0.99,
                                 epsilon=eps)
         results2[eps] = ret
     plot_sensitivity(
@@ -246,6 +254,54 @@ def exp_failure_case():
         title="CartPole - Failure case: no exploration (ε=0)",
         save_path=f"{FIG_DIR}/failure_no_exploration.png",
     )
+
+    # Failure 3: no discounting (γ=0) - myopia
+    # With γ=0 the target is just the immediate reward (+1 everywhere on
+    # CartPole), so every action looks equally good - the policy degenerates
+    # to random. γ=0.99 is shown for contrast.
+    results3 = {}
+    for g in [0.0, 0.9, 0.99]:
+        ret, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
+                                episodes=6000, alpha=0.1, gamma=g,
+                                epsilon=0.1)
+        results3[g] = ret
+    plot_sensitivity(
+        results3, "γ", "Q-Learning",
+        title="CartPole - Failure case: no discounting (γ=0 - myopia)",
+        save_path=f"{FIG_DIR}/failure_no_discount.png",
+    )
+
+
+# -----------------------------------------------------------------------
+# 5. Epsilon annealing vs constant (control check)
+# -----------------------------------------------------------------------
+def exp_epsilon_annealing():
+    """Control check: does ε-annealing help on CartPole? (Expected: not much.)
+
+    On Acrobot annealing is motivated by the sparse reward. CartPole has a DENSE
+    reward (+1 every step) and is not exploration-limited, so annealing should
+    give little or no benefit here. Running the same comparison as Acrobot makes
+    that contrast explicit: it is evidence that annealing helps specifically
+    where exploration is the bottleneck, not universally.
+
+    Compared: constant ε = 0.1 vs annealed ε (1.0 down to 0.01 over the first
+    half of training, then held).
+    """
+    print("\n=== 5. Epsilon annealing vs constant (control) ===")
+    const, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
+                              episodes=10000, alpha=0.1, gamma=0.99,
+                              epsilon=0.1)
+    anneal, _ = run_multi_seed(make_cartpole, q_learning, SEEDS,
+                               episodes=10000, alpha=0.1, gamma=0.99,
+                               epsilon=1.0, epsilon_end=0.01)
+    plot_learning_curves(
+        {"epsilon costante = 0.1": const,
+         "epsilon annealing 1.0 to 0.01": anneal},
+        title="CartPole - epsilon costante vs annealing (control)",
+        save_path=f"{FIG_DIR}/epsilon_annealing.png",
+    )
+    np.savez("results/cartpole/epsilon_annealing.npz",
+             const=const, anneal=anneal)
 
 
 # -----------------------------------------------------------------------
@@ -259,5 +315,6 @@ if __name__ == "__main__":
     exp_sensitivity()
     exp_prediction_comparison()
     exp_failure_case()
+    exp_epsilon_annealing()
 
     print(f"\nDone. Figures saved in {FIG_DIR}/")

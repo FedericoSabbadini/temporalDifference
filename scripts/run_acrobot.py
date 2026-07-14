@@ -38,8 +38,8 @@ FIG_DIR = "figures/acrobot"
 
 # Acrobot reward: -1 per step, episode truncated at 500 steps.
 # Best possible return ≈ -80 (swing up quickly). Random ≈ -500.
-# 10,000 episodes needed (vs 5,000 on CartPole) due to 6D state space.
-EPISODES = 10000
+# 20,000 episodes (vs 10,000 on CartPole) due to the larger 6D state space.
+EPISODES = 20000
 MAX_STEPS = 500
 
 
@@ -192,12 +192,12 @@ def exp_prediction():
     # MC prediction: higher variance on Acrobot because episodes are up to 500 steps long
     # - the return G = R1 + γR2 + ... + γ^499 R500 depends on 500 random transitions
     mc_ret, mc_res = run_multi_seed(make_acrobot, mc_prediction, SEEDS,
-                                    policy_fn=learned_policy, episodes=3000,
+                                    policy_fn=learned_policy, episodes=6000,
                                     gamma=0.99, max_steps=MAX_STEPS,
                                     track_state=anchor)
     # TD(0) prediction: lower variance because it only uses ONE step of randomness
     td_ret, td_res = run_multi_seed(make_acrobot, td0_prediction, SEEDS,
-                                    policy_fn=learned_policy, episodes=3000,
+                                    policy_fn=learned_policy, episodes=6000,
                                     alpha=0.1, gamma=0.99, max_steps=MAX_STEPS,
                                     track_state=anchor)
 
@@ -225,6 +225,43 @@ def exp_prediction():
 
 
 # -----------------------------------------------------------------------
+# 5. Epsilon annealing vs constant epsilon
+# -----------------------------------------------------------------------
+def exp_epsilon_annealing():
+    """Test whether ε-annealing beats the best constant ε on Acrobot.
+
+    Acrobot is the environment where annealing is theoretically motivated: the
+    reward is sparse, so the agent needs HIGH exploration early (to stumble on
+    the goal) but LOW exploration late (to exploit the swing-up it found). The
+    ε-sensitivity experiment showed that a constant high ε hurts; this checks
+    whether an annealed schedule (high early, low late) beats the best constant
+    ε found there (ε=0.1).
+
+    Compared:
+      - constant ε = 0.1 (best constant from the sensitivity sweep)
+      - annealed ε: 1.0 down to 0.01 over the first half of training, then held.
+
+    (Pong's DQN already uses ε-annealing; CartPole does not need it because its
+    dense reward makes it exploration-easy.)
+    """
+    print("\n=== 5. Epsilon annealing vs constant (Acrobot) ===")
+    const, _ = run_multi_seed(make_acrobot, q_learning, SEEDS,
+                              episodes=EPISODES, alpha=0.1, gamma=0.99,
+                              epsilon=0.1, max_steps=MAX_STEPS)
+    anneal, _ = run_multi_seed(make_acrobot, q_learning, SEEDS,
+                               episodes=EPISODES, alpha=0.1, gamma=0.99,
+                               epsilon=1.0, epsilon_end=0.01, max_steps=MAX_STEPS)
+    plot_learning_curves(
+        {"epsilon costante = 0.1": const,
+         "epsilon annealing 1.0 to 0.01": anneal},
+        title="Acrobot - epsilon costante vs annealing",
+        save_path=f"{FIG_DIR}/epsilon_annealing.png",
+    )
+    np.savez("results/acrobot/epsilon_annealing.npz",
+             const=const, anneal=anneal)
+
+
+# -----------------------------------------------------------------------
 if __name__ == "__main__":
     os.makedirs(FIG_DIR, exist_ok=True)
     os.makedirs("results/acrobot", exist_ok=True)
@@ -233,5 +270,6 @@ if __name__ == "__main__":
     exp_bin_resolution()
     exp_sensitivity_epsilon()
     exp_prediction()
+    exp_epsilon_annealing()
 
     print(f"\nDone. Figures saved in {FIG_DIR}/")
