@@ -1,14 +1,14 @@
 \begin{table}[htbp]
 \centering
-\caption{Acrobot controllo: Q-Learning vs SARSA, media su 3 seed. Policy casuale $\approx -500$; un buon swing-up raggiunge $\approx -100$.}
+\caption{Acrobot, controllo: Q-Learning vs SARSA, media su 3 seed. Policy casuale $\approx -500$; un buon swing-up raggiunge $\approx -100$.}
 \label{tab:acrobot-control}
 \begin{tabular}{lccc}
 \toprule
 Algoritmo & Return iniziale & Return finale & Episodi/seed \\
           & (primi 100 ep) & (ultimo 10\% ep, media $\pm$ std) & \\
 \midrule
-Q-Learning & -468.0 & $-344.7 \pm 10.2$ & 10000 \\
-SARSA & -473.2 & $-354.5 \pm 30.9$ & 10000 \\
+Q-Learning & -468.0 & $-341.4 \pm 27.8$ & 20000 \\
+SARSA & -473.2 & $-348.6 \pm 3.2$ & 20000 \\
 \bottomrule
 \end{tabular}
 \end{table}

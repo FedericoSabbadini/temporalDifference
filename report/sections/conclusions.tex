@@ -1,50 +1,86 @@
 \section{Conclusioni}
 \label{sec:conclusions}
 
-\subsection{Risultati raggiunti}
-Il progetto soddisfa i requisiti della consegna: i quattro algoritmi tabellari
-e il DQN sono implementati da zero e applicati ai tre ambienti; ogni risultato
-\`e mediato su 3 seed con bande di deviazione standard; sono presenti le
-analisi di sensibilit\`a, i confronti richiesti (SARSA vs Q\hbox{-}Learning,
-MC vs TD(0)), i casi di fallimento e lo studio di ablazione del DQN con il
-bonus Double DQN.
+Rispondo esplicitamente alle tre domande richieste dalla consegna.
 
-\subsection{Cosa si \`e imparato}
-\begin{itemize}[nosep]
-  \item La discretizzazione non \`e neutra: la sua risoluzione governa sia il
-        tetto di performance sia la velocit\`a di convergenza. Restringere i bin
-        di CartPole ai limiti di terminazione (fix \#2) alza il tetto (le curve
-        superano 184 e arrivano a $\sim$225) ma rallenta la convergenza e
-        aumenta la varianza. La risoluzione ottima dipende dall'ambiente e dal
-        budget di episodi (Acrobot: 10 bin migliori di 4, contro l'intuizione).
-  \item On-policy (SARSA) vs off-policy (Q\hbox{-}Learning): Q\hbox{-}Learning
-        \`e pi\`u stabile tra i seed, ma su CartPole (fix \#2) SARSA raggiunge un
-        return pi\`u alto: stabilit\`a e performance non coincidono
-        necessariamente.
-  \item Nel DQN, l'experience replay \`e il componente decisivo per
-        l'apprendimento; la target network migliora stabilit\`a e velocit\`a.
-  \item Le ipotesi teoriche vanno \emph{verificate} sui dati: due esperimenti
-        Acrobot hanno dato l'esito opposto all'attesa, e questo \`e stato
-        analizzato invece che nascosto.
+\subsection{Cosa non ha funzionato}
+\begin{itemize}
+  \item \textbf{Acrobot non decolla}: plateau a $\approx -345$ contro un ottimo di
+        $\approx -100$, e nessun miglioramento per 15\,000 episodi. Raddoppiare il
+        budget non serve, perch\'e il limite \`e la risoluzione della Q-table
+        (Sez.~\ref{sec:res-acrobot-control}).
+  \item \textbf{CartPole non raggiunge 500}: con $10^4$ stati il tetto in 10\,000
+        episodi \`e circa met\`a del massimo. Anche qui il vincolo \`e rappresentativo,
+        non algoritmico.
+  \item \textbf{I tre fallimenti indotti} (Sez.~\ref{sec:failure}): $\alpha=1.0$ non
+        converge, $\varepsilon=0$ resta subottimale, $\gamma=0$ non pu\`o imparare
+        affatto. In tutti e tre il codice gira correttamente, ed \`e ci\`o che li rende
+        istruttivi.
+  \item \textbf{Double DQN non supera il DQN base} a 200k step: il maximization bias che
+        dovrebbe correggere non ha ancora avuto il tempo di accumularsi.
+  \item \textbf{Il mio primo confronto MC vs TD(0) non misurava nulla}: graficava il
+        return della policy condivisa, identico per costruzione tra i due stimatori. Il
+        grafico era ``giusto'' e completamente inutile
+        (Sez.~\ref{sec:res-cartpole-pred}).
 \end{itemize}
 
-\subsection{Possibili miglioramenti futuri}
-\begin{itemize}[nosep]
-  \item Rendere informativo il confronto MC vs TD(0) tracciando l'errore sulle
-        stime $V(s)$ (o la varianza dei target), non il return della policy.
-  \item Aggiungere una fase di evaluation puramente greedy per il DQN e
-        graficare l'ablazione Pong in funzione degli \emph{step} ambiente.
-  \item Provare uno schedule di $\varepsilon$ decrescente per i metodi
-        tabellari, per confrontare esplorazione costante vs annealing.
-  \item Persistere come \code{.npz} anche i dati di sensibilit\`a/fallimento
-        per una riproducibilit\`a completa delle tabelle.
-  \item Estendere il budget di training del DQN (verso punteggi positivi su
-        Pong), tempo e hardware permettendo.
+\subsection{Cosa mi ha sorpreso}
+\begin{itemize}
+  \item \textbf{Su Acrobot pi\`u bin sono \emph{meglio}}, non peggio: l'opposto della
+        curse of dimensionality che pensavo di illustrare. Il costo dell'\emph{aliasing}
+        --- stati che richiedono coppie opposte collassati nello stesso bin --- domina
+        quello della sparsit\`a (Sez.~\ref{sec:res-acrobot-bins}).
+  \item \textbf{Su Acrobot \emph{meno} esplorazione \`e meglio}, ma solo a
+        $\varepsilon$ costante: l'annealing poi batte ogni valore costante. Il problema
+        non era ``quanta'' esplorazione, ma ``quando'' --- distinzione che l'intuizione
+        ``reward sparso $\Rightarrow$ pi\`u esplorazione'' non cattura
+        (Sez.~\ref{sec:res-acrobot-eps}).
+  \item \textbf{SARSA batte Q\hbox{-}Learning su CartPole}, con varianza minore. Mi
+        aspettavo il contrario; ma la curva misura la performance \emph{con
+        l'esplorazione attiva}, e SARSA \`e l'unico dei due che ne tiene conto.
+  \item \textbf{Il bias di TD(0) non \`e una costante}: sulla policy casuale (episodi di
+        $\approx 22$ passi) TD raggiunge MC, su quella appresa ($\approx 330$ passi)
+        resta indietro del $13\%$ dopo 6000 episodi. Dipende dalla distanza temporale
+        dal reward --- cosa che il \emph{random walk} del corso, con episodi corti,
+        nasconde.
+  \item \textbf{Quanto \`e binaria l'ablazione del replay}: senza replay la curva \`e
+        \emph{piatta}, non semplicemente peggiore.
 \end{itemize}
 
-\subsection{Valutazione complessiva}
-Coerentemente con l'obiettivo didattico della consegna --- comprensione e
-analisi critica pi\`u che performance assoluta --- il progetto raggiunge i
-suoi scopi. I limiti individuati sono dichiarati esplicitamente e trasformati
-in spunti di miglioramento, il che \`e a sua volta parte dell'analisi
-richiesta.
+\subsection{Limiti degli algoritmi}
+\begin{itemize}
+  \item \textbf{Discretizzazione} --- il collo di bottiglia dominante, e ha due lame:
+        pochi bin non distinguono stati che richiedono azioni diverse, troppi bin fanno
+        esplodere lo spazio. Nessuna scelta di bin risolve entrambi i problemi: serve
+        l'approssimazione di funzione. \`E la motivazione empirica del DQN.
+  \item \textbf{Efficienza campionaria} --- migliaia di episodi per risultati modesti:
+        senza generalizzazione, ogni cella della tabella va visitata di persona.
+  \item \textbf{Convergenza asintotica} --- con $\alpha$ ed $\varepsilon$ costanti la
+        stima fluttua e non converge: propriet\`a nota, ma da tenere presente leggendo
+        qualunque curva.
+  \item \textbf{Sparsit\`a del reward} --- su Acrobot il segnale ($-1$ per passo) non
+        dice \emph{quale} azione fosse sbagliata: il credit assignment su 500 passi \`e il
+        problema vero, e nessuno dei quattro algoritmi tabellari lo affronta.
+  \item \textbf{Sensibilit\`a agli iperparametri} --- marcata, e in modi che cambiano da
+        ambiente ad ambiente e persino da algoritmo ad algoritmo ($\alpha$ alto danneggia
+        SARSA ma non Q\hbox{-}Learning).
+  \item \textbf{Costo del Deep RL} --- il DQN risolve la rappresentazione, ma 200k step
+        sono lo $0.4\%$ del budget Nature: \`e per questo che Pong si ferma a
+        $\approx -12$.
+\end{itemize}
+
+\subsection{Cosa farei con pi\`u tempo, e valutazione complessiva}
+Con pi\`u tempo: approssimazione di funzione su Acrobot (tile coding o una piccola rete)
+per superare il tetto della discretizzazione; una misura globale dell'errore su $V$ (RMSE
+contro un riferimento Monte Carlo ad alta campionatura); una valutazione puramente greedy
+del DQN, riusando i checkpoint gi\`a salvati; e l'ablazione Pong in funzione degli step
+ambiente anzich\'e degli episodi.
+
+Il progetto soddisfa i requisiti: i quattro algoritmi tabellari e il DQN sono
+implementati da zero e applicati ai tre ambienti, ogni risultato \`e mediato su 3 seed, e
+le analisi richieste (sensibilit\`a a $\varepsilon$/$\alpha$/$\gamma$, SARSA vs
+Q\hbox{-}Learning, MC vs TD(0), failure case, ablazione con/senza target network e replay,
+bonus Double DQN) sono tutte presenti. Ci\`o di cui sono pi\`u soddisfatto, per\`o, non
+sono le curve che salgono: sono i due esperimenti che hanno smentito le mie ipotesi.
+Averli tenuti e spiegati, invece di riparametrizzarli finch\'e confermassero l'attesa,
+\`e il risultato che mi ha insegnato di pi\`u.

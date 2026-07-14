@@ -1,29 +1,10 @@
-"""Monte Carlo prediction for V(s) (S&B §5.1).
+"""Monte Carlo prediction of V(s) for a fixed policy (S&B §5.1).
 
-Origin: ADAPTED from the course Esercitazione_RL / prediction.py and
-random_walk_incomplete.json. Same structure: generate episode - compute
-returns backward - incremental average. Adapted to Gymnasium API.
+Origin: ADAPTED from the course Esercitazione_RL / prediction.py (random_walk).
 
-MC prediction estimates the state-value function V(s) for a FIXED policy π.
-It is a PREDICTION algorithm (not control): it does not learn or improve
-the policy, it only estimates V(s) given a policy to follow.
-
-Method:
-  1. Generate a complete episode following π: S0,A0,R1, S1,A1,R1, ..., ST
-  2. For each state S visited, compute the actual return:
-     G_t = R_{t+1} + γ R_{t+2} + γ² R_{t+3} + ...
-  3. Average all observed returns for each state:
-     V(s) = mean of all G_t where S_t = s
-
-First-visit MC: only the FIRST occurrence of s in an episode counts.
-Every-visit MC: all occurrences count. (Both converge to V^π.)
-
-Key properties vs TD(0) (S&B §6.1):
-  - MC is UNBIASED: G_t is the true return, no bootstrapping needed
-  - MC has HIGHER VARIANCE: G_t depends on the entire trajectory (all
-    future randomness compounds)
-  - MC must wait until episode END to update (cannot learn online)
-  - MC does NOT bootstrap (does not use its own estimates in the target)
+MC is PREDICTION, not control: it never changes the policy, it only estimates V^pi.
+It averages the actual returns G_t observed after each state, so it is unbiased but
+high-variance, and it can only update once the episode has ended.
 """
 
 from collections import defaultdict
@@ -31,77 +12,60 @@ from collections import defaultdict
 
 def mc_prediction(env, policy_fn, episodes=5000, gamma=1.0,
                   first_visit=True, max_steps=1000, track_state=None):
-    """First-visit (or every-visit) MC prediction for V(s).
+    """First-visit (or every-visit) MC prediction.
 
     Args:
-        env: Gymnasium environment (discrete observations).
-        policy_fn: callable(state) - action. The fixed policy to evaluate.
-                   This function is never modified - MC is pure prediction.
+        env: Gymnasium env with discrete/discretized observations.
+        policy_fn: callable(state) -> action. The FIXED policy being evaluated.
         episodes: number of episodes to generate.
-        gamma: discount factor (γ=1.0 = undiscounted, standard for episodic tasks).
-        first_visit: if True, use first-visit MC; else every-visit.
-        max_steps: max steps per episode.
-        track_state: optional reference state (tuple). If given, the current
-                   estimate V(track_state) is recorded after every episode.
-                   This exposes HOW the estimate evolves - the quantity that
-                   actually differs between MC and TD(0). MC's trace is noisy
-                   (high variance, unbiased), TD's is smooth (low variance,
-                   biased early). The episode return alone cannot show this,
-                   because both methods follow the same fixed policy.
+        gamma: discount factor.
+        first_visit: True -> count only the first occurrence of a state per episode.
+        max_steps: cap on episode length.
+        track_state: if given, V(track_state) is recorded after every episode. This is
+            the quantity that actually separates MC from TD(0): the episode return
+            cannot, since both methods follow the same fixed policy and therefore
+            produce identical returns by construction.
 
     Returns:
-        V: estimated state-value function (defaultdict: state - float).
-        episode_returns: list of total returns per episode (for plotting).
-        value_history: list of V(track_state) after each episode (empty if
-                   track_state is None).
+        (V, episode_returns, value_history).
     """
-    returns_sum = defaultdict(float)    # cumulative sum of returns G per state
-    returns_count = defaultdict(float)  # number of times each state was visited
-    V = defaultdict(float)  # estimated V(s) = returns_sum[s] / returns_count[s]
-    episode_returns = []  # total return per episode (for plotting)
-    value_history = []  # V(track_state) after each episode (bias/variance study)
+    returns_sum = defaultdict(float)
+    returns_count = defaultdict(float)
+    V = defaultdict(float)
+    episode_returns = []
+    value_history = []
 
     for ep in range(episodes):
-        # --- Step 1: Generate a COMPLETE episode following policy_fn ---
-        # MC requires the full episode before any update (unlike TD which updates online)
-        episode = []  # list of (state, action, reward) tuples
+        # MC needs the whole episode before it can update anything.
+        episode = []
         state, _ = env.reset()
 
         for _ in range(max_steps):
-            action = policy_fn(state)  # follow the fixed policy (no learning here)
+            action = policy_fn(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated
-            episode.append((state, action, reward))  # record the transition
+            episode.append((state, action, reward))
             state = next_state
-            if done:
+            if terminated or truncated:
                 break
 
-        # Total undiscounted return for this episode (used for plotting only)
-        ep_return = sum(r for _, _, r in episode)
-        episode_returns.append(ep_return)
+        episode_returns.append(sum(r for _, _, r in episode))
 
-        # --- Step 2: Compute returns G backward and update V(s) ---
-        # Walking backward through the episode lets us compute G incrementally:
-        # G_t = R_{t+1} + γ * G_{t+1}  (recursive definition of return)
-        G = 0.0  # running return, built from the end of the episode backward
-        visited = set()  # tracks which states have been seen (for first-visit MC)
+        # Walking backward makes the return recursive: G_t = R_{t+1} + gamma * G_{t+1}.
+        G = 0.0
+        visited = set()
 
         for t in reversed(range(len(episode))):
-            s, a, r = episode[t]
-            # Accumulate return: each step adds its reward + discounts the future
-            G = gamma * G + r  # G_t = R_{t+1} + γ * G_{t+1}
+            s, _, r = episode[t]
+            G = gamma * G + r
 
             if first_visit and s in visited:
-                continue  # first-visit MC: only count the FIRST occurrence of s
+                continue
             visited.add(s)
 
-            # Incremental mean: V(s) = sum(all G observed at s) / count(visits to s)
-            # This converges to the true V^π(s) by the law of large numbers
             returns_sum[s] += G
             returns_count[s] += 1.0
-            V[s] = returns_sum[s] / returns_count[s] # V[s] = mean of all returns G observed at s
+            V[s] = returns_sum[s] / returns_count[s]
 
-        # Record the running estimate of the reference state (if requested)
         if track_state is not None:
             value_history.append(V[track_state])
 

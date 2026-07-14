@@ -1,73 +1,34 @@
-"""Action-selection policies for tabular RL.
+"""Action-selection policies for tabular RL (S&B §2.1).
 
 Origin: ADAPTED from the course exercises (Esercitazione_RL / control.py).
-Same ε-greedy logic, adapted for defaultdict Q-tables with np.flatnonzero
-for random tie-breaking among maximum Q-values.
-
-Theory: these implement the exploration/exploitation trade-off (S&B §2.1).
-- greedy_action: pure exploitation - always picks argmax Q(s,a)
-- epsilon_greedy_action: with prob ε explores (random), otherwise exploits (greedy)
 """
 
 import numpy as np
 
 
 def greedy_action(Q, state):
-    """Select the action with highest Q-value, breaking ties randomly.
+    """Pick argmax_a Q(s,a), breaking ties uniformly at random.
 
-    Q is a defaultdict mapping states to arrays of Q-values, one per action. 
-    (e.g. 
-        Q = {
-            (0, 0): np.array([0.5, 0.3]), # state 1; action 1 + action 2
-            (0, 1): np.array([0.2, 0.4]) # state 2, action 1 + action 2
-            }
-    )
-    state is the current state (e.g. a tuple of ints for discrete states).
-    (e.g.
-        state = (0, 0) # state 1
-    )
-    This implements the greedy policy: π(s) = argmax_a Q(s,a).
-    Random tie-breaking is important when multiple actions have Q=0
-    (as in the initial Q-table), otherwise the agent would always pick action 0.
+    Random tie-breaking matters: the Q-table starts at 0 everywhere, so without it the
+    agent would deterministically pick action 0 in every state it has not seen yet.
     """
-    qvals = Q[state]  # array of Q-values, one per action (e.g. [0.5, 0.3] for 2 actions) = all actions of state
-    max_q = np.max(qvals)  # the highest Q-value across all actions of state
-    # np.isclose handles floating-point comparison (e.g. 0.500000001 ≈ 0.5)
-    # flatnonzero returns the indices where the condition is True
-    candidates = np.flatnonzero(np.isclose(qvals, max_q))
-    return np.random.choice(candidates)  # break ties uniformly at random
+    qvals = Q[state]
+    candidates = np.flatnonzero(np.isclose(qvals, np.max(qvals)))
+    return np.random.choice(candidates)
 
 
 def epsilon_greedy_action(Q, state, epsilon, n_actions):
-    """Epsilon-greedy: explore with probability ε, exploit otherwise.
-
-    With prob ε: choose a uniformly random action (exploration)
-    With prob 1-ε: choose the greedy action (exploitation)
-
-    This is the simplest exploration strategy and the one used throughout
-    Sutton & Barto. More advanced alternatives (UCB, softmax) exist but
-    are not required by the assignment.
-    """
-    if np.random.rand() < epsilon:  # with probability ε...
-        return np.random.randint(n_actions)  # ...pick a random action (exploration)
-    return greedy_action(Q, state)  # otherwise pick the best known action (exploitation)
+    """Random action with probability epsilon, greedy action otherwise."""
+    if np.random.rand() < epsilon:
+        return np.random.randint(n_actions)
+    return greedy_action(Q, state)
 
 
 def linear_epsilon(start, end, current, horizon):
-    """Single shared ε schedule used by BOTH the tabular algorithms and the DQN.
+    """Linear decay from `start` to `end` over `horizon`, then held at `end`.
 
-    Linear decay from `start` (at current=0) down to `end` (once current reaches
-    `horizon`), then held constant at `end`:
-
-        frac   = min(1, current / horizon)
-        eps    = start + (end - start) * frac
-
-    The formula is the same everywhere; only the UNIT of (current, horizon)
-    differs by necessity, because the training loops are different:
-      - tabular (episode-based): current = episode index, horizon = episodes // 2
-      - DQN (step-based):        current = env step,     horizon = decay steps
-
-    This keeps one decay implementation instead of two.
+    One shared schedule for both the tabular loops and the DQN; only the unit of
+    (current, horizon) differs, because those loops are episode-based vs step-based.
     """
     frac = min(1.0, current / horizon)
     return start + (end - start) * frac

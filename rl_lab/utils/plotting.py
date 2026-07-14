@@ -1,106 +1,76 @@
-"""Plotting utilities - learning curves with std bands, sensitivity plots.
+"""Learning-curve and sensitivity plots.
 
-Origin: moving_average is ADAPTED from the course exercises.
-plot_learning_curves (mean + std bands) and plot_sensitivity are NEW.
-The course exercises plotted single runs; here we need multi-seed bands.
+Origin: moving_average is ADAPTED from the course exercises; the multi-seed mean+band
+plots are NEW (the course plotted single runs).
 
-All plots follow the same style:
-  - Moving-average smoothing for readability
-  - Mean line + shaded ±1 std band (when multiple seeds), as required
-  - Labeled axes, legend, grid
-  - Consistent figure size (10×5)
-
-This produces the "learning curves (reward vs episodi)" and "sensibilità
-agli iperparametri" plots required by the assignment for every environment.
+House style for every figure: moving-average smoothing, mean line over the 3 seeds,
+shaded +/-1 sigma band, labelled axes, legend, grid.
 """
 
 import os
 import numpy as np
 import matplotlib
-# Non-interactive backend: save figures to disk without a GUI. Avoids GUI-backend
-# issues (Tk load blocked on Windows App Control; crashes on some macOS setups).
-matplotlib.use("Agg")
+matplotlib.use("Agg")  # save to disk without a GUI (Tk is blocked on the Windows box)
 import matplotlib.pyplot as plt
 
 
 def moving_average(x, window=20):
-    """Smooth a 1-D array with a moving average of size 'window'.
-
-    Uses np.convolve with a uniform kernel of size `window`.
-    Returns an array shorter by (window-1) elements ('valid' mode).
-    """
+    """Running mean, 'valid' mode (output is window-1 shorter)."""
     if len(x) < window:
-        return np.array(x)  # not enough data to smooth - return as-is
-    # np.convolve with a uniform kernel [1/w, 1/w, ..., 1/w] computes the running mean.
-    # mode="valid" means output length = len(x) - window + 1 (no padding artifacts).
+        return np.array(x)
     return np.convolve(x, np.ones(window) / window, mode="valid")
 
 
 def plot_learning_curves(results_dict, title, save_path=None, window=40,
                          ylabel="Return"):
-    """Plot learning curves for multiple algorithms (same hyperparameter).
-
-    This is the primary visualization tool for the project.
-    Each algorithm gets a smoothed mean line with a shaded ±1σ band,
-    showing both average performance and variability across seeds.
+    """Mean curve +/-1 sigma band, one entry per algorithm/configuration.
 
     Args:
-        results_dict: {label: np.array of shape (n_seeds, n_episodes)}.
-            Each value is a 2D array where rows are seeds and columns are episodes.
-        title: plot title.
-        save_path: if set, save the figure here.
-        window: moving-average window size (higher = smoother but loses detail).
-        ylabel: y-axis label (default "Return" = total episode reward).
+        results_dict: {label: array of shape (n_seeds, n_episodes)}.
+        window: moving-average window (use 1 for the value-estimate plots, where the
+            raw variance of MC is exactly what has to be visible).
     """
     plt.figure(figsize=(10, 5))
 
-    for label, data in results_dict.items(): # label is the seed, data is the array of linked rewards
+    for label, data in results_dict.items():
         if data.ndim == 1:
-            data = data.reshape(1, -1)  # single seed - treat as 1-row matrix
-        # axis=0 computes mean/std ACROSS seeds (each row is one seed's returns)
-        mean = np.mean(data, axis=0)  # (n_episodes,) - average performance
-        std = np.std(data, axis=0)    # (n_episodes,) - variability across seeds
-        # Smooth both mean and std for readability (raw curves are very noisy)
+            data = data.reshape(1, -1)
+        # axis=0 -> across seeds
+        mean = np.mean(data, axis=0)
+        std = np.std(data, axis=0)
         sm_mean = moving_average(mean, window)
         sm_std = moving_average(std, window)
-        x = np.arange(len(sm_mean))  # x-axis = episode number (after smoothing)
-        plt.plot(x, sm_mean, label=label)  # solid line = mean performance
-        # Shaded band = ±1 standard deviation (shows seed-to-seed variability)
-        plt.fill_between(x, sm_mean - sm_std, sm_mean + sm_std, alpha=0.2) # +-0.1
+        x = np.arange(len(sm_mean))
+        plt.plot(x, sm_mean, label=label)
+        plt.fill_between(x, sm_mean - sm_std, sm_mean + sm_std, alpha=0.2)
 
     plt.xlabel(f"Episode (smoothed, window={window})")
     plt.ylabel(ylabel)
     plt.title(title)
     plt.legend()
-    plt.grid(True, alpha=0.3)  # light grid for readability
-    plt.tight_layout()  # prevent label clipping
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
         print(f"Saved: {save_path}")
-    plt.close()  # free memory (important when generating many figures)
+    plt.close()
 
 
 def plot_sensitivity(results_by_param, param_name, algo_name, title=None,
                      save_path=None, window=40):
-    """Plot learning curves (1 algorithm) for different hyperparameter values.
+    """One mean curve per hyperparameter value.
 
-    Used for the "sensitivity analysis" required by the assignment:
-    how does changing ε, α, or γ affect learning?
-
-    Args:
-        results_by_param: {param_value: np.array (n_seeds, n_episodes)}.
-        param_name: parameter name for legend (e.g. "ε", "α", "γ").
-        algo_name: algorithm name for title (e.g. "Q-Learning").
+    Each curve is still the mean over the 3 seeds, but I deliberately omit the sigma
+    bands here: with four overlapping curves the shaded regions cover each other and
+    the plot becomes unreadable. The seed spread is reported in the tables instead.
     """
     plt.figure(figsize=(10, 5))
 
     for param_val, data in results_by_param.items():
         if data.ndim == 1:
             data = data.reshape(1, -1)
-        # Only plot the mean (no std band) to keep sensitivity plots readable
-        # with multiple overlapping curves
         mean = np.mean(data, axis=0)
         sm = moving_average(mean, window)
         plt.plot(range(len(sm)), sm, label=f"{param_name}={param_val}")

@@ -1,43 +1,41 @@
 \section{Introduzione}
 \label{sec:introduction}
 
-\subsection{Obiettivi del progetto}
-Il progetto ha lo scopo di implementare \emph{da zero} i principali algoritmi
-di Reinforcement Learning (RL) e di confrontarli su tre ambienti di
-difficolt\`a crescente, analizzandone comportamento, limiti e prestazioni.
-Coerentemente con la consegna, l'enfasi \`e sulla \textbf{comprensione} e
-sull'\textbf{analisi sperimentale critica}, non sulla performance assoluta:
-molti risultati sono volutamente sub-ottimali e vengono analizzati come tali,
-inclusi i casi di fallimento e i risultati che smentiscono le ipotesi di
-partenza.
+\subsection{Obiettivi}
+Il progetto implementa \emph{da zero} i principali algoritmi di Reinforcement Learning e
+li confronta su tre ambienti di difficolt\`a crescente. Come chiede la consegna,
+l'enfasi \`e sulla \textbf{comprensione} e sull'\textbf{analisi sperimentale critica},
+non sulla performance assoluta: diversi risultati sono volutamente sub-ottimali e
+vengono analizzati come tali, inclusi i casi di fallimento e i risultati che smentiscono
+le ipotesi da cui ero partito.
 
-\subsection{Ambienti}
-Sono stati affrontati tre ambienti Gymnasium~\cite{towers2024gymnasium}:
-\begin{itemize}[nosep]
-  \item \textbf{CartPole-v1} (comune a tutti i gruppi): bilanciare un'asta su
-        un carrello. Stato continuo 4-D, 2 azioni, reward $+1$ per passo.
-  \item \textbf{Acrobot-v1} (assegnato): portare la punta di un doppio pendolo
-        sopra una soglia. Stato continuo 6-D, 3 azioni, reward $-1$ per passo
-        (reward sparso).
-  \item \textbf{ALE/Pong-v5} (assegnato): il gioco Atari Pong, affrontato con
-        Deep RL su osservazioni a pixel~\cite{bellemare2013ale}.
-\end{itemize}
+\subsection{Ambienti e algoritmi}
+Ho lavorato su tre ambienti Gymnasium~\cite{towers2024gymnasium}:
+\textbf{CartPole-v1} (comune; stato 4-D continuo, 2 azioni, reward $+1$/passo, denso),
+\textbf{Acrobot-v1} (assegnato; 6-D continuo, 3 azioni, reward $-1$/passo fino
+all'obiettivo, sparso) e \textbf{ALE/Pong-v5} (assegnato; Atari da
+pixel~\cite{bellemare2013ale}). La progressione non \`e casuale: CartPole serve a
+verificare che gli algoritmi siano corretti, Acrobot a metterli in crisi, Pong a
+mostrare cosa serve quando la tabella non \`e pi\`u praticabile.
 
-\subsection{Algoritmi}
-Per CartPole e Acrobot si utilizzano quattro algoritmi tabellari implementati
-a mano: due di \emph{controllo} (Q\hbox{-}Learning, SARSA) e due di
-\emph{predizione} (Monte Carlo, TD(0)). Poich\'e gli ambienti hanno stato
-continuo, \`e stato necessario introdurre una \emph{discretizzazione} dello
-spazio degli stati. Per Pong si \`e implementato un DQN in
-PyTorch~\cite{mnih2015} con experience replay e target network, pi\`u il bonus
-Double DQN~\cite{vanhasselt2016}.
+Su CartPole e Acrobot uso quattro algoritmi tabellari scritti a mano: due di
+\emph{controllo} (Q\hbox{-}Learning, SARSA) e due di \emph{predizione} (Monte Carlo,
+TD(0)). Poich\'e entrambi gli ambienti hanno stato continuo, ho dovuto introdurre una
+\textbf{discretizzazione}: non \`e un dettaglio implementativo ma la scelta che, come
+mostro nella Sez.~\ref{sec:res-acrobot-bins}, governa il tetto di performance
+raggiungibile. Per Pong ho implementato un DQN in PyTorch~\cite{mnih2015} con experience
+replay e target network, pi\`u il bonus Double DQN~\cite{vanhasselt2016}.
 
-\subsection{Struttura del progetto e del report}
-Il codice \`e organizzato nel pacchetto \code{rl\_lab} (algoritmi, ambienti,
-utility) con uno script per ambiente in \code{scripts/}. Il report segue il
-percorso: fondamenti teorici (Sez.~\ref{sec:theory}), metodologia
-(Sez.~\ref{sec:methodology}), setup sperimentale
-(Sez.~\ref{sec:experiments}), risultati (Sez.~\ref{sec:results}), analisi
-critica (Sez.~\ref{sec:discussion}), conformit\`a alla consegna
-(Sez.~\ref{sec:compliance}), origine del codice
-(Sez.~\ref{sec:code-origin}) e conclusioni (Sez.~\ref{sec:conclusions}).
+MC e TD(0), essendo di predizione, valutano una policy \emph{fissa} senza apprenderla:
+la policy da valutare deve quindi venire da qualche parte. Ho scelto di addestrare prima
+Q\hbox{-}Learning, estrarne la policy greedy e valutare \emph{quella}, affiancandole una
+policy casuale come riferimento (Sez.~\ref{sec:met-prediction}). La scelta non \`e
+neutra: come si vedr\`a, il divario tra MC e TD(0) dipende proprio da quale policy si
+valuta.
+
+\subsection{Struttura del documento}
+Fondamenti teorici (Sez.~\ref{sec:theory}), metodologia (Sez.~\ref{sec:methodology}),
+setup sperimentale (Sez.~\ref{sec:experiments}), risultati (Sez.~\ref{sec:results}),
+failure analysis (Sez.~\ref{sec:failure}), analisi critica (Sez.~\ref{sec:discussion}) e
+conclusioni con ci\`o che non ha funzionato, ci\`o che mi ha sorpreso e i limiti degli
+algoritmi (Sez.~\ref{sec:conclusions}).

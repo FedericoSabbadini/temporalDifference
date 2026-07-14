@@ -1,8 +1,8 @@
 # Mappa del codice - classi, funzioni e file
 
-> Glossario navigabile del *codice* (non della teoria: per quella vedi
-> [`glossario.md`](glossario.md)). Per ogni file: cosa contiene, le funzioni/classi
-> chiave con la loro firma, e chi le chiama. Serve a orientarsi rapidamente.
+> Riferimento navigabile del *codice*: per ogni file, cosa contiene, le funzioni/classi
+> chiave con la loro firma e chi le chiama. La teoria e l'analisi dei risultati stanno
+> nella relazione (`report/`).
 
 Convenzione firme: `nome(argomenti) - valore_di_ritorno`.
 
@@ -88,13 +88,15 @@ Tutti prendono l'`env` e restituiscono tuple con `episode_returns` all'**indice 
 - `exp_control_comparison()` - Q-Learning vs SARSA - `control_comparison.png/.npz`.
 - `_sweep(algo_fn, algo_name, param_name, param_values, defaults)` - helper per gli sweep.
 - `exp_sensitivity()` - sweep ε/α/γ per QL e SARSA (6 figure).
-- `exp_prediction_comparison()` - MC vs TD(0): grafici `_return` e `_value`.
-- `exp_failure_case()` - α=1.0 e ε=0.
+- `exp_prediction_comparison()` - MC vs TD(0): grafici `_return` e `_value`, su policy
+  appresa e casuale.
+- `exp_failure_case()` - i 3 fallimenti: α=1.0, ε=0, γ=0.
+- `exp_epsilon_annealing()` - ε costante vs annealing.
 
 ### `run_acrobot.py`
 - `make_acrobot() - env`.
 - `exp_control_comparison()`, `exp_bin_resolution()` (l'esperimento originale),
-  `exp_sensitivity_epsilon()`, `exp_prediction()`.
+  `exp_sensitivity_epsilon()`, `exp_prediction()`, `exp_epsilon_annealing()`.
 
 ### `run_pong.py`
 - `make_pong() - env`.
@@ -103,7 +105,7 @@ Tutti prendono l'`env` e restituiscono tuple con `episode_returns` all'**indice 
 - `random_baseline(seeds, n_episodes) - mean_return` - riferimento ≈ −20.4.
 - `main()` - le 5 configurazioni + i grafici di ablazione.
 
-### `make_report_tables.py`
+### `report/make_report_tables.py`
 - `_valid_rows(arr)`, `_final_perf(arr, tail_frac)` - helper (gestiscono il padding NaN).
 - `table_control(...)`, `table_pong(...)` - generano il LaTeX.
 - `main()` - scrive `report/tables/*.tex` dai `.npz`.
@@ -131,7 +133,7 @@ Per il DQN la catena è analoga: `run_pong.py :: run_config` - `train_dqn`
 
 | File | Contenuto |
 |---|---|
-| `pyproject.toml` / `uv.lock` | dipendenze (vedi [`librerie.md`](librerie.md)) |
+| `pyproject.toml` / `uv.lock` | dipendenze e versioni pinnate (`uv sync`) |
 | `results/*/*.npz` | array grezzi (fonte di verità dei numeri) |
 | `results/pong/*/*.pt` | checkpoint dei modelli DQN |
 | `figures/*/*.png` | grafici generati |

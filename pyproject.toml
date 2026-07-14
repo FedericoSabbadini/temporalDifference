@@ -6,6 +6,10 @@ requires-python = ">=3.12"
 dependencies = [
     "gymnasium[atari]>=1.0",
     "ale-py>=0.10",
+    # AtariPreprocessing needs cv2 for the 84x84 resize, and gymnasium[atari] does NOT
+    # pull it in (that is gymnasium[other]). Without this, run_pong.py fails on a fresh
+    # `uv sync` with DependencyNotInstalled.
+    "opencv-python>=4.8",
     "numpy>=1.24",
     "matplotlib>=3.7",
     "tqdm>=4.66",

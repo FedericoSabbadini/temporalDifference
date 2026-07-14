@@ -1,56 +1,44 @@
 """Multi-seed experiment runner.
 
-Origin: INSPIRED by the run_bias_experiment pattern from the course exercises
-(Esercitazione_RL). The course did 100-200 runs for bias analysis.
-Generalized here to work with any algorithm and return arrays for plotting.
+Origin: INSPIRED by the run_bias_experiment pattern from the course exercises,
+generalized to any algorithm.
 
-The assignment requires: "Ogni risultato deve essere media su 3 seed diversi,
-accompagnato da deviazione standard (o bande)." This module enforces that
-by running any algorithm across multiple seeds and collecting results.
+This is where the assignment's "media su 3 seed + deviazione standard" is enforced:
+every experiment goes through here, so no result can accidentally be single-seed.
 """
 
 import numpy as np
 from rl_lab.utils.seeding import set_seed
 
 
-def run_multi_seed(make_env_fn, train_fn, seeds=(42, 123, 456),
-                   **train_kwargs):
-    """Run a training function with multiple seeds, collect episode returns.
-
-    This is the core of the experimental methodology:
-    1. For each seed: create a fresh env, set the seed, train, collect returns
-    2. Stack all returns into a (n_seeds, n_episodes) array
-    3. The plotting functions compute mean ± std from this array
+def run_multi_seed(make_env_fn, train_fn, seeds=(42, 123, 456), **train_kwargs):
+    """Run `train_fn` once per seed and stack the episode returns.
 
     Args:
-        make_env_fn: callable() - Gymnasium env. Called once per seed
-                     (fresh env each time to avoid cross-contamination).
-        train_fn: algorithm function. Must accept env= as first kwarg and
-                  return a tuple where index [1] is the episode returns list.
-                  Works with: q_learning, sarsa (returns Q, returns, lengths)
-                  and mc_prediction, td0_prediction (returns V, returns).
-        seeds: sequence of random seeds (default: 3 seeds per assignment).
-        **train_kwargs: forwarded to train_fn (episodes, alpha, gamma, etc.).
+        make_env_fn: callable() -> env. Called once per seed, so no state leaks
+            between runs.
+        train_fn: any algorithm in this package. All of them return the episode
+            returns at index [1] of their result tuple, which is the contract this
+            runner relies on.
+        seeds: the 3 seeds required by the assignment.
+        **train_kwargs: forwarded to train_fn.
 
     Returns:
-        all_returns: np.array of shape (n_seeds, n_episodes).
-        all_results: list of full result tuples from each seed.
+        (all_returns of shape (n_seeds, n_episodes), all_results) — the full result
+        tuples are kept because some experiments need value_history from them.
     """
-    all_returns = []  # will become a (n_seeds, n_episodes) array containing all the REWARDS for each seed+episode
-    all_results = []  # full result tuples for each seed (Q-tables, V, etc.)
+    all_returns = []
+    all_results = []
 
     for seed in seeds:
-        set_seed(seed)  # seed numpy and torch for this run
-        env = make_env_fn()  # fresh environment (no state from previous seed)
-        env.reset(seed=seed)  # seed the env's internal RNG (Gymnasium API)
+        set_seed(seed)
+        env = make_env_fn()
+        env.reset(seed=seed)         # the env RNG, not just numpy/torch
+        env.action_space.seed(seed)  # and its own, separate RNG (see run_pong.py)
 
-        # Run the algorithm; all algorithms return episode_returns at index [1]:
-        # q_learning - (Q, returns, lengths)
-        # mc_prediction / td0_prediction - (V, returns, value_history)
         result = train_fn(env=env, **train_kwargs)
-        all_returns.append(result[1])  # index [1] = episode_returns list
+        all_returns.append(result[1])
         all_results.append(result)
-        env.close()  # free resources (important for Atari envs)
+        env.close()
 
-    # Stack into (n_seeds, n_episodes) array for easy mean/std computation
     return np.array(all_returns), all_results

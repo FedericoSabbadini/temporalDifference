@@ -1,23 +1,12 @@
 """On-policy TD control: SARSA (S&B §6.4).
 
 Origin: ADAPTED from the course Esercitazione_RL / control.py.
-Same update rule and SARSA pattern (choose A' before update).
 
-Update rule:
-    Q(S,A) += α [ R + γ Q(S',A') - Q(S,A) ]
+    Q(S,A) += alpha * [ R + gamma * Q(S',A') - Q(S,A) ]
 
-Key difference from Q-Learning: the target uses the ACTUAL next action A'
-chosen by the ε-greedy policy, not the greedy max. This makes SARSA
-ON-POLICY - it evaluates and improves the policy it is currently following.
-
-Consequence: SARSA learns a "safer" policy that accounts for its own
-exploration noise. Classic example (S&B §6.5, Fig. 6.5): on CliffWalking,
-SARSA avoids the cliff edge (because it knows it will sometimes explore
-and fall off), while Q-Learning walks right along it (because the target
-assumes greedy behavior, ignoring the exploration risk).
-
-The name SARSA comes from the quintuple used in each update:
-(S, A, R, S', A') - State, Action, Reward, next State, next Action.
+The target uses A', the action epsilon-greedy actually picked, not the max. SARSA
+therefore evaluates the policy it is really following, exploration noise included,
+which is why it learns "safer" policies (the CliffWalking result, S&B Fig. 6.5).
 """
 
 import numpy as np
@@ -28,57 +17,35 @@ from rl_lab.policies import epsilon_greedy_action, linear_epsilon
 
 def sarsa(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
           max_steps=1000, epsilon_end=None):
-    """Train SARSA on a discrete (or discretized) Gymnasium env.
-
-    Args are the same as q_learning, including `epsilon_end`: if None (default)
-    ε is constant at `epsilon`; if set, ε is annealed linearly from `epsilon` to
-    `epsilon_end` over the first half of training, then held.
-
-    Returns:
-        Q, episode_returns, episode_lengths (same format as q_learning).
-    """
-    n_actions = env.action_space.n  # number of discrete actions
+    """Train SARSA. Same arguments and return format as `q_learning`."""
+    n_actions = env.action_space.n
     Q = defaultdict(lambda: np.zeros(n_actions, dtype=np.float64))
-    episode_returns = []  # total reward per episode (for learning curves)
-    episode_lengths = []  # steps per episode (for diagnostics)
+    episode_returns = []
+    episode_lengths = []
 
     for ep in range(episodes):
-        # ε schedule: constant if epsilon_end is None (default), else the shared
-        # linear anneal (see policies.linear_epsilon)
         if epsilon_end is None:
             eps = epsilon
         else:
             eps = linear_epsilon(epsilon, epsilon_end, ep, max(1, episodes // 2))
 
         state, _ = env.reset()
-        # SARSA needs the first action BEFORE entering the loop -
-        # unlike Q-Learning, which only needs the action inside the loop.
-        # This is because SARSA uses the (S, A, R, S', A') quintuple.
+        # SARSA needs A before the loop: the update consumes the full (S,A,R,S',A').
         action = epsilon_greedy_action(Q, state, eps, n_actions)
         total_reward = 0.0
 
         for step in range(max_steps):
-            # Take action A, observe R and S'
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             total_reward += reward
 
-            # Choose next action A' BEFORE updating - this is the key SARSA pattern.
-            # A' is chosen by the SAME ε-greedy policy the agent is following.
-            # The full quintuple (S, A, R, S', A') is now available for the update.
-            next_action = epsilon_greedy_action(Q, next_state, eps,
-                                                n_actions)
+            next_action = epsilon_greedy_action(Q, next_state, eps, n_actions)
 
-            # === SARSA update (S&B §6.4, Eq. 6.7) ===
-            # target = R + γ Q(S', A') - uses the ACTUAL next action A' (not max)
-            # This makes SARSA ON-POLICY: the target respects the exploration policy.
             td_target = reward + gamma * Q[next_state][next_action] * (not done)
             Q[state][action] += alpha * (td_target - Q[state][action])
 
             state = next_state
-            # Carry A' forward: it becomes the action A at the next step.
-            # This avoids choosing A' twice (once for update, once for action).
-            action = next_action
+            action = next_action  # carry A' forward so it is not re-sampled
             if done:
                 break
 

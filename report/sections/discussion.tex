@@ -1,92 +1,90 @@
 \section{Analisi critica}
 \label{sec:discussion}
 
-\subsection{L'agente sta davvero imparando?}
-S\`i, in tutti e tre gli ambienti, ma in misura diversa:
-\begin{itemize}[nosep]
-  \item \textbf{CartPole}: apprendimento netto (da $\sim$30 a $\sim$175--225,
-        ancora in salita a 5000 episodi dopo il fix \#2), riproducibile tra i
-        seed anche se pi\`u rumoroso della versione a bin larghi.
-  \item \textbf{Acrobot}: apprendimento reale ma parziale (da $-470$ a
-        $-345$), lontano dall'ottimo e molto rumoroso.
-  \item \textbf{Pong}: apprendimento chiaro sopra il caso casuale per le
-        configurazioni con replay; nessun apprendimento senza replay.
+Questa sezione raccoglie le letture \emph{trasversali}, che nessun singolo esperimento
+mostra da solo.
+
+\subsection{SARSA vs Q-Learning: la teoria non predice il vincitore}
+Il confronto ha dato esiti \emph{opposti} nei due ambienti, ed \`e istruttivo proprio
+per questo. Su \textbf{CartPole} SARSA vince su entrambi i fronti (return $258$ vs
+$224$, std $\pm 31$ vs $\pm 49$). Su \textbf{Acrobot} Q\hbox{-}Learning ottiene un
+return leggermente migliore ($-341$ vs $-349$) ma SARSA \`e quasi dieci volte pi\`u
+stabile tra i seed ($\pm 3.2$ vs $\pm 27.8$).
+
+La differenza teorica \`e sempre la stessa --- il target di Q\hbox{-}Learning usa il
+$\max$ e ignora l'esplorazione, quello di SARSA usa l'azione realmente scelta e la
+include --- ma le \emph{conseguenze} dipendono dall'ambiente. Dove l'esplorazione \`e
+costosa (CartPole: una mossa casuale pu\`o far cadere l'asta), SARSA guadagna perch\'e
+apprende una policy robusta al proprio rumore. Dove il reward \`e sparso (Acrobot), il
+$\max$ amplifica le rare traiettorie fortunate che raggiungono l'obiettivo: quali
+siano dipende dal seed, da cui i picchi migliori ma la varianza altissima di
+Q\hbox{-}Learning. Concluderne che ``off-policy \`e meglio'' non ha valore predittivo:
+conta come il rischio dell'esplorazione interagisce con la struttura del reward.
+
+\subsection{Perch\'e le curve non convergono mai davvero}
+Nessuna curva tabellare si appiattisce del tutto, e non deve: con $\varepsilon$ e
+$\alpha$ \emph{costanti} l'agente continua a esplorare e pesa le esperienze recenti in
+modo esponenziale (media a pesi mobili, non media esatta), quindi la fluttuazione
+asintotica \`e attesa (S\&B \S2.5). Che l'annealing di $\varepsilon$ riduca
+sensibilmente la varianza tra seed su entrambi gli ambienti \`e la conferma sperimentale
+di questa lettura.
+
+\subsection{Due ipotesi smentite, e perch\'e le ho tenute}
+I risultati sui bin e su $\varepsilon$ in Acrobot contraddicono entrambi la mia
+previsione iniziale. Non ho ritoccato n\'e gli esperimenti n\'e le ipotesi: sono
+riproducibili sui 3 seed, \emph{monotoni} nel parametro (quindi non sono rumore) e
+hanno una spiegazione meccanicistica coerente.
+
+Il punto interessante \`e che le due ``regole'' che ho smentito sono vere
+\emph{in astratto}: la curse of dimensionality esiste, e un reward sparso richiede
+davvero pi\`u esplorazione. Sono per\`o affermazioni \emph{asintotiche}, mentre un
+esperimento avviene a budget finito e su un ambiente specifico --- il tipo di errore che
+solo la verifica sperimentale intercetta.
+
+\subsection{Limiti metodologici che riconosco}
+\begin{itemize}
+  \item \textbf{Predizione: misura locale.} Il confronto MC vs TD(0) traccia
+        $V(s_{\text{ref}})$ di \emph{un} singolo stato; una misura globale (RMSE di $V$
+        su tutti gli stati, come nel \emph{random walk} del corso) richiederebbe un $V$
+        di riferimento che qui non ho. L'attenuante \`e che valutare \emph{due} policy
+        diverse mi ha comunque permesso di isolare \emph{da cosa} dipende il bias.
+  \item \textbf{Asse x in ``episodi'' nell'ablazione Pong.} A parit\`a di 200k step le
+        configurazioni producono numeri diversi di episodi, quindi confrontarle allo
+        stesso indice non \`e un confronto a parit\`a esatta di calcolo. Un asse in step
+        ambiente sarebbe pi\`u corretto; la conclusione qualitativa non cambia, dato che
+        le curve senza replay restano piatte per l'intera durata.
+  \item \textbf{Persistenza parziale dei dati grezzi.} Controllo, annealing, predizione e
+        ablazione Pong sono salvati in \code{.npz}; le sweep di sensibilit\`a e i
+        fallimenti producono solo figure, quindi le tabelle usano solo dati persistiti.
+  \item \textbf{Bande assenti nelle figure di sensibilit\`a}, per leggibilit\`a
+        (Sez.~\ref{sec:experiments-reading}).
+  \item \textbf{Il DQN \`e valutato durante il training}, con $\varepsilon > 0$: \`e
+        una stima leggermente \emph{pessimistica} della policy greedy. I checkpoint
+        sono salvati, quindi una valutazione greedy separata sarebbe fattibile senza
+        riaddestrare.
 \end{itemize}
-Il fatto che il codice ``giri'' non basta: la valutazione si basa sul confronto
-tra performance osservata e attesa teorica, non sull'assenza di errori.
 
-\subsection{Convergenza, stabilit\`a e varianza}
-Nessun ambiente raggiunge una convergenza piatta: le curve tabellari restano
-rumorose perch\'e $\varepsilon$ \`e costante (l'agente continua a esplorare) e
-perch\'e $\alpha$ \`e fisso (media a pesi esponenziali, non convergenza a
-media esatta). Questo \`e atteso e coerente con la teoria. In termini di
-varianza tra seed Q\hbox{-}Learning \`e pi\`u stabile di SARSA su entrambi gli
-ambienti (CartPole $\pm 39$ vs $\pm 61$; Acrobot $\pm 10$ vs $\pm 31$): l'update
-off-policy con $\max$ risulta qui meno rumoroso della stima on-policy. Su
-CartPole, per\`o, dopo il fix \#2 SARSA raggiunge un return \emph{pi\`u alto}
-(225 vs 174): il vantaggio di stabilit\`a di Q\hbox{-}Learning non si traduce in
-performance superiore in questo budget di episodi.
+\subsection{Problemi implementativi incontrati}
+Distinti dai limiti intrinseci dell'RL, questi sono ostacoli reali che ho dovuto
+risolvere:
+\begin{itemize}
+  \item \textbf{GPU Blackwell (RTX 5060)}: richiede la build PyTorch CUDA 12.8; con
+        build precedenti la GPU non viene rilevata e il training cade silenziosamente
+        su CPU.
+  \item \textbf{Pipeline Atari, tre trappole}: (i) l'ambiente \code{-v5} ha gi\`a un
+        frame-skip interno che, combinato con \code{AtariPreprocessing}, darebbe uno
+        skip effettivo di 16 frame, quindi va forzato \code{frameskip=1}; (ii) in
+        Gymnasium 1.x \code{FrameStack} si chiama \code{FrameStackObservation};
+        (iii) i frame impilati sono gi\`a channel-first \code{(4,84,84)} e non vanno
+        trasposti. Sbagliare uno dei tre produce un crash oppure --- peggio --- input
+        silenziosamente malformati.
+  \item \textbf{Memoria del replay buffer}: 1M di transizioni Atari sarebbero
+        $\approx 28$\,GB, quindi ho limitato il buffer a 100k tenendo i frame in
+        \code{uint8}.
+  \item \textbf{Stato di riferimento impossibile} (Sez.~\ref{sec:met-prediction}): il
+        grafico piatto a zero era corretto, era la domanda ad essere mal posta.
+\end{itemize}
 
-\subsection{Riproducibilit\`a}
-Tutti i risultati sono su 3 seed con banda $\pm 1\sigma$; il seeding combinato
-(numpy + torch + env) rende le run ripetibili. Le bande, spesso ampie
-(soprattutto Acrobot e predizione), sono riportate onestamente e non
-nascoste: sono esse stesse un risultato (indicano quanto l'esito dipenda dal
-seed).
-
-\subsection{Training vs evaluation, checkpoint}
-Per il DQN training ed evaluation sono separati: la baseline casuale \`e
-valutata a parte campionando azioni uniformi, e i pesi finali di ogni run sono
-salvati come checkpoint (\code{results/pong/<config>/model\_seed<n>.pt}). Un
-limite onesto: nel loop DQN la ``curva'' \`e il return di training (con
-$\varepsilon$ ancora $>0$), quindi \`e una stima leggermente pessimistica
-della policy greedy; non \`e stata aggiunta una fase di evaluation puramente
-greedy separata, che sarebbe un miglioramento naturale.
-
-\subsection{Limiti metodologici individuati}
-Questa sezione riporta i problemi trovati durante la revisione, senza
-nasconderli.
-
-\paragraph{(1) Confronto MC vs TD(0): da poco informativo a corretto.}
-Nella prima versione i grafici MC vs TD(0) tracciavano il \emph{return della
-policy valutata}, identico per costruzione tra i due metodi, e non mostravano il
-compromesso bias/varianza (che riguarda le stime $V(s)$). Questo \`e stato
-corretto (fix \#1, Sez.~\ref{sec:lessons-fixes}): si traccia ora la stima
-$V(s_{\text{ref}})$ di uno stato di riferimento episodio per episodio
-(Fig.~\ref{fig:pred-value}), che rende visibile la varianza alta di MC contro la
-traiettoria liscia di TD(0). Resta una misura \emph{locale} (un solo stato); una
-misura globale (RMSE di $V$ su tutti gli stati, come nel ``random walk'')
-richiederebbe un $V$ di riferimento non disponibile in questo setup.
-
-\paragraph{(2) Ipotesi smentite dai dati (Acrobot).}
-Sia l'esperimento sui bin sia quello su $\varepsilon$ hanno dato l'esito
-opposto all'ipotesi iniziale (pi\`u bin = meglio; meno esplorazione = meglio).
-Questo \`e stato mantenuto e discusso come risultato, non ``corretto'' per
-farlo combaciare con l'attesa. La lezione: la curse of dimensionality e la
-difficolt\`a di esplorazione sono reali in principio, ma il loro effetto
-dipende dal budget di episodi e dallo schema di $\varepsilon$ (costante vs
-decrescente).
-
-\paragraph{(3) Asse x in ``episodi'' nell'ablazione Pong.}
-Le curve Pong sono in funzione dell'\emph{indice di episodio}, ma le
-configurazioni raggiungono numeri di episodi diversi a parit\`a di 200k step.
-Confrontarle allo stesso indice di episodio non \`e un confronto a parit\`a di
-calcolo esatta; un asse in ``step ambiente'' sarebbe pi\`u corretto. La
-conclusione qualitativa (replay indispensabile) resta comunque valida.
-
-\paragraph{(4) Persistenza parziale dei dati grezzi.}
-I runner salvano come \code{.npz} solo le comparazioni di controllo e
-l'ablazione Pong; sensibilit\`a, fallimenti e predizione producono solo
-figure. Le tabelle usano quindi solo dati realmente persistiti; le altre
-analisi sono discusse qualitativamente dalle figure. Salvare anche quegli
-array sarebbe un miglioramento di riproducibilit\`a.
-
-\subsection{Buono per un progetto didattico, non ``research-grade''}
-I risultati sono pienamente adeguati agli obiettivi didattici della consegna:
-mostrano apprendimento, confronti corretti e fallimenti analizzati. Non sono
-``research-grade'': CartPole non raggiunge 500 (limite della discretizzazione,
-alzato ma non eliminato dal fix \#2), Acrobot resta lontano dall'ottimo, e Pong
-si ferma a $\sim$$-12$ (un DQN
-addestrato per 50M step, non 200k, arriverebbe a punteggi positivi). Questi
-divari sono attesi e coerenti con il budget di calcolo scelto, e sono
-dichiarati esplicitamente.
+Nel complesso i risultati mostrano apprendimento, confronti corretti e fallimenti
+analizzati, e in questo sono adeguati agli obiettivi della consegna; non sono per\`o
+``research-grade'', e i divari li dichiaro apertamente nelle conclusioni.

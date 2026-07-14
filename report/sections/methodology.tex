@@ -2,23 +2,16 @@
 \label{sec:methodology}
 
 \subsection{Organizzazione del codice}
-Il codice \`e nel pacchetto \code{rl\_lab}, con separazione netta delle
-responsabilit\`a:
-\begin{itemize}[nosep]
-  \item \code{algorithms/tabular/}: Q\hbox{-}Learning, SARSA, MC, TD(0) --- funzioni
-        pure (ambiente in ingresso, risultati in uscita).
-  \item \code{algorithms/deep/}: rete (\code{networks.py}), replay buffer,
-        loop di training DQN con flag di ablazione e Double DQN.
-  \item \code{envs/}: \code{discretizer.py} (binning generico) e
-        \code{atari\_wrappers.py} (preprocessing Atari).
-  \item \code{experiments/runner.py}: esecuzione multi-seed.
-  \item \code{utils/}: seeding e plotting (curve con banda $\pm 1\sigma$).
-  \item \code{scripts/}: uno script per ambiente che orchestra gli esperimenti.
-\end{itemize}
-Gli iperparametri di ambiente stanno in \code{configs.py}; il plotting \`e
-isolato dai loop di training.
+Il codice sta nel pacchetto \code{rl\_lab}: gli algoritmi sono funzioni pure (ambiente
+in ingresso, risultati in uscita), gli script orchestrano gli esperimenti, il plotting
+\`e isolato dai loop di training e gli iperparametri stanno in \code{configs.py}. Le
+componenti sono \code{algorithms/tabular/} (i quattro algoritmi),
+\code{algorithms/deep/} (rete Nature-CNN, replay buffer, loop DQN con i flag di
+ablazione e Double DQN), \code{envs/} (discretizzatore e preprocessing Atari),
+\code{experiments/runner.py} (esecuzione multi-seed: ogni esperimento passa di qui,
+quindi nessun risultato pu\`o essere accidentalmente a seed singolo) e \code{utils/}
+(seeding e plotting).
 
-\subsection{Ambienti: stati, azioni, reward}
 \begin{table}[H]
 \centering
 \caption{Caratteristiche degli ambienti e discretizzazione adottata.}
@@ -27,51 +20,79 @@ isolato dai loop di training.
 \toprule
 Ambiente & Stato & Azioni & Reward & Discretizzazione \\
 \midrule
-CartPole & 4-D cont. & 2 & $+1$/passo & 10 bin/dim $\to 10^4$ stati \\
-Acrobot  & 6-D cont. & 3 & $-1$/passo & 6 bin/dim $\to 46656$ stati \\
+CartPole & 4-D cont. & 2 & $+1$/passo (denso) & 10 bin/dim $\to 10^4$ stati \\
+Acrobot  & 6-D cont. & 3 & $-1$/passo (sparso) & 6 bin/dim $\to 46\,656$ stati \\
 Pong     & $210{\times}160$ RGB & 6 & $\pm 1$ (punto) & --- (pixel, DQN) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Discretizzazione.} Il wrapper \code{DiscretizedEnv} clippa ogni
-dimensione in un intervallo configurato, la scala su $[0, \text{bin}]$ e la
-tronca a un indice intero; il risultato \`e una tupla usata come chiave della
-Q-table (\code{defaultdict}). Per le velocit\`a (illimitate) si clippa a un
-intervallo pratico ricavato dalla documentazione Gymnasium.
+\subsection{Discretizzazione: le scelte che contano}
+Il wrapper \code{DiscretizedEnv} clippa ogni dimensione in un intervallo configurato, la
+scala e la tronca a un indice intero; il risultato \`e una tupla usata come chiave della
+Q-table (state aggregation, S\&B \S9.4). Due scelte incidono sui risultati e le dichiaro.
 
-\paragraph{Preprocessing Atari.} Segue lo standard di
-Mnih~et~al.~\cite{mnih2015}: no-op iniziali casuali, frame-skip 4,
-grayscale, resize $84{\times}84$, stack di 4 frame (per dare informazione di
-moto). I frame sono tenuti in \code{uint8} nel buffer per risparmiare memoria
-e normalizzati a $[0,1]$ solo al momento del training.
+\emph{Intervalli di clipping.} Su CartPole clippo posizione e angolo ai limiti di
+\textbf{terminazione} ($\pm 2.4$ e $\pm 0.21$\,rad), non a quelli dello spazio di
+osservazione ($\pm 4.8$, $\pm 0.418$): oltre le soglie di terminazione l'episodio \`e
+gi\`a finito, quindi usare i limiti pi\`u larghi sprecherebbe met\`a dei bin di
+posizione e angolo su stati che non possono verificarsi. La scelta raddoppia la
+risoluzione utile sulle due dimensioni pi\`u importanti. Le velocit\`a non hanno un
+limite ufficiale e le clippo a $\pm 3.0$, valore entro cui restano comodamente durante il
+bilanciamento. Su Acrobot i limiti \emph{esistono} nel sorgente Gymnasium ($4\pi$ e $9\pi$
+per le due velocit\`a angolari) e li riuso esattamente: nessun bin sprecato, nessuno
+saturo.
 
-\subsection{Policy di predizione valutata}
-MC e TD(0) sono algoritmi di predizione e richiedono una policy \emph{fissa}.
-La scelta implementativa (documentata anche nel codice) \`e: addestrare
-Q\hbox{-}Learning, estrarne la policy greedy $\pi(s)=\arg\max_a Q(s,a)$, e
-valutare \emph{quella} policy con MC e TD(0). Come confronto si valuta anche
-una policy casuale.
+\emph{Numero di bin.} \`E il parametro che non ho voluto assumere: la
+Sez.~\ref{sec:res-acrobot-bins} lo misura direttamente, con esito opposto all'attesa.
 
-\subsection{Architettura del DQN}
-La rete \`e la Nature-CNN~\cite{mnih2015}: tre layer convoluzionali
-($8{\times}8$/4, $4{\times}4$/2, $3{\times}3$/1) seguiti da due layer fully
-connected ($3136{\to}512{\to}n_{\text{azioni}}$). La rete restituisce
-$Q(s,\cdot)$ per tutte le azioni in un solo forward pass.
+\subsection{Quale policy valutano MC e TD(0)?}
+\label{sec:met-prediction}
+Addestro Q\hbox{-}Learning, ne estraggo la policy greedy $\pi(s)=\arg\max_a Q(s,a)$ e
+valuto \emph{quella} con entrambi gli stimatori; come riferimento valuto anche una policy
+\emph{casuale}. Il doppio caso non \`e ridondante ed \`e anzi la parte pi\`u interessante
+del risultato (Sez.~\ref{sec:res-cartpole-pred}): la policy appresa genera episodi lunghi
+($\approx 330$ passi), quella casuale episodi corti ($\approx 22$), e la lunghezza degli
+episodi \`e esattamente ci\`o che determina quanto TD(0) resta distorto.
 
-\subsection{Training vs evaluation}
-Per gli algoritmi tabellari la ``curva di apprendimento'' \`e il return per
-episodio \emph{durante} il training (con esplorazione attiva). Per la
-predizione, invece, si riporta il return degli episodi generati sotto la
-policy fissa valutata. Per il DQN il training \`e \emph{step-based} (budget
-fisso di passi ambiente); la baseline casuale viene valutata separatamente
-campionando azioni uniformi. I checkpoint dei modelli DQN sono salvati in
-\code{results/pong/} per ogni configurazione e seed.
+Per confrontare gli stimatori traccio la stima $V(s_{\text{ref}})$ di un singolo stato,
+episodio per episodio. Come $s_{\text{ref}}$ uso lo \textbf{stato di reset
+discretizzato}: \`e sempre raggiungibile ed \`e visitato all'inizio di ogni episodio,
+quindi entrambi gli stimatori lo aggiornano di continuo. La mia prima scelta --- il
+``bin centrale'' di ogni dimensione --- era sbagliata: su Acrobot d\`a uno stato
+\emph{fisicamente impossibile}, perch\'e l'osservazione codifica gli angoli come
+$[\cos\theta, \sin\theta]$ e i due non possono essere entrambi $\approx 0$. Quello stato
+non veniva mai visitato e la stima restava piatta a zero.
 
-\subsection{Riproducibilit\`a}
-Ogni run fissa il seed con \code{set\_seed} (numpy + torch CPU/CUDA) e
-\code{env.reset(seed=...)}. Tutti i risultati riportati sono media su 3 seed
-$\{42, 123, 456\}$ con banda $\pm 1\sigma$. Gli array grezzi delle
-comparazioni di controllo e dell'ablazione Pong sono salvati in
-\code{results/} come \code{.npz}, cos\`i che ogni tabella e figura sia
-rigenerabile senza rieseguire il training.
+\subsection{DQN, preprocessing Atari e riproducibilit\`a}
+La rete \`e la Nature-CNN~\cite{mnih2015}: tre layer convoluzionali e due fully connected
+($3136 \to 512 \to n_{\text{azioni}}$), che restituiscono $Q(s,\cdot)$ per tutte le
+azioni in un forward pass. I due stabilizzatori sono dietro un flag ciascuno, cos\`i
+l'ablazione richiesta \`e un cambio di parametro e non di codice. Il replay buffer \`e
+limitato a 100k transizioni: il milione del paper Nature occuperebbe $\approx 28$\,GB,
+pi\`u della RAM disponibile.
+
+Il preprocessing Atari segue lo standard di Mnih~et~al.: no-op iniziali casuali,
+frame-skip 4 con massimo pixel-wise sugli ultimi due frame (Atari fa lampeggiare gli
+sprite e la pallina pu\`o sparire a frame alterni), grayscale, resize $84{\times}84$ e
+stack di 4 frame --- necessario perch\'e da un solo fotogramma la direzione della pallina
+\`e ambigua. I frame restano \code{uint8} nel buffer e sono normalizzati solo al momento
+del training.
+
+Ogni run fissa il seed con \code{set\_seed} (numpy + torch) e
+\code{env.reset(seed=\ldots)}; tutti i risultati sono media su 3 seed $\{42, 123, 456\}$.
+Gli array grezzi sono salvati in \code{results/} come \code{.npz} e \textbf{tutte le
+tabelle di questo report sono generate da quei file}
+(\code{report/make\_report\_tables.py}): nessun numero \`e trascritto a mano.
+
+\subsection{Origine del codice}
+\label{sec:code-origin}
+I \textbf{quattro algoritmi tabellari} sono adattati dalle esercitazioni del corso
+(\code{control.py}, \code{prediction.py}): stessa regola di aggiornamento, riadattata
+all'API Gymnasium moderna e agli stati discretizzati. Il \textbf{DQN} (replay buffer,
+loop di training, target network, Double DQN), il \textbf{discretizzatore},
+l'infrastruttura multi-seed e tutti gli script sono \textbf{scritti da zero}: il corso
+forniva solo un DQN basato su Stable-Baselines3, che la consegna vieta per il core. La
+Nature-CNN replica l'architettura di~\cite{mnih2015} con implementazione PyTorch
+originale. Nessuna riga di Stable-Baselines3 \`e usata nel progetto. Il dettaglio
+completo \`e in \code{docs/origine\_codice.md}.

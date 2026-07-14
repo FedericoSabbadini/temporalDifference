@@ -1,58 +1,54 @@
-# Report - TemporalDifference
+# Report — TemporalDifference
 
-Final report (in Italian) for the Reinforcement Learning project.
+Final report (in Italian) for the Reinforcement Learning project. 15 pages, which is the
+assignment's limit.
 
 ## Structure
 
 ```
 report/
-├── main.tex              # entry point (loads all sections)
-├── references.bib        # bibliography
-├── sections/             # one .tex per section
+├── main.tex              # entry point (preamble + loads all sections)
+├── references.bib
+├── make_report_tables.py # generates tables/*.tex from results/*.npz
+├── sections/
 │   ├── introduction.tex
-│   ├── theory.tex
-│   ├── methodology.tex
-│   ├── experiments.tex
-│   ├── results.tex
-│   ├── discussion.tex    # critical analysis (incl. limitations)
-│   ├── compliance.tex    # requirement - deliverable matrix
-│   ├── code_origin.tex
-│   └── conclusions.tex
-├── figures/              # PNGs copied from ../figures (env-prefixed)
-└── tables/               # .tex tables generated from real data
+│   ├── theory.tex        # the four algorithms + DQN
+│   ├── methodology.tex   # implementation, discretization choices, code origin
+│   ├── experiments.tex   # setup, hyperparameters, how to read the figures
+│   ├── results.tex       # per-environment results (all figures live here)
+│   ├── failure.tex       # failure analysis (mandatory section)
+│   ├── discussion.tex    # cross-cutting critical analysis + known limits
+│   └── conclusions.tex   # what failed / what surprised me / algorithm limits
+├── figures/              # PNGs copied from ../figures, env-prefixed. Every file
+│                         #   here is cited in the text.
+└── tables/               # generated — do not edit by hand
 ```
 
 ## Compiling
 
 ```bash
-# From the report/ directory:
-latexmk -pdf main.tex
-# or manually:
-pdflatex main && bibtex main && pdflatex main && pdflatex main
+cd report && latexmk -pdf main.tex     # -> main.pdf
 ```
-
-Produces `main.pdf` (~16 pages).
 
 ## Regenerating figures and tables
 
-Figures and tables are derived from the saved experiment outputs, not
-hand-written:
+No number in the report is typed by hand: the tables are computed from the saved `.npz`.
 
 ```bash
-# 1. (Re)run experiments to produce results/ and figures/  (from repo root)
+# 1. (re)run experiments — from the repo root
 uv run python scripts/run_cartpole.py
 uv run python scripts/run_acrobot.py
 uv run python scripts/run_pong.py
 
-# 2. Regenerate the LaTeX tables from the saved .npz files
-uv run python scripts/make_report_tables.py
+# 2. regenerate the LaTeX tables from the saved .npz
+uv run python report/make_report_tables.py
 
-# 3. Refresh the report's figure copies
-cd report/figures
-for f in ../../figures/*/*.png; do
-  d=$(basename $(dirname "$f")); cp "$f" "${d}_$(basename $f)"
+# 3. refresh the report's figure copies (env-prefixed names)
+for f in figures/*/*.png; do
+  d=$(basename $(dirname "$f")); cp "$f" "report/figures/${d}_$(basename $f)"
 done
 ```
 
-All reported numbers come from `results/*/*.npz`; `make_report_tables.py`
-computes them so nothing is manually transcribed.
+Step 3 copies *all* figures; two of them (`*_prediction_return.png`) are intentionally
+not cited — the report explains why — so they can be deleted from `report/figures/` to
+keep that folder exactly equal to what the text references.

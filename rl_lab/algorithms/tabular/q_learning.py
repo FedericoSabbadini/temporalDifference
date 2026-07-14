@@ -1,18 +1,14 @@
 """Off-policy TD control: Q-Learning (S&B §6.5).
 
-Origin: ADAPTED from the course Esercitazione_RL / control.py.
-Same update rule, adapted to: (1) Gymnasium API (terminated/truncated),
-(2) discretized states (tuple keys), (3) episode_returns tracking.
+Origin: ADAPTED from the course Esercitazione_RL / control.py. Same update rule,
+adapted to the Gymnasium API (terminated/truncated), to discretized tuple states and
+to returning per-episode statistics.
 
-Update rule (Bellman optimality equation):
-    Q(S,A) += α [ R + γ max_a Q(S',a) - Q(S,A) ]
+    Q(S,A) += alpha * [ R + gamma * max_a Q(S',a) - Q(S,A) ]
 
-Key property: the target uses max over NEXT-STATE actions (greedy w.r.t. Q),
-regardless of the action actually taken by the ε-greedy behavior policy.
-This makes Q-Learning OFF-POLICY: it learns the optimal policy π* while
-following an exploratory policy (ε-greedy).
-
-The term in brackets [R + γ max Q(S',a) - Q(S,A)] is the TD error (δ).
+The target maxes over the next state's actions regardless of what the epsilon-greedy
+behaviour policy actually does: this is what makes it off-policy. It learns the value
+of the greedy policy while behaving exploratorily.
 """
 
 import numpy as np
@@ -26,69 +22,48 @@ def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
     """Train Q-Learning on a discrete (or discretized) Gymnasium env.
 
     Args:
-        env: Gymnasium environment (observation must be hashable, e.g. tuple).
+        env: Gymnasium env whose observations are hashable (tuples).
         episodes: number of training episodes.
-        alpha: learning rate - controls how much each update changes Q.
-               Too high - instability; too low - slow convergence.
-        gamma: discount factor - how much future rewards matter.
-               gamma=1 treats all future rewards equally; gamma<1 is "myopic".
-        epsilon: exploration rate for ε-greedy. This is the START value.
+        alpha: learning rate.
+        gamma: discount factor.
+        epsilon: exploration rate (the START value if epsilon_end is set).
         max_steps: safety cap on episode length.
-        epsilon_end: if None (default), ε is CONSTANT at `epsilon` (no decay).
-               If set, ε is ANNEALED linearly from `epsilon` down to
-               `epsilon_end` over the first half of training, then held at
-               `epsilon_end` (explore early, exploit late).
+        epsilon_end: None (default) keeps epsilon constant; if set, epsilon is annealed
+            linearly to it over the first half of training, then held.
 
     Returns:
-        Q: learned Q-table (defaultdict mapping state to an np.array of Q-values per action).
-        episode_returns: list of total rewards per episode (for learning curves).
-        episode_lengths: list of steps per episode.
+        (Q, episode_returns, episode_lengths).
     """
-    n_actions = env.action_space.n  # number of discrete actions (e.g. 2 for CartPole)
-    # defaultdict: unseen states automatically get Q=0 for all actions.
-    # This means every state starts with equal value - no initial bias toward any action.
+    n_actions = env.action_space.n
+    # Unseen states default to Q=0 for every action: no initial bias toward any action.
     Q = defaultdict(lambda: np.zeros(n_actions, dtype=np.float64))
-    episode_returns = []  # total reward per episode (for learning curves)
-    episode_lengths = []  # steps per episode (for diagnostics)
+    episode_returns = []
+    episode_lengths = []
 
     for ep in range(episodes):
-        # ε schedule: constant if epsilon_end is None (default, identical to
-        # before), otherwise the shared linear anneal over the first half of
-        # training (see policies.linear_epsilon).
         if epsilon_end is None:
             eps = epsilon
         else:
             eps = linear_epsilon(epsilon, epsilon_end, ep, max(1, episodes // 2))
 
-        # Gymnasium API: reset returns (observation, info_dict)
         state, _ = env.reset()
         total_reward = 0.0
 
         for step in range(max_steps):
-            # Behavior policy: ε-greedy (explore with prob ε)
             action = epsilon_greedy_action(Q, state, eps, n_actions)
-
-            # Gymnasium API: step returns (obs, reward, terminated, truncated, info)
-            # terminated = reached a terminal state (e.g. pole fell)
-            # truncated = hit the time limit (e.g. 500 steps in CartPole-v1)
             next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated  # episode ends either way
+            done = terminated or truncated
             total_reward += reward
 
-            # === Q-Learning update (S&B §6.5, Eq. 6.8) ===
-            # target = R + γ max_a Q(S', a)
-            # The target uses max (greedy) over NEXT-STATE actions,
-            # regardless of the action the ε-greedy policy actually chose - OFF-POLICY.
-            # (not done) multiplier: at terminal states S' has no future - γ term = 0
+            # (not done) zeroes the bootstrap term: a terminal state has no future.
             td_target = reward + gamma * np.max(Q[next_state]) * (not done)
-            # α controls the step size: Q moves toward the target by fraction α
             Q[state][action] += alpha * (td_target - Q[state][action])
 
-            state = next_state  # advance to the next state
+            state = next_state
             if done:
                 break
 
         episode_returns.append(total_reward)
-        episode_lengths.append(step + 1)  # +1 because range is 0-indexed
+        episode_lengths.append(step + 1)
 
     return Q, episode_returns, episode_lengths

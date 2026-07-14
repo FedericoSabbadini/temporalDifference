@@ -68,7 +68,7 @@ Ogni modulo del progetto è classificato in base alla sua provenienza.
 | `run_cartpole.py` | **Nuovo** | - | Orchestratore degli esperimenti Env 1. Il design degli esperimenti (quali sweep, quali confronti) segue la consegna. |
 | `run_acrobot.py` | **Nuovo** | - | Orchestratore Env 2. Include `exp_bin_resolution()` - esperimento originale che non ha equivalente nel corso. |
 | `run_pong.py` | **Nuovo** | - | Orchestratore Env 3. Design ablation study e gestione multi-seed con padding per episodi di lunghezza diversa. |
-| `make_report_tables.py` | **Nuovo** | - | Genera le tabelle LaTeX del report leggendo **solo** i `.npz` salvati: nessun numero scritto a mano, tabelle rigenerabili. |
+| `report/make_report_tables.py` | **Nuovo** | - | Genera le tabelle LaTeX del report leggendo **solo** i `.npz` salvati: nessun numero scritto a mano, tabelle rigenerabili. |
 
 ---
 

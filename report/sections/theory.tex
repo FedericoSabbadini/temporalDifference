@@ -50,16 +50,10 @@ $\max$, cio\`e valuta la policy greedy indipendentemente da come si esplora.
 \subsection{Esplorazione: $\varepsilon$-greedy}
 La policy $\varepsilon$-greedy sceglie un'azione casuale con probabilit\`a
 $\varepsilon$ (\emph{exploration}) e l'azione greedy $\arg\max_a Q(s,a)$
-altrimenti (\emph{exploitation}). \`E il compromesso pi\`u semplice tra i due
-e viene usato in tutto il progetto (S\&B \S2.1).
-
-\subsection{Discretizzazione (state aggregation)}
-I metodi tabellari richiedono uno spazio di stati finito. CartPole e Acrobot
-hanno stato continuo, quindi ogni dimensione viene divisa in \emph{bin}
-uniformi (S\&B \S9.4, \emph{state aggregation}): stati vicini finiscono nello
-stesso bin. Il numero di stati cresce come (bin)$^{\text{dim}}$: $10^4$ per
-CartPole (gestibile), fino a $10^6$ per Acrobot con 10 bin (\emph{curse of
-dimensionality}).
+altrimenti (\emph{exploitation}): \`e il compromesso pi\`u semplice tra i due
+ed \`e usata in tutto il progetto (S\&B \S2.1). I metodi tabellari richiedono
+inoltre uno spazio di stati finito: la discretizzazione necessaria per CartPole
+e Acrobot, e le sue conseguenze, sono in Sez.~\ref{sec:methodology}.
 
 \subsection{Deep Q-Network (DQN)}
 Quando lo spazio degli stati \`e troppo grande (pixel di Pong), la $Q$ viene

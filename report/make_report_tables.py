@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-"""Generate LaTeX result tables from the saved .npz result files.
+"""Generate the LaTeX result tables from the saved .npz files.
 
-Origin: NEW. Reads ONLY the real arrays produced by the runners
-(results/*/*.npz) and emits LaTeX tables into report/tables/.
-No numbers are hand-written — everything is computed from saved data,
-so the tables can be regenerated after re-running any experiment.
+Origin: NEW. Reads ONLY the real arrays produced by the runners and emits
+report/tables/*.tex. No number in the report is typed by hand, so re-running an
+experiment and re-running this script is enough to refresh the tables.
 
 Usage:
-    uv run python scripts/make_report_tables.py
+    uv run python report/make_report_tables.py
 
-Note: only the control comparisons (CartPole, Acrobot) and the Pong
-ablation were persisted as .npz by the runners. Sensitivity / failure /
-prediction experiments produced figures only, so they are discussed
-qualitatively in the report rather than tabulated here.
+Only the control comparisons and the Pong ablation are tabulated: the sensitivity and
+failure sweeps produce figures but are not persisted as .npz, so the report discusses
+them from the figures (this limitation is stated in the report itself).
 """
 
 import sys, os
@@ -109,14 +107,14 @@ def main():
     tables = {
         "cartpole_control.tex": table_control(
             "results/cartpole/control_comparison.npz", "CartPole",
-            "CartPole controllo (discretizzazione fine, fix \\#2): "
-            "Q-Learning vs SARSA, media su 3 seed. Il return massimo \\`e 500; "
-            "con i bin pi\\`u fini le curve sono ancora in salita a 5000 episodi "
-            "e SARSA supera Q-Learning.",
+            "CartPole, controllo: Q-Learning vs SARSA a parit\\`a di iperparametri "
+            "($\\alpha=0.1$, $\\gamma=0.99$, $\\varepsilon=0.1$), media su 3 seed. "
+            "Il return massimo dell'ambiente \\`e 500; entrambe le curve sono ancora "
+            "in salita a fine budget.",
             "tab:cartpole-control"),
         "acrobot_control.tex": table_control(
             "results/acrobot/control_comparison.npz", "Acrobot",
-            "Acrobot controllo: Q-Learning vs SARSA, media su 3 seed. "
+            "Acrobot, controllo: Q-Learning vs SARSA, media su 3 seed. "
             "Policy casuale $\\approx -500$; un buon swing-up raggiunge "
             "$\\approx -100$.",
             "tab:acrobot-control"),

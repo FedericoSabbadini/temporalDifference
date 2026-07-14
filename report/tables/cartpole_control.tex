@@ -1,14 +1,14 @@
 \begin{table}[htbp]
 \centering
-\caption{CartPole controllo (discretizzazione fine, fix \#2): Q-Learning vs SARSA, media su 3 seed. Il return massimo \`e 500; con i bin pi\`u fini le curve sono ancora in salita a 5000 episodi e SARSA supera Q-Learning.}
+\caption{CartPole, controllo: Q-Learning vs SARSA a parit\`a di iperparametri ($\alpha=0.1$, $\gamma=0.99$, $\varepsilon=0.1$), media su 3 seed. Il return massimo dell'ambiente \`e 500; entrambe le curve sono ancora in salita a fine budget.}
 \label{tab:cartpole-control}
 \begin{tabular}{lccc}
 \toprule
 Algoritmo & Return iniziale & Return finale & Episodi/seed \\
           & (primi 100 ep) & (ultimo 10\% ep, media $\pm$ std) & \\
 \midrule
-Q-Learning & 26.6 & $173.8 \pm 39.0$ & 5000 \\
-SARSA & 40.8 & $225.2 \pm 61.4$ & 5000 \\
+Q-Learning & 26.6 & $223.6 \pm 49.4$ & 10000 \\
+SARSA & 40.8 & $258.3 \pm 31.1$ & 10000 \\
 \bottomrule
 \end{tabular}
 \end{table}
