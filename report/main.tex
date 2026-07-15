@@ -77,17 +77,22 @@ progetto.
 
 \medskip\hrule\medskip
 
+% Ogni sezione inizia su una pagina nuova (\clearpage forza anche l'uscita delle
+% figure in sospeso, cos\`i nessuna figura sconfina nella sezione successiva).
 \input{sections/introduction}
+\clearpage
 \input{sections/theory}
+\clearpage
 \input{sections/methodology}
+\clearpage
 \input{sections/experiments}
+\clearpage
 \input{sections/results}
+\clearpage
 \input{sections/failure}
+\clearpage
 \input{sections/discussion}
+\clearpage
 \input{sections/conclusions}
-
-{\small
-\bibliographystyle{plain}
-\bibliography{references}}
 
 \end{document}

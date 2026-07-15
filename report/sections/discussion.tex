@@ -81,6 +81,17 @@ risolvere:
   \item \textbf{Memoria del replay buffer}: 1M di transizioni Atari sarebbero
         $\approx 28$\,GB, quindi ho limitato il buffer a 100k tenendo i frame in
         \code{uint8}.
+  \item \textbf{DQN non riproducibile per un RNG nascosto.} Run che avrebbero dovuto
+        essere identiche divergevano: l'azione esplorativa viene da
+        \code{env.action\_space.sample()}, e lo spazio delle azioni ha un \emph{RNG
+        separato} che n\'e \code{set\_seed} n\'e \code{reset(seed=)} inizializzano.
+        All'inizio ($\varepsilon\!\approx\!1$) quasi tutta l'esperienza nasceva da quel
+        RNG non seminato. Aggiunto \code{env.action\_space.seed(seed)}; i risultati Pong
+        riportati sono di questo run corretto e riproducibile.
+  \item \textbf{Episodio troncato contato come completo.} Quando il budget di step
+        finiva a met\`a partita, il return parziale (troppo ottimistico) veniva
+        registrato come episodio, con uno spurio picco verso l'alto sul bordo destro di
+        ogni curva. Corretto scartando l'episodio non terminato.
   \item \textbf{Stato di riferimento impossibile} (Sez.~\ref{sec:met-prediction}): il
         grafico piatto a zero era corretto, era la domanda ad essere mal posta.
 \end{itemize}

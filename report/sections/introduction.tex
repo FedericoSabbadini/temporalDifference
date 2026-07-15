@@ -10,11 +10,11 @@ vengono analizzati come tali, inclusi i casi di fallimento e i risultati che sme
 le ipotesi da cui ero partito.
 
 \subsection{Ambienti e algoritmi}
-Ho lavorato su tre ambienti Gymnasium~\cite{towers2024gymnasium}:
+Ho lavorato su tre ambienti Gymnasium:
 \textbf{CartPole-v1} (comune; stato 4-D continuo, 2 azioni, reward $+1$/passo, denso),
 \textbf{Acrobot-v1} (assegnato; 6-D continuo, 3 azioni, reward $-1$/passo fino
 all'obiettivo, sparso) e \textbf{ALE/Pong-v5} (assegnato; Atari da
-pixel~\cite{bellemare2013ale}). La progressione non \`e casuale: CartPole serve a
+pixel, tramite l'Arcade Learning Environment). La progressione non \`e casuale: CartPole serve a
 verificare che gli algoritmi siano corretti, Acrobot a metterli in crisi, Pong a
 mostrare cosa serve quando la tabella non \`e pi\`u praticabile.
 
@@ -23,8 +23,8 @@ Su CartPole e Acrobot uso quattro algoritmi tabellari scritti a mano: due di
 TD(0)). Poich\'e entrambi gli ambienti hanno stato continuo, ho dovuto introdurre una
 \textbf{discretizzazione}: non \`e un dettaglio implementativo ma la scelta che, come
 mostro nella Sez.~\ref{sec:res-acrobot-bins}, governa il tetto di performance
-raggiungibile. Per Pong ho implementato un DQN in PyTorch~\cite{mnih2015} con experience
-replay e target network, pi\`u il bonus Double DQN~\cite{vanhasselt2016}.
+raggiungibile. Per Pong ho implementato un DQN in PyTorch (Mnih et al.\ 2015) con experience
+replay e target network, pi\`u il bonus Double DQN (van Hasselt et al.\ 2016).
 
 MC e TD(0), essendo di predizione, valutano una policy \emph{fissa} senza apprenderla:
 la policy da valutare deve quindi venire da qualche parte. Ho scelto di addestrare prima
@@ -32,10 +32,3 @@ Q\hbox{-}Learning, estrarne la policy greedy e valutare \emph{quella}, affiancan
 policy casuale come riferimento (Sez.~\ref{sec:met-prediction}). La scelta non \`e
 neutra: come si vedr\`a, il divario tra MC e TD(0) dipende proprio da quale policy si
 valuta.
-
-\subsection{Struttura del documento}
-Fondamenti teorici (Sez.~\ref{sec:theory}), metodologia (Sez.~\ref{sec:methodology}),
-setup sperimentale (Sez.~\ref{sec:experiments}), risultati (Sez.~\ref{sec:results}),
-failure analysis (Sez.~\ref{sec:failure}), analisi critica (Sez.~\ref{sec:discussion}) e
-conclusioni con ci\`o che non ha funzionato, ci\`o che mi ha sorpreso e i limiti degli
-algoritmi (Sez.~\ref{sec:conclusions}).

@@ -80,7 +80,7 @@ def table_pong(npz_path):
         ("no_both", "Senza target + senza replay"),
     ]
     lines = [
-        r"\begin{table}[htbp]",
+        r"\begin{table}[H]",
         r"\centering",
         r"\caption{Ablazione DQN su Pong: performance finale dopo 200k step "
         r"ambiente, media $\pm$ std su 3 seed. Policy casuale $\approx -20.4$.}",

@@ -65,7 +65,7 @@ $[\cos\theta, \sin\theta]$ e i due non possono essere entrambi $\approx 0$. Quel
 non veniva mai visitato e la stima restava piatta a zero.
 
 \subsection{DQN, preprocessing Atari e riproducibilit\`a}
-La rete \`e la Nature-CNN~\cite{mnih2015}: tre layer convoluzionali e due fully connected
+La rete \`e la Nature-CNN (Mnih et al.\ 2015): tre layer convoluzionali e due fully connected
 ($3136 \to 512 \to n_{\text{azioni}}$), che restituiscono $Q(s,\cdot)$ per tutte le
 azioni in un forward pass. I due stabilizzatori sono dietro un flag ciascuno, cos\`i
 l'ablazione richiesta \`e un cambio di parametro e non di codice. Il replay buffer \`e
@@ -79,8 +79,11 @@ stack di 4 frame --- necessario perch\'e da un solo fotogramma la direzione dell
 \`e ambigua. I frame restano \code{uint8} nel buffer e sono normalizzati solo al momento
 del training.
 
-Ogni run fissa il seed con \code{set\_seed} (numpy + torch) e
-\code{env.reset(seed=\ldots)}; tutti i risultati sono media su 3 seed $\{42, 123, 456\}$.
+Ogni run fissa il seed con \code{set\_seed} (numpy + torch),
+\code{env.reset(seed=\ldots)} e \code{env.action\_space.seed(\ldots)} --- quest'ultimo
+indispensabile, perch\'e lo spazio delle azioni ha un RNG proprio da cui viene ogni
+azione esplorativa del DQN (vedi Sez.~\ref{sec:discussion}). Tutti i risultati sono media
+su 3 seed $\{42, 123, 456\}$.
 Gli array grezzi sono salvati in \code{results/} come \code{.npz} e \textbf{tutte le
 tabelle di questo report sono generate da quei file}
 (\code{report/make\_report\_tables.py}): nessun numero \`e trascritto a mano.
@@ -93,6 +96,6 @@ all'API Gymnasium moderna e agli stati discretizzati. Il \textbf{DQN} (replay bu
 loop di training, target network, Double DQN), il \textbf{discretizzatore},
 l'infrastruttura multi-seed e tutti gli script sono \textbf{scritti da zero}: il corso
 forniva solo un DQN basato su Stable-Baselines3, che la consegna vieta per il core. La
-Nature-CNN replica l'architettura di~\cite{mnih2015} con implementazione PyTorch
+Nature-CNN replica l'architettura di Mnih et al.\ (2015) con implementazione PyTorch
 originale. Nessuna riga di Stable-Baselines3 \`e usata nel progetto. Il dettaglio
 completo \`e in \code{docs/origine\_codice.md}.

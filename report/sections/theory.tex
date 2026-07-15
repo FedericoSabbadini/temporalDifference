@@ -1,72 +1,117 @@
 \section{Fondamenti teorici}
 \label{sec:theory}
 
-Si riportano solo i concetti necessari a comprendere le implementazioni. La
-notazione segue Sutton \& Barto~\cite{sutton2018}.
+Si riportano solo i concetti necessari a comprendere le implementazioni, con la
+notazione del corso (Sutton \& Barto, S\&B nel seguito): value function minuscole
+$v_\pi$, $q_\pi$ e reward $R$ maiuscolo.
 
 \subsection{MDP, valore e policy}
 Un problema di RL \`e modellato come un \emph{Markov Decision Process} (MDP):
 ad ogni \emph{timestep} l'agente osserva uno \emph{stato} $s$, sceglie
 un'\emph{azione} $a$ secondo una \emph{policy} $\pi(a|s)$, riceve un
-\emph{reward} $r$ e transita in $s'$. L'obiettivo \`e massimizzare il
-\emph{return} atteso $G_t = \sum_{k=0}^{\infty}\gamma^k r_{t+k+1}$, dove
-$\gamma \in [0,1]$ \`e il fattore di sconto. Si definiscono la
-\emph{state-value} $V^\pi(s)=\mathbb{E}_\pi[G_t\,|\,S_t=s]$ e la
-\emph{action-value} $Q^\pi(s,a)=\mathbb{E}_\pi[G_t\,|\,S_t=s, A_t=a]$.
+\emph{reward} $R$ e transita in $s'$. L'obiettivo \`e massimizzare il
+\emph{return} atteso, cio\`e il reward cumulato scontato
+\begin{equation}
+  G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots
+      = \sum_{k=0}^{\infty}\gamma^k R_{t+k+1},
+\end{equation}
+dove $\gamma \in [0,1]$ \`e il fattore di sconto ($\gamma \to 0$ rende l'agente
+``miope'', $\gamma \to 1$ ``lungimirante''). Si definiscono la \emph{state-value}
+e la \emph{action-value} di una policy $\pi$:
+\begin{equation}
+  v_\pi(s)=\mathbb{E}[G_t\,|\,S_t=s], \qquad
+  q_\pi(s,a)=\mathbb{E}[G_t\,|\,S_t=s, A_t=a].
+\end{equation}
 
 \subsection{Predizione vs controllo}
 \`E fondamentale distinguere i due compiti, perch\'e la consegna li richiede
 entrambi:
 \begin{itemize}[nosep]
-  \item \textbf{Predizione}: stimare $V^\pi$ per una policy $\pi$
+  \item \textbf{Predizione}: stimare $v_\pi$ per una policy $\pi$
         \emph{fissata}. Monte Carlo e TD(0) sono algoritmi di predizione.
   \item \textbf{Controllo}: trovare una policy migliore. Q\hbox{-}Learning e
         SARSA sono algoritmi di controllo.
 \end{itemize}
 
 \subsection{Monte Carlo (MC) e TD(0)}
-Entrambi stimano $V^\pi$ ma con target diversi (S\&B \S5.1, \S6.1):
+Entrambi stimano $v_\pi$ campionando l'equazione di Bellman, ma con target
+diversi (S\&B \S5.1, \S6.1):
 \begin{align}
-  \text{MC:}\quad   & V(S_t) \leftarrow V(S_t) + \alpha\,[\,G_t - V(S_t)\,] \\
-  \text{TD(0):}\quad& V(S_t) \leftarrow V(S_t) + \alpha\,[\,R_{t+1} + \gamma V(S_{t+1}) - V(S_t)\,]
+  \text{MC:}\quad   & v(S_t) \leftarrow v(S_t) + \alpha\,[\,G_t - v(S_t)\,] \\
+  \text{TD(0):}\quad& v(S_t) \leftarrow v(S_t) + \alpha\,\big[\,\underbrace{R_{t+1} + \gamma\, v(S_{t+1})}_{\text{target}} - v(S_t)\,\big]
 \end{align}
 MC usa il return \emph{effettivo} $G_t$: \`e non distorto (\emph{unbiased}) ma
 ad alta varianza e richiede episodi completi. TD(0) usa il \emph{bootstrap}
-$R_{t+1}+\gamma V(S_{t+1})$: \`e distorto (usa una stima) ma a varianza pi\`u
-bassa e aggiornabile online. Il termine
-$\delta_t = R_{t+1}+\gamma V(S_{t+1})-V(S_t)$ \`e il \emph{TD error}.
+$R_{t+1}+\gamma\, v(S_{t+1})$ come target: \`e distorto (usa una stima) ma a
+varianza pi\`u bassa e aggiornabile online. Il termine
+$\delta_t = R_{t+1}+\gamma\, v(S_{t+1})-v(S_t)$ \`e il \emph{TD error}.
+
+L'origine del compromesso \`e intuitiva. Il return $G_t$ di MC dipende da
+\emph{molte} azioni, transizioni e reward casuali lungo l'intera traiettoria: la
+loro variabilit\`a si accumula, tanto pi\`u l'episodio \`e lungo --- per questo su
+episodi lunghi la stima MC oscilla molto pi\`u che su episodi corti. Il target di
+TD(0) dipende invece da \emph{una} sola transizione casuale, quindi ha varianza
+minore; ma finch\'e $v(S_{t+1})$ \`e ancora sbagliata quella stima trascina il
+target, da cui la distorsione. Nel caso tabellare entrambi convergono a $v_\pi$;
+la velocit\`a con cui il bias di TD si riassorbe dipende da quanto lo stato \`e
+``lontano'' dal reward, ed \`e ci\`o che l'esperimento di predizione
+(Sez.~\ref{sec:res-cartpole-pred}) rende visibile.
 
 \subsection{SARSA (on-policy) e Q-Learning (off-policy)}
-Sono aggiornamenti TD sulla $Q$ (S\&B \S6.4--6.5):
+Sono l'aggiornamento TD applicato alle action-value $q$ (S\&B \S6.4--6.5):
 \begin{align}
-  \text{SARSA:}\quad     & Q(S,A) \leftarrow Q(S,A) + \alpha\,[\,R + \gamma Q(S',A') - Q(S,A)\,] \\
-  \text{Q\hbox{-}Learning:}\quad & Q(S,A) \leftarrow Q(S,A) + \alpha\,[\,R + \gamma \textstyle\max_{a'} Q(S',a') - Q(S,A)\,]
+  \text{SARSA:}\quad & q(S_t,A_t) \leftarrow q(S_t,A_t) + \alpha\,[\,R_{t+1} + \gamma\, q(S_{t+1},A_{t+1}) - q(S_t,A_t)\,] \\
+  \text{Q\hbox{-}Learning:}\quad & q(S_t,A_t) \leftarrow q(S_t,A_t) + \alpha\,[\,R_{t+1} + \gamma \textstyle\max_{a'} q(S_{t+1},a') - q(S_t,A_t)\,]
 \end{align}
-SARSA \`e \emph{on-policy}: il target usa l'azione $A'$ effettivamente scelta
+SARSA \`e \emph{on-policy}: il target usa l'azione $A_{t+1}$ effettivamente scelta
 dalla policy $\varepsilon$-greedy, quindi tiene conto del rischio
-dell'esplorazione. Q\hbox{-}Learning \`e \emph{off-policy}: il target usa il
-$\max$, cio\`e valuta la policy greedy indipendentemente da come si esplora.
+dell'esplorazione (usa la quintupla $(S_t,A_t,R_{t+1},S_{t+1},A_{t+1})$, da cui il
+nome). Q\hbox{-}Learning \`e \emph{off-policy}: il target usa il $\max$, cio\`e
+stima il valore della policy greedy indipendentemente da come si esplora --- e
+converge a $q_*$ purch\'e ogni azione sia scelta infinite volte.
+
+La conseguenza pratica \`e che i due apprendono policy \emph{qualitativamente}
+diverse quando l'esplorazione \`e rischiosa. L'esempio canonico \`e il
+CliffWalking (S\&B Fig.~6.5): un percorso ottimo passa sul bordo di un dirupo, e
+una singola azione esplorativa lungo il bordo fa cadere l'agente. Q\hbox{-}Learning,
+il cui target assume comportamento greedy, impara il percorso ottimo \emph{sul
+bordo} e paga care le esplorazioni; SARSA, che nel target include l'azione
+$\varepsilon$-greedy che davvero eseguir\`a, impara un percorso pi\`u interno e
+``prudente'', che rende di pi\`u \emph{finch\'e si continua a esplorare}. Questa
+distinzione, in forma attenuata, spiega il confronto SARSA vs Q\hbox{-}Learning su
+CartPole (Sez.~\ref{sec:res-cartpole-control}).
 
 \subsection{Esplorazione: $\varepsilon$-greedy}
 La policy $\varepsilon$-greedy sceglie un'azione casuale con probabilit\`a
-$\varepsilon$ (\emph{exploration}) e l'azione greedy $\arg\max_a Q(s,a)$
-altrimenti (\emph{exploitation}): \`e il compromesso pi\`u semplice tra i due
-ed \`e usata in tutto il progetto (S\&B \S2.1). I metodi tabellari richiedono
-inoltre uno spazio di stati finito: la discretizzazione necessaria per CartPole
-e Acrobot, e le sue conseguenze, sono in Sez.~\ref{sec:methodology}.
+$\varepsilon$ (\emph{exploration}) e l'azione greedy $\arg\max_a q(s,a)$
+altrimenti (\emph{exploitation}); con $|\mathcal{A}|$ azioni,
+\begin{equation}
+  \pi(a|s) =
+  \begin{cases}
+    1-\varepsilon + \varepsilon/|\mathcal{A}| & \text{se } a = \arg\max_b q(s,b)\\
+    \varepsilon/|\mathcal{A}| & \text{altrimenti.}
+  \end{cases}
+\end{equation}
+\`E il compromesso pi\`u semplice tra i due e viene usato in tutto il progetto
+(S\&B \S2.1). I metodi tabellari richiedono inoltre uno spazio di stati finito: la
+discretizzazione necessaria per CartPole e Acrobot, e le sue conseguenze, sono in
+Sez.~\ref{sec:methodology}.
 
 \subsection{Deep Q-Network (DQN)}
-Quando lo spazio degli stati \`e troppo grande (pixel di Pong), la $Q$ viene
-approssimata da una rete neurale $Q(s,a;\theta)$~\cite{mnih2015}. Due
-componenti stabilizzano l'addestramento:
+Quando lo spazio degli stati \`e troppo grande (pixel di Pong), la action-value
+viene approssimata da una rete neurale $Q(s,a;\theta)$ di parametri $\theta$
+(Mnih et al.\ 2015). Due componenti stabilizzano l'addestramento:
 \begin{itemize}[nosep]
   \item \textbf{Experience Replay}: le transizioni sono salvate in un buffer e
         campionate a mini-batch casuali, rompendo la correlazione temporale.
   \item \textbf{Target Network}: una copia $\theta^-$ della rete, aggiornata
         di rado, fornisce target stabili
-        $y = R + \gamma \max_{a'} Q(S',a';\theta^-)$.
+        $y = R_{t+1} + \gamma \max_{a'} Q(S_{t+1},a';\theta^-)$.
 \end{itemize}
-Il \textbf{Double DQN}~\cite{vanhasselt2016} disaccoppia selezione e
-valutazione dell'azione,
-$y = R + \gamma\, Q(S', \arg\max_{a'}Q(S',a';\theta);\theta^-)$, riducendo la
-sovrastima ($\emph{maximization bias}$, S\&B \S6.7).
+Il \textbf{Double DQN} (van Hasselt et al.\ 2016) parte dall'osservazione che
+$\max_{a'} q(S_{t+1},a') = q\big(S_{t+1}, \arg\max_{a'} q(S_{t+1},a')\big)$ usa gli
+\emph{stessi} valori per selezionare e per valutare l'azione, il che su stime
+rumorose causa una \emph{sovrastima} (\emph{maximization bias}, S\&B \S6.7).
+Disaccoppia allora selezione e valutazione,
+$y = R_{t+1} + \gamma\, Q\big(S_{t+1}, \arg\max_{a'}Q(S_{t+1},a';\theta);\theta^-\big)$,
+usando la rete online per scegliere l'azione e la target per valutarla.

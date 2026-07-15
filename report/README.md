@@ -49,6 +49,9 @@ for f in figures/*/*.png; do
 done
 ```
 
-Step 3 copies *all* figures; two of them (`*_prediction_return.png`) are intentionally
-not cited — the report explains why — so they can be deleted from `report/figures/` to
-keep that folder exactly equal to what the text references.
+Step 3 copies *all* figures, but a few are intentionally not cited by the report, so
+`report/figures/` is kept equal to exactly what the text references: the two
+`*_prediction_return.png` (return curves identical by construction — the report explains
+why) and the two isolated `pong_ablation_*.png` panels (the report shows the combined
+5-curve `pong_full_comparison.png`, which already contains both required ablations). The
+isolated panels still live in `figures/pong/`.

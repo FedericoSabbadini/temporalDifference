@@ -51,8 +51,10 @@ Both tabular control algorithms learn on CartPole (SARSA 260 ± 38, Q-Learning 2
 grid, not the algorithm. On Acrobot they plateau around −350 against an optimum of ≈ −100. Two
 Acrobot results **contradicted my initial hypotheses** — finer bins turned out *better*, not worse,
 and *low* ε beat high ε — and I kept and analyzed them instead of tuning them away. On Pong the
-ablation is clear-cut: without experience replay the agent does not learn at all, while the target
-network mainly accelerates and stabilizes learning.
+ablation is clear-cut and per-seed: with replay + target network the DQN learns on all 3 seeds
+(−13.5), without replay it never learns (flat at random on every seed), and without the target
+network learning becomes a lottery — only 1 seed of 3 leaves the random baseline. Replay makes
+learning *possible*, the target network makes it *reliable*.
 
 ## Project structure
 

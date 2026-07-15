@@ -28,7 +28,7 @@ azione sbagliata fa cadere l'asta, tenerne conto paga: \`e la dinamica del Cliff
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.55\linewidth]{cartpole_control_comparison.png}
+\includegraphics[width=0.49\linewidth]{cartpole_control_comparison.png}
 \caption{CartPole: Q\hbox{-}Learning vs SARSA a parit\`a di iperparametri (media su 3
 seed, banda $\pm1\sigma$). SARSA (arancio) sta sopra per tutto il training; entrambe le
 curve salgono ancora a 10\,000 episodi.}
@@ -120,7 +120,7 @@ seed. Il prezzo \`e un avvio pi\`u lento, fino a $\approx 3500$ episodi.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.55\linewidth]{cartpole_epsilon_annealing.png}
+\includegraphics[width=0.49\linewidth]{cartpole_epsilon_annealing.png}
 \caption{CartPole: $\varepsilon$ costante $=0.1$ vs annealing $1.0 \to 0.01$.
 L'annealing paga un avvio pi\`u lento, poi sorpassa e chiude con banda $\pm1\sigma$
 visibilmente pi\`u stretta.}
@@ -176,7 +176,7 @@ distorto verso l'inizializzazione e non ancora convergente a 6000 episodi.}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.52\linewidth]{cartpole_prediction_random_value.png}
+\includegraphics[width=0.47\linewidth]{cartpole_prediction_random_value.png}
 \caption{CartPole, MC vs TD(0) sulla \textbf{policy casuale}. Con episodi corti
 ($\approx 22$ passi) il bootstrap propaga in fretta e TD \emph{raggiunge} MC: il bias
 dipende da quanto lo stato \`e lontano dalla terminazione. Da confrontare con la
@@ -211,7 +211,7 @@ Sez.~\ref{sec:discussion} riprende il punto.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.55\linewidth]{acrobot_control_comparison.png}
+\includegraphics[width=0.49\linewidth]{acrobot_control_comparison.png}
 \caption{Acrobot: Q\hbox{-}Learning vs SARSA. Miglioramento reale rispetto al casuale
 ($-500$), ma plateau precoce ($\approx 5000$ episodi) e molto lontano dall'ottimo
 ($\approx -100$).}
@@ -246,7 +246,7 @@ precisione e generalizzazione serve un approssimatore di funzione.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.55\linewidth]{acrobot_bin_resolution.png}
+\includegraphics[width=0.49\linewidth]{acrobot_bin_resolution.png}
 \caption{Acrobot: effetto della risoluzione di discretizzazione (Q\hbox{-}Learning,
 20\,000 episodi). Contrariamente all'ipotesi, 10 bin ($10^6$ stati, rosso) \`e la
 configurazione \emph{migliore} e 4 bin (blu) la peggiore, con ordinamento monotono: 4
@@ -314,7 +314,7 @@ nella sua forma pi\`u pura: TD \`e molto \emph{preciso} nel dare la risposta
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.54\linewidth]{acrobot_prediction_value.png}
+\includegraphics[width=0.49\linewidth]{acrobot_prediction_value.png}
 \caption{Acrobot, MC vs TD(0): stima $V(s_{\text{ref}})$ della policy appresa. MC (blu)
 converge subito a $\approx -91$; TD(0) (arancio) scende da 0 con estrema regolarit\`a ma
 dopo 6000 episodi \`e ancora a $\approx -62$.}
@@ -325,65 +325,61 @@ dopo 6000 episodi \`e ancora a $\approx -62$.}
 \subsection{Pong --- ablazione del DQN}
 \label{sec:res-pong}
 
-Rispetto alla baseline casuale ($\approx -20.4$) e con soli 200k step
-(Fig.~\ref{fig:pong-full}, Tab.~\ref{tab:pong-ablation}):
-\begin{itemize}
-  \item \textbf{DQN completo}: \res{-12.1}{0.9}. Apprende nettamente e in modo
-        consistente tra i seed: il requisito della consegna (``mostrare apprendimento
-        rispetto a policy casuale'') \`e soddisfatto con ampio margine.
-  \item \textbf{Double DQN} (bonus): \res{-14.2}{0.8}. Apprende, con traiettoria simile
-        al completo, senza superarlo.
-  \item \textbf{Senza target network}: \res{-16.3}{2.8}. Apprende, ma pi\`u tardi e con
-        varianza \emph{tripla}.
-  \item \textbf{Senza replay} / \textbf{senza entrambi}: \res{-20.6}{0.2} e
-        \res{-20.5}{0.3} --- \emph{nessun apprendimento}, restano al livello casuale.
-\end{itemize}
-
-\textbf{I due componenti non sono equivalenti} (Fig.~\ref{fig:pong-ablation}). Il
-\emph{replay \`e indispensabile}: senza, la rete si addestra sul flusso di transizioni
-consecutive fortemente correlate e in 200k step non impara nulla --- la curva \`e piatta.
-La \emph{target network} \`e invece un \emph{acceleratore e stabilizzatore}: senza,
-l'agente impara comunque (da $-20.4$ a $-16.3$), ma pi\`u tardi e con varianza tra seed
-molto maggiore, il sintomo atteso del ``bersaglio mobile'' (ogni passo di gradiente
-sposta anche il target). La distinzione tra componente \emph{necessario} e componente
-\emph{utile} \`e il contenuto informativo dell'ablazione.
-
-Un segnale indiretto ma elegante: il DQN completo produce \emph{meno} episodi per seed
-($134$) delle configurazioni fallite ($\approx 240$). A parit\`a di step, un agente che
-impara tiene in vita gli scambi pi\`u a lungo e gioca quindi meno partite: il numero di
-episodi \`e esso stesso una misura di apprendimento.
-
-Sul \textbf{Double DQN}: non supera il DQN base, ed \`e un esito spiegabile. Corregge la
-\emph{sovrastima} dovuta al $\max$ su stime rumorose, un problema che si accumula su
-orizzonti lunghi; a 200k step (lo $0.4\%$ del budget Nature) non ha ancora avuto tempo
-di fare danno. Il bonus \`e implementato e funzionante --- semplicemente, in questo
-regime, non c'\`e il male che dovrebbe curare.
-
-\begin{figure}[htbp]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.55\linewidth]{pong_full_comparison.png}
-\caption{Pong: ablazione DQN completa (200k step, 3 seed, baseline casuale
-$\approx -20$). DQN completo (blu) e Double DQN (viola) apprendono; senza target network
-(arancio) si impara pi\`u tardi e peggio; le due configurazioni senza replay (verde e
-rosso) restano piatte al livello casuale.}
+\includegraphics[width=0.62\linewidth]{pong_full_comparison.png}
+\caption{Pong: ablazione DQN (200k step, 3 seed, baseline casuale $\approx -20$).
+Contiene entrambe le ablazioni richieste dalla consegna: \emph{con vs senza replay}
+(blu vs verde) e \emph{con vs senza target network} (blu vs arancio). Solo il DQN
+completo (blu) apprende su tutti i seed; il Double DQN (viola) apprende pi\`u lentamente;
+senza target network (arancio) la banda enorme segnala che la maggioranza dei seed non
+decolla; le due configurazioni senza replay (verde e rosso) restano piatte. Le figure
+per-ablazione isolate sono in \code{figures/pong/}.}
 \label{fig:pong-full}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}{0.46\linewidth}
-  \includegraphics[width=\linewidth]{pong_ablation_replay.png}
-  \caption{Con vs senza experience replay.}
-\end{subfigure}\hfill
-\begin{subfigure}{0.46\linewidth}
-  \includegraphics[width=\linewidth]{pong_ablation_target.png}
-  \caption{Con vs senza target network.}
-\end{subfigure}
-\caption{Pong: le due ablazioni richieste dalla consegna, isolate. (a) Senza replay la
-curva non si stacca mai dal livello casuale: componente \emph{necessario}. (b) Senza
-target network l'apprendimento avviene, ma pi\`u tardi e con banda $\pm1\sigma$ molto
-pi\`u larga: componente \emph{stabilizzante}.}
-\label{fig:pong-ablation}
-\end{figure}
+Rispetto alla baseline casuale ($\approx -20.4$) e con soli 200k step
+(Fig.~\ref{fig:pong-full}, Tab.~\ref{tab:pong-ablation}). Oltre alla media su 3 seed
+riporto tra parentesi \emph{quanti seed su 3} hanno effettivamente imparato (return
+finale sopra $-19$): su soli 3 seed la deviazione standard \`e essa stessa molto rumorosa
+e pu\`o dare barre d'errore ingannevolmente strette, e il conteggio dei seed che
+apprendono distingue ``la configurazione non impara'' da ``impara solo a volte'' --- una
+differenza che la sola media appiattisce.
+\begin{itemize}
+  \item \textbf{DQN completo}: \res{-13.5}{1.1} (3/3). Apprende in modo netto e su
+        \emph{tutti} i seed: il requisito della consegna (``mostrare apprendimento
+        rispetto a policy casuale'') \`e soddisfatto con ampio margine.
+  \item \textbf{Double DQN} (bonus): \res{-17.6}{2.3} (2/3). Apprende, ma pi\`u
+        lentamente del completo e con un seed che non decolla.
+  \item \textbf{Senza target network}: \res{-20.0}{1.4} (1/3). \`E il risultato
+        centrale: due seed su tre \emph{restano al livello casuale}, uno solo impara.
+  \item \textbf{Senza replay} / \textbf{senza entrambi}: \res{-20.9}{0.0} e
+        \res{-20.9}{0.0} (0/3) --- \emph{nessun apprendimento}, curva piatta al livello
+        casuale su ogni seed.
+\end{itemize}
 
 \input{tables/pong_ablation.tex}
+
+\textbf{Entrambi i componenti sono quasi indispensabili, e questo \`e il punto}
+(Fig.~\ref{fig:pong-full}). Il \emph{replay \`e necessario}: senza, la rete si
+addestra sul flusso di transizioni consecutive fortemente correlate e in 200k step non
+impara nulla su nessun seed --- curva piatta. Ma anche la \emph{target network} qui non
+\`e un semplice acceleratore: \emph{senza di essa l'apprendimento diventa una lotteria}.
+Il valore medio ($-20.0$) nasconde il fatto reale, leggibile nella banda enorme e nel
+per-seed: un solo seed sale a $\sim\!-18$, gli altri due restano piatti a $\sim\!-21$. La
+causa \`e il ``bersaglio mobile'' portato all'estremo dal budget ridotto --- ogni passo di
+gradiente sposta anche il target, quindi l'addestramento \`e in equilibrio instabile e il
+suo esito \`e deciso dalle condizioni iniziali che il seed controlla (pesi della rete e
+prime esperienze esplorative): un seed prende trazione e apprende, gli altri due non
+decollano affatto. La lettura corretta non \`e quindi ``replay necessario, target
+utile'', ma: \emph{il replay rende l'apprendimento possibile, la target network lo rende
+affidabile}; solo con entrambi il DQN impara su tutti e 3 i seed. Lo conferma un segnale
+indiretto: il DQN completo gioca \emph{meno} episodi ($137$ contro $\approx 240$), perch\'e
+imparare allunga gli scambi e a parit\`a di step le partite sono meno.
+
+Il \textbf{Double DQN} non supera il DQN base, anzi lo peggiora leggermente ($-17.6$
+contro $-13.5$, con un seed che collassa). Corregge la sovrastima dovuta al $\max$ su
+stime rumorose, che si accumula su orizzonti lunghi; a 200k step (lo $0.4\%$ del budget
+Nature) quel danno non c'\`e ancora, mentre disaccoppiare selezione e valutazione aggiunge
+un po' di rumore. Il bonus \`e implementato e funzionante --- in questo regime breve non
+c'\`e il male che dovrebbe curare.
