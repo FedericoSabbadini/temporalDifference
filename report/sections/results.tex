@@ -63,9 +63,9 @@ comportano diversamente, ed \`e il dato pi\`u interessante della sezione.
         $\alpha=0.1$ finiscono appaiati ($200$--$220$), con $0.5$ pi\`u veloce
         all'inizio. Per \emph{SARSA} invece $\alpha=0.5$ parte forte ma
         \textbf{satura sotto} $\alpha=0.1$ ($\approx 210$ contro $\approx 260$). SARSA
-        \`e on-policy, quindi il target $Q(S',A')$ contiene la casualit\`a dell'azione
-        $A'$: un $\alpha$ alto insegue quel rumore invece di mediarlo.
-        Q\hbox{-}Learning, che usa il $\max$ (deterministico dato $Q$), ne soffre meno.
+        \`e on-policy, quindi il target $q(S_{t+1},A_{t+1})$ contiene la casualit\`a dell'azione
+        $A_{t+1}$: un $\alpha$ alto insegue quel rumore invece di mediarlo.
+        Q\hbox{-}Learning, che usa il $\max$ (deterministico data $q$), ne soffre meno.
         $\alpha=0.01$ \`e troppo lento per entrambi ($45$--$95$).
 \end{itemize}
 
@@ -136,7 +136,7 @@ curve sono \emph{identiche per costruzione}, perch\'e MC e TD(0) valutano la
 \emph{stessa} policy fissa e generano quindi gli stessi episodi (return $\approx 330$).
 La curva di MC \`e letteralmente nascosta sotto quella di TD. Non \`e un errore di
 plotting: \`e la prova che la differenza tra i due metodi non vive nel return ma nelle
-stime $V(s)$. Per inciso, quei $\approx 330$ passi sono ottenuti dalla policy greedy
+stime $v(s)$. Per inciso, quei $\approx 330$ passi sono ottenuti dalla policy greedy
 \emph{senza} esplorazione, contro i $\approx 224$ della curva di training: gran parte
 del divario dal massimo \`e il costo di $\varepsilon$, non incapacit\`a della policy.
 

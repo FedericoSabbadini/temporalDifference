@@ -10,7 +10,7 @@ correttezza dell'implementazione non garantisce l'apprendimento.
 
 \paragraph{1. $\alpha = 1.0$ --- instabilit\`a (mancata convergenza).}
 L'aggiornamento \emph{sostituisce} completamente la stima ad ogni passo
-($Q(S,A) \leftarrow R + \gamma \max_a Q(S',a)$): la media incrementale scompare, quindi
+($q(S_t,A_t) \leftarrow R_{t+1} + \gamma \max_{a'} q(S_{t+1},a')$): la media incrementale scompare, quindi
 $Q$ non pu\`o mediare sulla stocasticit\`a delle transizioni e insegue l'ultimo campione
 visto. L'agente si blocca a $\approx 65$ per 6000 episodi.
 
