@@ -7,7 +7,7 @@ li confronta su tre ambienti di difficolt\`a crescente. Come chiede la consegna,
 l'enfasi \`e sulla \textbf{comprensione} e sull'\textbf{analisi sperimentale critica},
 non sulla performance assoluta: diversi risultati sono volutamente sub-ottimali e
 vengono analizzati come tali, inclusi i casi di fallimento e i risultati che smentiscono
-le ipotesi da cui ero partito.
+le ipotesi da cui ero partito durante i primi esperimenti.
 
 \subsection{Ambienti e algoritmi}
 Ho lavorato su tre ambienti Gymnasium:
@@ -21,14 +21,11 @@ mostrare cosa serve quando la tabella non \`e pi\`u praticabile.
 Su CartPole e Acrobot uso quattro algoritmi tabellari scritti a mano: due di
 \emph{controllo} (Q\hbox{-}Learning, SARSA) e due di \emph{predizione} (Monte Carlo,
 TD(0)). Poich\'e entrambi gli ambienti hanno stato continuo, ho dovuto introdurre una
-\textbf{discretizzazione}: non \`e un dettaglio implementativo ma la scelta che, come
-mostro nella Sez.~\ref{sec:res-acrobot-bins}, governa il tetto di performance
-raggiungibile. Per Pong ho implementato un DQN in PyTorch (Mnih et al.\ 2015) con experience
+\textbf{discretizzazione}. Per Pong ho implementato un DQN in PyTorch (Mnih et al.\ 2015) con experience
 replay e target network, pi\`u il bonus Double DQN (van Hasselt et al.\ 2016).
 
-MC e TD(0), essendo di predizione, valutano una policy \emph{fissa} senza apprenderla:
-la policy da valutare deve quindi venire da qualche parte. Ho scelto di addestrare prima
+MC e TD(0), essendo di predizione, valutano una policy \emph{fissa} senza apprenderla: ho scelto di addestrare prima
 Q\hbox{-}Learning, estrarne la policy greedy e valutare \emph{quella}, affiancandole una
 policy casuale come riferimento (Sez.~\ref{sec:met-prediction}). La scelta non \`e
-neutra: come si vedr\`a, il divario tra MC e TD(0) dipende proprio da quale policy si
+neutra: come si vedr\`a, il divario tra MC e TD(0) in termini di return dipende proprio da quale policy si
 valuta.

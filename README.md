@@ -37,7 +37,6 @@ uv run python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_
 uv run python scripts/run_cartpole.py       # Env 1 — tabular, CPU
 uv run python scripts/run_acrobot.py        # Env 2 — tabular, CPU
 uv run python scripts/run_pong.py           # Env 3 — DQN, GPU, several hours
-uv run python report/make_report_tables.py  # regenerates report/tables/*.tex from the .npz
 ```
 
 Figures go to `figures/<env>/`, raw arrays to `results/<env>/*.npz`, DQN checkpoints to
@@ -48,13 +47,10 @@ the report is hand-written.
 
 Both tabular control algorithms learn on CartPole (SARSA 260 ± 38, Q-Learning 224 ± 51 after
 10 000 episodes, still improving) but never reach the 500 ceiling: the limit is the discretization
-grid, not the algorithm. On Acrobot they plateau around −350 against an optimum of ≈ −100. Two
-Acrobot results **contradicted my initial hypotheses** — finer bins turned out *better*, not worse,
-and *low* ε beat high ε — and I kept and analyzed them instead of tuning them away. On Pong the
+grid, not the algorithm. On Acrobot they plateau around −350 against an optimum of ≈ −100. On Pong the
 ablation is clear-cut and per-seed: with replay + target network the DQN learns on all 3 seeds
 (−13.5), without replay it never learns (flat at random on every seed), and without the target
-network learning becomes a lottery — only 1 seed of 3 leaves the random baseline. Replay makes
-learning *possible*, the target network makes it *reliable*.
+network learning becomes a lottery — only 1 seed of 3 leaves the random baseline. 
 
 ## Project structure
 
@@ -71,16 +67,14 @@ TemporalDifference/
 ├── scripts/                   # one orchestrator per environment
 ├── report/                    # LaTeX report (Italian) + auto-generated tables
 ├── docs/                      # code map and code-origin declaration
-├── figures/  results/         # generated plots and raw data
+├── figures/results/           # generated plots and raw data
 ```
 
 ## Code origin
 
 The four tabular algorithms are adapted from the course exercises; the DQN, the discretizer, the
 multi-seed infrastructure and all the experiment scripts are written from scratch. No
-Stable-Baselines3 code is used anywhere. Full breakdown:
-[`docs/origine_codice.md`](docs/origine_codice.md). Code layout reference:
-[`docs/mappa_codice.md`](docs/mappa_codice.md).
+Stable-Baselines3 code is used anywhere.
 
 ## References
 

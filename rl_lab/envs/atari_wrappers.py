@@ -12,6 +12,7 @@ keep the replay buffer ~4x smaller; normalization happens in dqn.py.
 
 import gymnasium as gym
 import ale_py
+import rl_lab.configs as conf
 
 # Recent ale-py no longer auto-registers the ALE envs: without this,
 # gym.make("ALE/Pong-v5") raises NamespaceNotFound.
@@ -28,14 +29,14 @@ def make_atari_env(env_name="ALE/Pong-v5", render_mode=None):
 
     env = gym.wrappers.AtariPreprocessing(
         env,
-        noop_max=30,
-        frame_skip=4,
-        screen_size=84,
-        terminal_on_life_loss=False,  # an episode is a whole game, not a single point
-        grayscale_obs=True,           # colour carries nothing useful in Pong
-        scale_obs=False,              # keep uint8: 4x less replay memory
+        noop_max=conf.PONG["noop_max"],
+        frame_skip=conf.PONG["frame_skip"],
+        screen_size=conf.PONG["screen_size"],
+        terminal_on_life_loss=False,
+        grayscale_obs=conf.PONG["greyscale_obs"],
+        scale_obs=False,
     )
 
     # Axis 0 of the stack is time (oldest -> newest); the result is already
     # channel-first, so it feeds the CNN with no transpose.
-    return gym.wrappers.FrameStackObservation(env, stack_size=4)
+    return gym.wrappers.FrameStackObservation(env, stack_size=conf.PONG["stack_size"])

@@ -2,7 +2,7 @@
 \label{sec:methodology}
 
 \subsection{Organizzazione del codice}
-Il codice sta nel pacchetto \code{rl\_lab}: gli algoritmi sono funzioni pure (ambiente
+Il codice-motore si trova nel pacchetto \code{rl\_lab}: gli algoritmi sono funzioni pure (ambiente
 in ingresso, risultati in uscita), gli script orchestrano gli esperimenti, il plotting
 \`e isolato dai loop di training e gli iperparametri stanno in \code{configs.py}. Le
 componenti sono \code{algorithms/tabular/} (i quattro algoritmi),
@@ -30,21 +30,20 @@ Pong     & $210{\times}160$ RGB & 6 & $\pm 1$ (punto) & --- (pixel, DQN) \\
 \subsection{Discretizzazione: le scelte che contano}
 Il wrapper \code{DiscretizedEnv} clippa ogni dimensione in un intervallo configurato, la
 scala e la tronca a un indice intero; il risultato \`e una tupla usata come chiave della
-Q-table (state aggregation, S\&B \S9.4). Due scelte incidono sui risultati e le dichiaro.
+Q-table (state aggregation). Due scelte incidono sui risultati e le dichiaro.
 
-\emph{Intervalli di clipping.} Su CartPole clippo posizione e angolo ai limiti di
+\emph{Intervalli di clipping.} Su CartPole faccio clipping sulla posizione e sull'angolo ai limiti di
 \textbf{terminazione} ($\pm 2.4$ e $\pm 0.21$\,rad), non a quelli dello spazio di
 osservazione ($\pm 4.8$, $\pm 0.418$): oltre le soglie di terminazione l'episodio \`e
 gi\`a finito, quindi usare i limiti pi\`u larghi sprecherebbe met\`a dei bin di
-posizione e angolo su stati che non possono verificarsi. La scelta raddoppia la
-risoluzione utile sulle due dimensioni pi\`u importanti. Le velocit\`a non hanno un
+posizione e angolo su stati che non possono verificarsi. Le velocit\`a non hanno un
 limite ufficiale e le clippo a $\pm 3.0$, valore entro cui restano comodamente durante il
-bilanciamento. Su Acrobot i limiti \emph{esistono} nel sorgente Gymnasium ($4\pi$ e $9\pi$
-per le due velocit\`a angolari) e li riuso esattamente: nessun bin sprecato, nessuno
-saturo.
+bilanciamento; su Acrobot i limiti \emph{esistono} nel sorgente Gymnasium ($4\pi$ e $9\pi$
+per le due velocit\`a angolari) e li riuso esattamente..
 
 \emph{Numero di bin.} \`E il parametro che non ho voluto assumere: la
-Sez.~\ref{sec:res-acrobot-bins} lo misura direttamente, con esito opposto all'attesa.
+Sez.~\ref{sec:res-acrobot-bins} lo misura direttamente e valuta l'impatto sulla performance. 
+Per CartPole uso 10 bin per dimensione, per Acrobot 6.
 
 \subsection{Quale policy valutano MC e TD(0)?}
 \label{sec:met-prediction}
@@ -52,25 +51,20 @@ Addestro Q\hbox{-}Learning, ne estraggo la policy greedy $\pi(s)=\arg\max_a Q(s,
 valuto \emph{quella} con entrambi gli stimatori; come riferimento valuto anche una policy
 \emph{casuale}. Il doppio caso non \`e ridondante ed \`e anzi la parte pi\`u interessante
 del risultato (Sez.~\ref{sec:res-cartpole-pred}): la policy appresa genera episodi lunghi
-($\approx 330$ passi), quella casuale episodi corti ($\approx 22$), e la lunghezza degli
-episodi \`e esattamente ci\`o che determina quanto TD(0) resta distorto.
+($\approx 330$ passi), quella casuale episodi corti ($\approx 22$). 
 
 Per confrontare gli stimatori traccio la stima $V(s_{\text{ref}})$ di un singolo stato,
-episodio per episodio. Come $s_{\text{ref}}$ uso lo \textbf{stato di reset
-discretizzato}: \`e sempre raggiungibile ed \`e visitato all'inizio di ogni episodio,
-quindi entrambi gli stimatori lo aggiornano di continuo. La mia prima scelta --- il
-``bin centrale'' di ogni dimensione --- era sbagliata: su Acrobot d\`a uno stato
+episodio per episodio. Come $s_{\text{ref}}$ uso lo \textbf{stato di reset environment}: 
+\`e sempre raggiungibile ed \`e visitato all'inizio di ogni episodio,
+quindi entrambi gli stimatori lo aggiornano di continuo. La mia prima scelta era stata --- il
+``bin centrale'' di ogni dimensione ---, ma su Acrobot d\`a uno stato
 \emph{fisicamente impossibile}, perch\'e l'osservazione codifica gli angoli come
-$[\cos\theta, \sin\theta]$ e i due non possono essere entrambi $\approx 0$. Quello stato
-non veniva mai visitato e la stima restava piatta a zero.
+$[\cos\theta, \sin\theta]$ che non possono essere entrambi $\approx 0$. 
 
 \subsection{DQN, preprocessing Atari e riproducibilit\`a}
 La rete \`e la Nature-CNN (Mnih et al.\ 2015): tre layer convoluzionali e due fully connected
 ($3136 \to 512 \to n_{\text{azioni}}$), che restituiscono $Q(s,\cdot)$ per tutte le
-azioni in un forward pass. I due stabilizzatori sono dietro un flag ciascuno, cos\`i
-l'ablazione richiesta \`e un cambio di parametro e non di codice. Il replay buffer \`e
-limitato a 100k transizioni: il milione del paper Nature occuperebbe $\approx 28$\,GB,
-pi\`u della RAM disponibile.
+azioni in un forward pass. 
 
 Il preprocessing Atari segue lo standard di Mnih~et~al.: no-op iniziali casuali,
 frame-skip 4 con massimo pixel-wise sugli ultimi due frame (Atari fa lampeggiare gli
@@ -79,11 +73,7 @@ stack di 4 frame --- necessario perch\'e da un solo fotogramma la direzione dell
 \`e ambigua. I frame restano \code{uint8} nel buffer e sono normalizzati solo al momento
 del training.
 
-Ogni run fissa il seed con \code{set\_seed} (numpy + torch),
-\code{env.reset(seed=\ldots)} e \code{env.action\_space.seed(\ldots)} --- quest'ultimo
-indispensabile, perch\'e lo spazio delle azioni ha un RNG proprio da cui viene ogni
-azione esplorativa del DQN (vedi Sez.~\ref{sec:discussion}). Tutti i risultati sono media
-su 3 seed $\{42, 123, 456\}$.
+Tutti i risultati sono media su 3 seed $\{42, 123, 456\}$.
 Gli array grezzi sono salvati in \code{results/} come \code{.npz} e \textbf{tutte le
 tabelle di questo report sono generate da quei file}
 (\code{report/make\_report\_tables.py}): nessun numero \`e trascritto a mano.
@@ -97,5 +87,4 @@ loop di training, target network, Double DQN), il \textbf{discretizzatore},
 l'infrastruttura multi-seed e tutti gli script sono \textbf{scritti da zero}: il corso
 forniva solo un DQN basato su Stable-Baselines3, che la consegna vieta per il core. La
 Nature-CNN replica l'architettura di Mnih et al.\ (2015) con implementazione PyTorch
-originale. Nessuna riga di Stable-Baselines3 \`e usata nel progetto. Il dettaglio
-completo \`e in \code{docs/origine\_codice.md}.
+originale. Nessuna riga di Stable-Baselines3 \`e usata nel progetto. 

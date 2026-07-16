@@ -2,8 +2,7 @@
 \label{sec:theory}
 
 Si riportano solo i concetti necessari a comprendere le implementazioni, con la
-notazione del corso (Sutton \& Barto, S\&B nel seguito): value function minuscole
-$v_\pi$, $q_\pi$ e reward $R$ maiuscolo.
+notazione del corso.
 
 \subsection{MDP, valore e policy}
 Un problema di RL \`e modellato come un \emph{Markov Decision Process} (MDP):
@@ -35,7 +34,7 @@ entrambi:
 
 \subsection{Monte Carlo (MC) e TD(0)}
 Entrambi stimano $v_\pi$ campionando l'equazione di Bellman, ma con target
-diversi (S\&B \S5.1, \S6.1):
+diversi:
 \begin{align}
   \text{MC:}\quad   & v(S_t) \leftarrow v(S_t) + \alpha\,[\,G_t - v(S_t)\,] \\
   \text{TD(0):}\quad& v(S_t) \leftarrow v(S_t) + \alpha\,\big[\,\underbrace{R_{t+1} + \gamma\, v(S_{t+1})}_{\text{target}} - v(S_t)\,\big]
@@ -72,7 +71,7 @@ converge a $q_*$ purch\'e ogni azione sia scelta infinite volte.
 
 La conseguenza pratica \`e che i due apprendono policy \emph{qualitativamente}
 diverse quando l'esplorazione \`e rischiosa. L'esempio canonico \`e il
-CliffWalking (S\&B Fig.~6.5): un percorso ottimo passa sul bordo di un dirupo, e
+CliffWalking (Fig.~6.5): un percorso ottimo passa sul bordo di un dirupo, e
 una singola azione esplorativa lungo il bordo fa cadere l'agente. Q\hbox{-}Learning,
 il cui target assume comportamento greedy, impara il percorso ottimo \emph{sul
 bordo} e paga care le esplorazioni; SARSA, che nel target include l'azione
@@ -92,10 +91,13 @@ altrimenti (\emph{exploitation}); con $|\mathcal{A}|$ azioni,
     \varepsilon/|\mathcal{A}| & \text{altrimenti.}
   \end{cases}
 \end{equation}
-\`E il compromesso pi\`u semplice tra i due e viene usato in tutto il progetto
-(S\&B \S2.1). I metodi tabellari richiedono inoltre uno spazio di stati finito: la
-discretizzazione necessaria per CartPole e Acrobot, e le sue conseguenze, sono in
-Sez.~\ref{sec:methodology}.
+Il valore di $\varepsilon$ è decrescente nel tempo, iniziando con un valore alto 
+per favorire l'esplorazione e riducendolo gradualmente per permettere all'agente di sfruttare le conoscenze acquisite.
+Ho scelto una unica implementazione condivisa in cui
+\begin{equation}
+  \text{frac} = \min(1, \text{current} / \text{horizon}), \qquad
+  \varepsilon = \text{start} + (\text{end} - \text{start}) \cdot \text{frac}
+\end{equation}
 
 \subsection{Deep Q-Network (DQN)}
 Quando lo spazio degli stati \`e troppo grande (pixel di Pong), la action-value
@@ -105,7 +107,7 @@ viene approssimata da una rete neurale $Q(s,a;\theta)$ di parametri $\theta$
   \item \textbf{Experience Replay}: le transizioni sono salvate in un buffer e
         campionate a mini-batch casuali, rompendo la correlazione temporale.
   \item \textbf{Target Network}: una copia $\theta^-$ della rete, aggiornata
-        di rado, fornisce target stabili
+        di rado, fornisce target stabili, diminuiendo la soft divergence.
         $y = R_{t+1} + \gamma \max_{a'} Q(S_{t+1},a';\theta^-)$.
 \end{itemize}
 Il \textbf{Double DQN} (van Hasselt et al.\ 2016) parte dall'osservazione che

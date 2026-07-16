@@ -2,8 +2,7 @@
 \label{sec:experiments}
 
 \subsection{Hardware, librerie, iperparametri}
-Gli esperimenti tabellari girano su CPU; il DQN su GPU NVIDIA RTX 5060 (8\,GB,
-Blackwell), che richiede la build PyTorch CUDA 12.8. Librerie: Gymnasium (con ALE),
+Gli esperimenti tabellari girano su CPU; il DQN su GPU NVIDIA RTX 5060 (32 GB), che richiede la build PyTorch CUDA 12.8. Librerie: Gymnasium (con ALE),
 PyTorch, NumPy, Matplotlib; dipendenze gestite con \code{uv} e bloccate in
 \code{uv.lock}. Nessuna libreria RL di alto livello \`e usata nel core, come richiesto.
 
@@ -33,7 +32,7 @@ circa cinque volte pi\`u grande e il reward \`e sparso: con 10\,000 episodi le c
 erano ancora entrate in regime.
 
 \paragraph{Esperimenti.} \emph{CartPole}: Q\hbox{-}Learning vs SARSA; sensibilit\`a a
-$\varepsilon$, $\alpha$, $\gamma$ per \emph{entrambi} gli algoritmi (6 sweep); MC vs
+$\varepsilon$, $\alpha$, $\gamma$ per \emph{entrambi} gli algoritmi; MC vs
 TD(0) su policy appresa e casuale; tre casi di fallimento; $\varepsilon$ costante vs
 annealing. \emph{Acrobot}: gli stessi confronti, pi\`u l'effetto della risoluzione di
 discretizzazione (4/6/8/10 bin). \emph{Pong}: ablazione a cinque configurazioni (DQN
@@ -49,9 +48,7 @@ banda ombreggiata \`e la deviazione standard $\pm 1\sigma$ tra i seed.
 Nelle figure di \textbf{sensibilit\`a} (quattro curve sovrapposte) ho invece
 \emph{omesso deliberatamente le bande}: le regioni ombreggiate si coprirebbero a vicenda
 rendendo il grafico illeggibile. Ogni curva resta la media sugli stessi 3 seed, e la
-dispersione \`e riportata numericamente nelle tabelle. Lo dichiaro esplicitamente perch\'e
-\`e una deviazione dalla lettera della consegna, fatta per leggibilit\`a e non per
-nascondere varianza.
+dispersione \`e riportata numericamente nelle tabelle. 
 
 Le tabelle riportano la performance ``finale'' come media sull'\textbf{ultimo 10\%} degli
 episodi di ciascun seed, aggregata poi tra seed: \`e una stima dell'asintoto molto pi\`u

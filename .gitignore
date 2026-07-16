@@ -230,8 +230,14 @@ __marimo__/
 *.bcf
 *.run.xml
 
-# zip for Prism
-report/main.zip
+# in folder report only main.pdf must be kept, all other pdf artifacts must be ignored
+report/figures/
+report/sections/
+report/tables/
+report/main.tex
+report/references.bib
+report/README.md
+report/make_report_tables.py
 
 # Model weights (stored on HuggingFace)
 chronos/outputs/models/
@@ -243,3 +249,4 @@ chronos/data/corpus/
 .claude/
 CLAUDE.md
 .cursor/
+docs/*

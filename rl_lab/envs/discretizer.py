@@ -31,8 +31,11 @@ class DiscretizedEnv(gym.ObservationWrapper):
         self.bin_widths = (self.clip_high - self.clip_low) / self.n_bins
 
     def observation(self, obs):
-        """Clip -> scale -> floor to a bin index -> tuple (hashable Q-table key)."""
-        clipped = np.clip(obs, self.clip_low, self.clip_high)
-        scaled = (clipped - self.clip_low) / self.bin_widths
-        bins = np.clip(scaled.astype(int), 0, self.n_bins - 1)
-        return tuple(bins)
+        """Clip -> scale -> floor to a bin index -> tuple (hashable Q-table key).
+        
+        An observation is an array of floats, one per dimension. Each dimension is clipped to its own range, scaled to [0, n_bins), floored to an integer bin index, and returned as a tuple. The tuple is hashable and can be used as a key in a Q-table.
+        """
+        clipped = np.clip(obs, self.clip_low, self.clip_high) # clip every dim to its own range
+        scaled = (clipped - self.clip_low) / self.bin_widths # scale to [0, n_bins)
+        bins = np.clip(scaled.astype(int), 0, self.n_bins - 1) # floor to bin index and clip to [0, n_bins-1] in case of rounding errors
+        return tuple(bins) # return the tuple of bin indices, which is hashable and can be used as a key in a Q-table

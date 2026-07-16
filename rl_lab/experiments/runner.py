@@ -1,6 +1,6 @@
 """Multi-seed experiment runner.
 
-Origin: INSPIRED by the run_bias_experiment pattern from the course exercises,
+Origin: ADAPTED by the run_bias_experiment pattern from the course exercises,
 generalized to any algorithm.
 
 This is where the assignment's "media su 3 seed + deviazione standard" is enforced:
