@@ -41,7 +41,7 @@ PONG = {
     # No discretization: the DQN works on raw pixels. Binning a 210x160x3 image into a
     # Q-table is hopeless, and aggregating by pixel intensity would destroy exactly the
     # information the agent needs (ball and paddle positions).
-    "n_actions": 6, # no-op, fire, left, right, select, start
+    "n_actions": 6, # NOOP, FIRE, RIGHT, LEFT, RIGHTFIRE, LEFTFIRE (action set ALE di Pong)
 
     # Nature DQN preprocessing pipeline (Mnih et al. 2015):
     "frame_skip": 4, # Being the game fps=60 we skip 4 frames per action, so the agent sees 15 frames/sec.

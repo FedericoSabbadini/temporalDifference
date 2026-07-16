@@ -2,7 +2,7 @@
 \label{sec:theory}
 
 Si riportano solo i concetti necessari a comprendere le implementazioni, con la
-notazione del corso.
+notazione del corso (Sutton \& Barto, S\&B nel seguito).
 
 \subsection{MDP, valore e policy}
 Un problema di RL \`e modellato come un \emph{Markov Decision Process} (MDP):
@@ -71,7 +71,7 @@ converge a $q_*$ purch\'e ogni azione sia scelta infinite volte.
 
 La conseguenza pratica \`e che i due apprendono policy \emph{qualitativamente}
 diverse quando l'esplorazione \`e rischiosa. L'esempio canonico \`e il
-CliffWalking (Fig.~6.5): un percorso ottimo passa sul bordo di un dirupo, e
+CliffWalking (S\&B Fig.~6.5): un percorso ottimo passa sul bordo di un dirupo, e
 una singola azione esplorativa lungo il bordo fa cadere l'agente. Q\hbox{-}Learning,
 il cui target assume comportamento greedy, impara il percorso ottimo \emph{sul
 bordo} e paga care le esplorazioni; SARSA, che nel target include l'azione
@@ -91,12 +91,16 @@ altrimenti (\emph{exploitation}); con $|\mathcal{A}|$ azioni,
     \varepsilon/|\mathcal{A}| & \text{altrimenti.}
   \end{cases}
 \end{equation}
-Il valore di $\varepsilon$ è decrescente nel tempo, iniziando con un valore alto 
-per favorire l'esplorazione e riducendolo gradualmente per permettere all'agente di sfruttare le conoscenze acquisite.
-Ho scelto una unica implementazione condivisa in cui
+Il valore di $\varepsilon$ pu\`o essere tenuto \emph{costante} oppure fatto
+\emph{decrescere} nel tempo (annealing): si parte da un valore alto per favorire
+l'esplorazione e lo si riduce gradualmente per permettere all'agente di sfruttare le
+conoscenze acquisite. Nel progetto uso entrambe le varianti e le confronto
+(Sez.~\ref{sec:res-cartpole-anneal}, \ref{sec:res-acrobot-eps}); il DQN usa sempre
+l'annealing. Per il decadimento ho scelto un'unica implementazione lineare condivisa
+tra tabellari e DQN:
 \begin{equation}
   \text{frac} = \min(1, \text{current} / \text{horizon}), \qquad
-  \varepsilon = \text{start} + (\text{end} - \text{start}) \cdot \text{frac}
+  \varepsilon = \text{start} + (\text{end} - \text{start}) \cdot \text{frac}.
 \end{equation}
 
 \subsection{Deep Q-Network (DQN)}
@@ -106,10 +110,13 @@ viene approssimata da una rete neurale $Q(s,a;\theta)$ di parametri $\theta$
 \begin{itemize}[nosep]
   \item \textbf{Experience Replay}: le transizioni sono salvate in un buffer e
         campionate a mini-batch casuali, rompendo la correlazione temporale.
-  \item \textbf{Target Network}: una copia $\theta^-$ della rete, aggiornata
-        di rado, fornisce target stabili, diminuiendo la soft divergence.
-        $y = R_{t+1} + \gamma \max_{a'} Q(S_{t+1},a';\theta^-)$.
+  \item \textbf{Target Network}: una copia $\theta^-$ della rete, aggiornata di
+        rado, fornisce target stabili
+        $y = R_{t+1} + \gamma \max_{a'} Q(S_{t+1},a';\theta^-)$, riducendo il
+        rischio di divergenza dell'addestramento (\emph{soft divergence}).
 \end{itemize}
+
+
 Il \textbf{Double DQN} (van Hasselt et al.\ 2016) parte dall'osservazione che
 $\max_{a'} q(S_{t+1},a') = q\big(S_{t+1}, \arg\max_{a'} q(S_{t+1},a')\big)$ usa gli
 \emph{stessi} valori per selezionare e per valutare l'azione, il che su stime
