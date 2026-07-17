@@ -10,21 +10,20 @@ calcolati da \code{make\_report\_tables.py}.
 
 Entrambi gli algoritmi apprendono in modo netto (Fig.~\ref{fig:cp-control},
 Tab.~\ref{tab:cartpole-control}): da $\approx 27$--$41$ arrivano a \res{223.6}{49.4}
-(Q\hbox{-}Learning) e \res{258.3}{31.1} (SARSA). Due osservazioni contano pi\`u dei
-numeri assoluti.
+(Q\hbox{-}Learning) e \res{258.3}{31.1} (SARSA). 
 
 \textbf{Le curve sono ancora in salita a fine budget}: a 10\,000 episodi nessuna ha
-raggiunto un plateau, e il massimo dell'ambiente \`e 500. Il vincolo \`e il budget, non
-l'algoritmo: la griglia a $10^4$ stati va esplorata quasi tutta.
+raggiunto un plateau, e il massimo dell'ambiente \`e 500. Il vincolo \`e il budget in termini di step, non
+l'algoritmo: la griglia a $10^4$ stati va esplorata quasi tutta e gli step attuali sono limitati.
 
 \textbf{SARSA supera Q\hbox{-}Learning ed \`e meno disperso tra seed} ($\pm 31$ contro
 $\pm 49$) --- l'opposto dell'intuizione, dato che Q\hbox{-}Learning apprende la policy
-\emph{ottima}. La spiegazione: la curva misura la performance \emph{durante} il
-training, con $\varepsilon = 0.1$ attivo. Q\hbox{-}Learning valuta la policy greedy e
-ignora che il $10\%$ delle volte far\`a una mossa casuale; SARSA include quel rischio
-nel target e impara una policy che tollera le proprie deviazioni. Dove una singola
-azione sbagliata fa cadere l'asta, tenerne conto paga: \`e la dinamica del CliffWalking
-(S\&B Fig.~6.5), attenuata ma visibile.
+\emph{ottima} e SARSA è eseguita senza decay di $\varepsilon$. La spiegazione: la curva misura la performance \emph{durante} il
+training, con $\varepsilon = 0.1$ attivo. Q\hbox{-}Learning valuta sempre la policy greedy e
+ignora che il $10\%$ delle volte far\`a una mossa casuale, con rischi di errore; SARSA include quel rischio
+nel target e impara una policy che tollera le proprie deviazioni; \`e la dinamica del CliffWalking
+(S\&B Fig.~6.5), attenuata ma visibile. Ovviamente a fine training, con $\varepsilon$ spento, Q\hbox{-}Learning \`e superiore: 
+la policy greedy \`e ottima, quella di SARSA no.
 
 \begin{figure}[htbp]
 \centering
@@ -41,31 +40,27 @@ curve salgono ancora a 10\,000 episodi.}
 \subsection{CartPole --- sensibilit\`a a $\varepsilon$, $\alpha$, $\gamma$}
 \label{sec:res-cartpole-sens}
 
-La Fig.~\ref{fig:cp-sens} riporta le sei sweep. Averle
-fatte per \emph{entrambi} gli algoritmi non \`e ridondanza: su $\alpha$ i due si
-comportano diversamente, ed \`e il dato pi\`u interessante della sezione.
+La Fig.~\ref{fig:cp-sens} riporta i sei sweep. 
 
 \begin{itemize}
   \item \textbf{$\gamma$ --- l'effetto pi\`u netto.} Valori alti vincono per entrambi:
         $\gamma \in \{0.99, 1.0\}$ arriva a $230$--$280$, $\gamma \in \{0.9, 0.95\}$ si
-        blocca a $140$--$165$. Strutturale: CartPole \`e un compito di
+        blocca a $140$--$165$. CartPole \`e un compito di
         \emph{sopravvivenza} con reward $+1$/passo, quindi il valore di uno stato
         \emph{\`e} quanto a lungo si sopravvive. Con $\gamma=0.9$ l'orizzonte effettivo
         \`e $\approx 1/(1-\gamma) = 10$ passi: l'agente non pu\`o vedere la caduta che
-        sta preparando.
+        arriver\`a.
   \item \textbf{$\varepsilon$ --- serve, ma il troppo non nuoce.} $\varepsilon=0.01$ \`e
         il peggiore per entrambi ($105$--$130$), mentre $\varepsilon=0.3$ \emph{non}
-        degrada ($220$--$250$, come $0.1$): il reward denso perdona l'esplorazione,
-        perch\'e una mossa casuale costa al pi\`u qualche passo. Su Acrobot accadr\`a
-        l'esatto contrario (Sez.~\ref{sec:res-acrobot-eps}): l'effetto di $\varepsilon$
+        degrada ($220$--$250$, come $0.1$): la presenza di un reward denso garantisce "perdono" per l'esplorazione,
+        a differenza di quello che accadr\`a su Acrobot (Sez.~\ref{sec:res-acrobot-eps}); l'effetto di $\varepsilon$
         dipende dalla struttura del reward, non \`e una propriet\`a dell'algoritmo.
   \item \textbf{$\alpha$ --- qui i due divergono.} Per Q\hbox{-}Learning $\alpha=0.5$ e
         $\alpha=0.1$ finiscono appaiati ($200$--$220$), con $0.5$ pi\`u veloce
-        all'inizio. Per \emph{SARSA} invece $\alpha=0.5$ parte forte ma
-        \textbf{satura sotto} $\alpha=0.1$ ($\approx 210$ contro $\approx 260$). SARSA
+        all'inizio. Per \emph{SARSA} invece $\alpha=0.5$ parte alto ma
+        \textbf{satura sotto} $\alpha=0.1$ ($\approx 210$ contro $\approx 260$). La motivazione è che SARSA
         \`e on-policy, quindi il target $q(S_{t+1},A_{t+1})$ contiene la casualit\`a dell'azione
         $A_{t+1}$: un $\alpha$ alto insegue quel rumore invece di mediarlo.
-        Q\hbox{-}Learning, che usa il $\max$ (deterministico data $q$), ne soffre meno.
         $\alpha=0.01$ \`e troppo lento per entrambi ($45$--$95$).
 \end{itemize}
 
@@ -113,10 +108,9 @@ nel pannello $\alpha$: per SARSA (e) $\alpha=0.5$ (rosso) parte veloce ma satura
 Mi aspettavo che l'annealing servisse a poco su CartPole, che ha reward denso e non \`e
 limitato dall'esplorazione. Il beneficio c'\`e, ma \`e soprattutto sulla
 \emph{stabilit\`a}: l'annealing ($1.0 \to 0.01$) chiude a \res{243.8}{23.9} contro
-\res{223.6}{49.4} del costante (Fig.~\ref{fig:cp-anneal}). Il guadagno in media \`e
+\res{223.6}{49.4} del costante (Fig.~\ref{fig:cp-anneal}); considerando l'ultimo 10\% degli episodi. Il guadagno in media \`e
 modesto ($+20$), ma la dispersione tra seed si \emph{dimezza}: ridurre $\varepsilon$ a
-fine training toglie il rumore che la policy si porta dietro, e l'esito dipende meno dal
-seed. Il prezzo \`e un avvio pi\`u lento, fino a $\approx 3500$ episodi.
+fine training toglie il rumore della policy, pagando un avvio pi\`u lento fino ai $\approx 3500$ episodi.
 
 \begin{figure}[htbp]
 \centering
@@ -133,28 +127,19 @@ visibilmente pi\`u stretta.}
 
 \textbf{Il return non pu\`o distinguere i due stimatori} (Fig.~\ref{fig:cp-pred}a): le
 curve sono \emph{identiche per costruzione}, perch\'e MC e TD(0) valutano la
-\emph{stessa} policy fissa e generano quindi gli stessi episodi (return $\approx 330$).
-La curva di MC \`e letteralmente nascosta sotto quella di TD. Non \`e un errore di
-plotting: \`e la prova che la differenza tra i due metodi non vive nel return ma nelle
-stime $v(s)$. Per inciso, quei $\approx 330$ passi sono ottenuti dalla policy greedy
-\emph{senza} esplorazione, contro i $\approx 224$ della curva di training: gran parte
-del divario dal massimo \`e il costo di $\varepsilon$, non incapacit\`a della policy.
+\emph{stessa} policy greedy fissa e generano quindi gli stessi episodi (return $\approx 330$).
 
-\textbf{La differenza vive nelle stime} (Fig.~\ref{fig:cp-pred}b), ed \`e il quadro
-classico di S\&B \S6.2. \textbf{MC} salta al valore corretto ($81.07 \pm 0.17$) in poche
-decine di episodi ma con un picco iniziale violento: \`e \emph{non distorto} e ad
-\emph{alta varianza}, perch\'e ogni aggiornamento usa il return completo di una
+\textbf{La differenza vive nelle stime} (Fig.~\ref{fig:cp-pred}b). \textbf{MC} salta al valore corretto ($81.07 \pm 0.17$) in poche
+decine di episodi ma con un picco iniziale violento, perch\'e ogni aggiornamento usa il return completo di una
 traiettoria di $\approx 330$ passi. \textbf{TD(0)} parte da 0 e sale lentamente e in modo
-liscio, fermandosi a $70.50 \pm 0.28$ dopo 6000 episodi --- ancora $13\%$ sotto MC: \`e
-\emph{distorto} (fa bootstrap su una stima ancora sbagliata) ma a \emph{bassa varianza}.
+liscio, fermandosi a $70.50 \pm 0.28$ dopo 6000 episodi --- ancora $13\%$ sotto MC, a causa dell'errore di bootstrap.
 
 \textbf{Il bias di TD(0) non \`e una costante: dipende dalla policy valutata.} \`E il
 risultato che giustifica l'aver valutato anche la policy casuale
-(Fig.~\ref{fig:cp-pred-random}). L\`i gli episodi durano $\approx 22$ passi, lo stato di
-riferimento \`e vicinissimo alla terminazione, e TD(0) \emph{raggiunge} MC entro
-$\approx 5000$ episodi ($17.04$ contro $17.43$): il bias sparisce. Con la policy appresa
+(Fig.~\ref{fig:cp-pred-random}). L\`i gli episodi durano $\approx 22$ passi anzich\'e $\approx 330$ e TD(0) \emph{raggiunge} MC entro
+$\approx 5000$ episodi ($17.04$ contro $17.43$): facendo sparire il bias. Con la policy appresa
 gli episodi sono quindici volte pi\`u lunghi e il bootstrap deve propagare il valore un
-passo alla volta. La distorsione di TD(0) \`e quindi una funzione della \emph{distanza
+passo alla volta: la distorsione di TD(0) \`e quindi una funzione della \emph{distanza
 temporale} tra lo stato e il reward, non un difetto fisso dell'algoritmo.
 
 \begin{figure}[htbp]
@@ -184,9 +169,6 @@ Fig.~\ref{fig:cp-pred}b.}
 \label{fig:cp-pred-random}
 \end{figure}
 
-Le figure del return sulla policy casuale e su Acrobot esistono in \code{figures/} ma
-non sono riportate: mostrano lo stesso fenomeno di Fig.~\ref{fig:cp-pred}a (curve
-sovrapposte per costruzione) e non aggiungono informazione.
 
 % =====================================================================
 \subsection{Acrobot --- controllo}

@@ -27,17 +27,17 @@ def run_multi_seed(make_env_fn, train_fn, seeds=(42, 123, 456), **train_kwargs):
         (all_returns of shape (n_seeds, n_episodes), all_results) — the full result
         tuples are kept because some experiments need value_history from them.
     """
-    all_returns = []
-    all_results = []
+    all_returns = [] # array of shape (n_seeds, n_episodes), the episode returns for each seed.
+    all_results = [] # list of the full result tuples for each seed, because some experiments need value_history from them.
 
     for seed in seeds:
         set_seed(seed)
         env = make_env_fn()
-        env.reset(seed=seed)         # the env RNG, not just numpy/torch
-        env.action_space.seed(seed)  # and its own, separate RNG (see run_pong.py)
+        env.reset(seed=seed)          # set the env's RNG for reproducibility.
+        env.action_space.seed(seed)   # set the action space's RNG for reproducibility (e.g. for stochastic policies as random one).
 
         result = train_fn(env=env, **train_kwargs)
-        all_returns.append(result[1])
+        all_returns.append(result[1]) # the episode returns are at index 1 of the result tuple, by contract.
         all_results.append(result)
         env.close()
 

@@ -15,8 +15,19 @@ import matplotlib.pyplot as plt
 
 
 def moving_average(x, window=20):
-    """Running mean, 'valid' mode (output is window-1 shorter)."""
+    """Running mean, 'valid' mode (output is window-1 shorter).
+    
+    Args:
+        x: 1D array.
+        window: Size of the moving average window; used for smoothing the learning curves. 
+        Use 1 for no smoothing (e.g. for value-estimate plots).
+        
+    Returns:
+        1D array of the same type as x, smoothed (meaning each element is the mean of the previous `window` elements).
+        "valid" mode means the output only includes points where the full window fits.
+    """
     if len(x) < window:
+        # case of very short arrays (e.g. 1 episode), just return the array itself
         return np.array(x)
     return np.convolve(x, np.ones(window) / window, mode="valid")
 
@@ -34,15 +45,16 @@ def plot_learning_curves(results_dict, title, save_path=None, window=40,
 
     for label, data in results_dict.items():
         if data.ndim == 1:
-            data = data.reshape(1, -1)
+            data = data.reshape(1, -1) # 
         # axis=0 -> across seeds
-        mean = np.mean(data, axis=0)
-        std = np.std(data, axis=0)
+        mean = np.mean(data, axis=0) # mean over all seeds, for each episode
+        std = np.std(data, axis=0) # std over all seeds, for each episode
         sm_mean = moving_average(mean, window)
         sm_std = moving_average(std, window)
+        
         x = np.arange(len(sm_mean))
         plt.plot(x, sm_mean, label=label)
-        plt.fill_between(x, sm_mean - sm_std, sm_mean + sm_std, alpha=0.2)
+        plt.fill_between(x, sm_mean - sm_std, sm_mean + sm_std, alpha=0.2) # +- 0.1 required
 
     plt.xlabel(f"Episode (smoothed, window={window})")
     plt.ylabel(ylabel)

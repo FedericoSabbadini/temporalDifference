@@ -45,6 +45,7 @@ def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
             eps = epsilon
         else:
             eps = linear_epsilon(epsilon, epsilon_end, ep, max(1, episodes // 2))
+            # after reaching epsilon_end, it stays there for the rest of training
 
         state, _ = env.reset()
         total_reward = 0.0
@@ -55,7 +56,6 @@ def q_learning(env, episodes=5000, alpha=0.1, gamma=0.99, epsilon=0.1,
             done = terminated or truncated
             total_reward += reward
 
-            # (not done) zeroes the bootstrap term: a terminal state has no future.
             td_target = reward + gamma * np.max(Q[next_state]) * (not done)
             Q[state][action] += alpha * (td_target - Q[state][action])
 

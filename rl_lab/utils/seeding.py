@@ -5,13 +5,12 @@ experiments repeatable, as the assignment requires.
 """
 
 import numpy as np
-
+import torch
 
 def set_seed(seed):
     """Seed numpy and, if installed, torch (CPU and all GPUs)."""
     np.random.seed(seed)
     try:
-        import torch
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)

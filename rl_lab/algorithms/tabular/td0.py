@@ -16,8 +16,8 @@ def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
                    max_steps=1000, track_state=None):
     """TD(0) prediction. Same contract as `mc_prediction`.
 
-    Note the alpha: unlike MC's exact running average, a constant alpha weights recent
-    experience exponentially, so TD(0) never fully settles.
+    Both MC and TD(0) use a constant alpha, weighting recent experience
+    exponentially — this makes the comparison fair.
     """
     V = defaultdict(float)
     episode_returns = []
@@ -33,7 +33,6 @@ def td0_prediction(env, policy_fn, episodes=5000, alpha=0.1, gamma=1.0,
             done = terminated or truncated
             ep_return += reward
 
-            # (not done) zeroes the bootstrap term at terminal states.
             td_target = reward + gamma * V[next_state] * (not done)
             V[state] += alpha * (td_target - V[state])
 

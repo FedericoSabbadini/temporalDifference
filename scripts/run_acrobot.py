@@ -1,16 +1,3 @@
-#!/usr/bin/env python3
-"""Acrobot experiments - Env 2 (assigned).
-
-Origin: NEW. Same algorithms as CartPole, on the environment that exposes their
-limits: 6-D state (6^6 = 46,656 states at 6 bins) and a sparse reward (-1 per step
-until the goal), which together make exploration and credit assignment hard.
-
-The bin-resolution study is the most original experiment here, and the one that
-contradicted my hypothesis outright.
-
-Figures -> figures/acrobot/.
-"""
-
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -142,7 +129,7 @@ def exp_prediction():
 
     mc_ret, mc_res = run_multi_seed(make_acrobot, mc_prediction, SEEDS,
                                     policy_fn=learned_policy, episodes=6000,
-                                    gamma=0.99, max_steps=MAX_STEPS,
+                                    alpha=0.1, gamma=0.99, max_steps=MAX_STEPS,
                                     track_state=anchor)
     td_ret, td_res = run_multi_seed(make_acrobot, td0_prediction, SEEDS,
                                     policy_fn=learned_policy, episodes=6000,

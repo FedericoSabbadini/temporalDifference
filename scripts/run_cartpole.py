@@ -1,22 +1,7 @@
-#!/usr/bin/env python3
-"""CartPole experiments - Env 1 (common to all groups).
-
-Origin: NEW. One function per required analysis:
-  1. Q-Learning vs SARSA (control)
-  2. sensitivity to epsilon, alpha, gamma, for both algorithms
-  3. MC vs TD(0) (prediction), on the learned and on a random policy
-  4. failure cases: alpha=1.0, epsilon=0, gamma=0
-  5. constant vs annealed epsilon
-
-Everything runs on 3 seeds. Figures -> figures/cartpole/, raw arrays -> results/.
-"""
-
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import gymnasium as gym
 import numpy as np
-
 from rl_lab.configs import CARTPOLE, SEEDS
 from rl_lab.envs.discretizer import DiscretizedEnv
 from rl_lab.algorithms.tabular.q_learning import q_learning
@@ -114,7 +99,7 @@ def exp_prediction_comparison():
     for policy_fn, label in [(learned_policy, "learned"), (random_policy, "random")]:
         mc_ret, mc_res = run_multi_seed(make_cartpole, mc_prediction, SEEDS,
                                         policy_fn=policy_fn, episodes=6000,
-                                        gamma=0.99, track_state=anchor)
+                                        alpha=0.1, gamma=0.99, track_state=anchor)
         td_ret, td_res = run_multi_seed(make_cartpole, td0_prediction, SEEDS,
                                         policy_fn=policy_fn, episodes=6000,
                                         alpha=0.1, gamma=0.99, track_state=anchor)
