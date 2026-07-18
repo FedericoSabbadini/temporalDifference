@@ -22,7 +22,7 @@ class ReplayBuffer:
     """Fixed-capacity FIFO buffer with uniform random sampling."""
 
     def __init__(self, capacity):
-        self.buffer = deque(maxlen=capacity)  # maxlen evicts the oldest for free
+        self.buffer = deque(maxlen=capacity) 
 
     def push(self, state, action, reward, next_state, done):
         self.buffer.append((

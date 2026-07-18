@@ -210,8 +210,7 @@ Tab.~\ref{tab:acrobot-control}).
 Il dato pi\`u istruttivo riguarda la \textbf{forma} della curva: il grosso del
 miglioramento avviene entro i primi $\approx 5\,000$ episodi, dopodich\'e le curve
 oscillano attorno a $-340/-350$ \emph{senza ulteriori progressi} per altri 15\,000
-episodi. Non si tratta di lentezza ma di un tetto strutturale: raddoppiare il budget
-non lo sposterebbe. Con 46\,656 stati e un reward informativo solo quando l'obiettivo
+episodi. Con 46\,656 stati e un reward informativo solo quando l'obiettivo
 viene raggiunto per caso, la Q-table a 6 bin non possiede la risoluzione necessaria a
 rappresentare una politica migliore, come la sezione successiva verifica.
 
@@ -235,8 +234,7 @@ lontano dall'ottimo ($\approx -100$).}
 \subsection{Acrobot --- risoluzione della discretizzazione}
 \label{sec:res-acrobot-bins}
 
-Questo esperimento ha smentito l'ipotesi di partenza ed \`e il risultato pi\`u istruttivo
-del progetto. L'ipotesi era che aumentare il numero di bin \emph{peggiorasse}
+Questo esperimento ha smentito l'ipotesi di partenza che aumentare il numero di bin \emph{peggiorasse}
 l'apprendimento, poich\'e lo spazio degli stati cresce come $\text{bin}^6$ e a 10 bin
 ($10^6$ stati) la tabella sarebbe diventata irrimediabilmente sparsa, secondo la
 classica \emph{curse of dimensionality}.
@@ -278,17 +276,17 @@ ordine monotono.
 
 Il problema non \`e che l'esplorazione sia inutile, bens\`i che \textbf{l'esplorazione
 \emph{costante} \`e lo strumento sbagliato}: con $\varepsilon = 0.4$ l'agente continua
-a iniettare coppie casuali \emph{anche dopo} aver trovato uno swing-up efficace,
+a iniettare coppie casuali \emph{anche dopo} aver trovato uno movimiento efficace,
 distruggendolo sistematicamente ad ogni episodio.
 
-L'annealing conferma questa lettura e chiude il cerchio (Fig.~\ref{fig:ac-explore}b):
+L'annealing conferma questa lettura (Fig.~\ref{fig:ac-explore}b):
 lo schedule $1.0 \to 0.01$ raggiunge \res{-316.3}{24.5} contro \res{-341.4}{27.8} del
 miglior $\varepsilon$ costante, rappresentando il guadagno pi\`u significativo ottenuto
 su Acrobot senza modificare l'algoritmo. Il prezzo \`e visibile: per i primi
 $\approx 5\,000$ episodi la curva con annealing \`e inchiodata a $-500$ (con
 $\varepsilon \approx 1$ l'agente si comporta in modo casuale), per poi sorpassare il
 costante attorno ai 9\,000 episodi e restare stabilmente al di sopra. Il confronto con
-CartPole, dove lo stesso schedule produce un guadagno modesto, isola il meccanismo:
+CartPole, dove lo stesso schedule produce un guadagno modesto, conferma che
 l'annealing risulta vantaggioso l\`a dove l'esplorazione rappresenta davvero il collo di
 bottiglia.
 
@@ -323,11 +321,6 @@ e dopo 6\,000 episodi si trova ancora a $-62.00 \pm 0.03$. Lo stato di riferimen
 dista $\approx 90$ passi dall'obiettivo e TD propaga il valore un passo per volta: per
 uno stato cos\`i distante dal reward il bootstrap risulta estremamente lento e la stima
 resta ancorata all'inizializzazione.
-
-La banda di TD(0) \`e cos\`i stretta da risultare invisibile nel grafico ($\pm 0.03$),
-mentre quella di MC \`e ampia nei primi episodi. Si tratta del compromesso
-bias/varianza nella sua forma pi\`u pura: TD(0) \`e molto \emph{preciso} nel fornire una
-risposta \emph{sbagliata}, e necessita di molti episodi per convergere a quella corretta.
 
 \begin{figure}[htbp]
 \centering

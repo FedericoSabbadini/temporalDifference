@@ -25,10 +25,3 @@ TD(0)). Poich\'e entrambi gli ambienti presentano stato continuo, ho introdotto 
 \textbf{discretizzazione} per rendere praticabile la Q-table. Per Pong ho implementato
 un DQN in PyTorch (Mnih et al.\ 2015) con experience replay e target network, oltre al
 bonus Double DQN (van Hasselt et al.\ 2016).
-
-MC e TD(0), in quanto algoritmi di predizione, valutano una policy \emph{fissa} senza
-apprenderla: ho quindi scelto di addestrare prima Q\hbox{-}Learning, estrarne la policy
-greedy e valutare \emph{quella}, affiancandole una policy casuale come riferimento
-(Sez.~\ref{sec:met-prediction}). La scelta non \`e neutra, poich\'e il divario tra MC e
-TD(0) in termini di stime dipende proprio dalla policy che si valuta e dalla lunghezza
-degli episodi che essa genera.

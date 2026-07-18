@@ -47,16 +47,13 @@ volta una stima), ma presenta varianza pi\`u bassa e pu\`o essere aggiornata onl
 ogni passo. La quantit\`a $\delta_t = R_{t+1}+\gamma\, v(S_{t+1})-v(S_t)$ prende il
 nome di \emph{TD error}.
 
-L'origine del compromesso \`e intuitiva. Il return $G_t$ di MC dipende da \emph{molte}
+Il return $G_t$ di MC dipende da \emph{molte}
 azioni, transizioni e reward casuali lungo l'intera traiettoria, la cui variabilit\`a si
 accumula tanto pi\`u l'episodio \`e lungo: per questo su traiettorie estese la stima MC
 oscilla molto pi\`u che su episodi corti. Il target di TD(0) dipende invece da
 \emph{una} sola transizione casuale e ha quindi varianza minore; tuttavia, finch\'e la
 stima $v(S_{t+1})$ \`e ancora inaccurata, essa trascina con s\'e il target, dando origine
-alla distorsione. Nel caso tabellare entrambi convergono a $v_\pi$; la velocit\`a con cui
-il bias di TD si riassorbe dipende da quanto lo stato \`e ``lontano'' dal reward, ed \`e
-ci\`o che l'esperimento di predizione (Sez.~\ref{sec:res-cartpole-pred}) rende
-osservabile.
+alla distorsione. 
 
 \subsection{SARSA (on-policy) e Q-Learning (off-policy)}
 Sono l'aggiornamento TD applicato alle action-value $q$ (S\&B \S6.4--6.5):
@@ -76,12 +73,9 @@ La conseguenza pratica \`e che i due algoritmi apprendono policy
 \emph{qualitativamente} diverse quando l'esplorazione comporta un rischio rilevante.
 L'esempio canonico \`e il CliffWalking (S\&B Fig.~6.5): il percorso ottimo passa sul
 bordo di un dirupo, e una singola azione esplorativa lungo quel bordo fa cadere
-l'agente. Q\hbox{-}Learning, il cui target assume comportamento greedy, apprende il
-percorso ottimo \emph{sul bordo} e paga care le azioni esplorative; SARSA, che nel
-target include l'azione $\varepsilon$-greedy che realmente eseguir\`a, apprende un
-percorso pi\`u interno e ``prudente'', che rende di pi\`u \emph{finch\'e si continua a
-esplorare}. Questa distinzione, in forma attenuata, spiega il confronto SARSA vs
-Q\hbox{-}Learning su CartPole (Sez.~\ref{sec:res-cartpole-control}).
+l'agente. Q-learning impara la policy ottima, che passa sul bordo e quindi \emph{espone}
+ l'agente al rischio; SARSA impara invece una policy sub-ottima che passa pi\`u lontano dal 
+ dirupo, \emph{evitando} il rischio. Se la proprietà GLIE (Greedy in the Limit with Infinite Exploration) \`e soddisfatta, entrambe le policy convergono a quella ottima, ma SARSA lo fa pi\`u lentamente.
 
 \subsection{Esplorazione: $\varepsilon$-greedy}
 La policy $\varepsilon$-greedy sceglie un'azione casuale con probabilit\`a
@@ -121,7 +115,7 @@ stabilizzano l'addestramento:
         rischio di divergenza dell'addestramento (\emph{soft divergence}).
 \end{itemize}
 
-Il \textbf{Double DQN} (van Hasselt et al.\ 2016) parte dall'osservazione che
+Il \textbf{Double DQN} (van Hasselt et al.\ 2016) nota che
 $\max_{a'} q(S_{t+1},a') = q\big(S_{t+1}, \arg\max_{a'} q(S_{t+1},a')\big)$ impiega
 gli \emph{stessi} valori sia per selezionare sia per valutare l'azione migliore, il che
 su stime rumorose causa una \emph{sovrastima} sistematica (\emph{maximization bias},

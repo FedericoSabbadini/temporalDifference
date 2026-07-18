@@ -30,13 +30,15 @@ from rl_lab.policies import linear_epsilon
 
 
 def _obs_to_tensor(obs, device):
-    """Single observation -> (1, 4, 84, 84) float tensor in [0, 1].
+    """Single observation -> (4, 84, 84) float tensor in [0, 1].
+    Necessary because the network expects a batch dimension, and the replay buffer stores
+    uint8 to save RAM. 
 
     FrameStackObservation already yields channel-first uint8, so this normalizes and
     adds a batch dim; transposing here would silently scramble the frames.
     """
     obs = np.asarray(obs, dtype=np.float32) / 255.0
-    return torch.from_numpy(obs).unsqueeze(0).to(device)
+    return torch.from_numpy(obs).unsqueeze(0).to(device) # unsqueeze(0) adds the batch dimension, so the shape is (1, 4, 84, 84)
 
 
 def _batch_to_tensor(batch, device):
@@ -55,6 +57,7 @@ def _update_network(online_net, target_net, buffer, optimizer, batch_size,
     """
     states, actions, rewards, next_states, dones = buffer.sample(batch_size)
 
+    # Preprocess the batch into tensors on the right device
     states_t = _batch_to_tensor(states, device)
     next_states_t = _batch_to_tensor(next_states, device)
     actions_t = torch.from_numpy(actions).to(device)
@@ -63,7 +66,7 @@ def _update_network(online_net, target_net, buffer, optimizer, batch_size,
 
     # Q(s, a) for the action actually taken.
     q_values = online_net(states_t)
-    q_value = q_values.gather(1, actions_t.unsqueeze(1)).squeeze(1)
+    q_value = q_values.gather(1, actions_t.unsqueeze(1)).squeeze(1) # gather selects the Q-value corresponding to the action taken, and squeeze removes the extra dimension
 
     with torch.no_grad():  # the target is a fixed reference, never differentiated
         if use_double_dqn:
@@ -129,7 +132,6 @@ def train_dqn(
         target_net = copy.deepcopy(online_net)
         target_net.eval()
     else:
-        # Ablation: same object, so every gradient step also moves the target.
         target_net = online_net
 
     optimizer = torch.optim.Adam(online_net.parameters(), lr=lr)
@@ -138,8 +140,6 @@ def train_dqn(
         buffer = ReplayBuffer(buffer_capacity)
         min_buffer = max(learning_starts, batch_size)
     else:
-        # Ablation: a buffer of exactly one batch degenerates to online learning on the
-        # most recent, highly correlated transitions.
         buffer = ReplayBuffer(batch_size)
         min_buffer = batch_size
 
@@ -158,6 +158,7 @@ def train_dqn(
             epsilon = linear_epsilon(epsilon_start, epsilon_end, step,
                                      epsilon_decay_steps)
 
+            # epsilon-greedy behavioural policy
             if np.random.rand() < epsilon:
                 action = env.action_space.sample()
             else:

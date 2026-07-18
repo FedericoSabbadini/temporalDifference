@@ -32,4 +32,4 @@ class NatureCNN(nn.Module):
         x = F.relu(self.conv3(x))
         x = x.reshape(x.size(0), -1)
         x = F.relu(self.fc1(x))
-        return self.out(x)  # no activation: Q-values are unbounded
+        return self.out(x) 
