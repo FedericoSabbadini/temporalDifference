@@ -176,20 +176,13 @@ Fig.~\ref{fig:cp-pred}b.}
 
 Entrambi gli algoritmi migliorano da $\approx -470$ (vicino al casuale, $-500$) fino a
 \res{-341.4}{27.8} (Q\hbox{-}Learning) e \res{-348.6}{3.2} (SARSA), restando lontanissimi
-dall'ottimo ($\approx -100$): l'agente impara qualche spinta utile, non uno swing-up
-efficiente (Fig.~\ref{fig:ac-control}, Tab.~\ref{tab:acrobot-control}).
+dall'ottimo ($\approx -100$) (Fig.~\ref{fig:ac-control}, Tab.~\ref{tab:acrobot-control}).
 
 Il dato pi\`u istruttivo \`e la \textbf{forma} della curva: il grosso del miglioramento
 avviene entro i primi $\approx 5000$ episodi, poi le curve oscillano attorno a
-$-340/-350$ \emph{senza migliorare} per altri 15\,000. Non \`e lentezza, \`e un tetto:
-raddoppiare il budget non lo sposta. Con 46\,656 stati e un reward informativo solo
+$-340/-350$ \emph{senza migliorare} per altri 15\,000. Con 46\,656 stati e un reward informativo solo
 quando l'obiettivo viene raggiunto per caso, la Q-table a 6 bin non ha la risoluzione per
 rappresentare una politica migliore --- ipotesi che la sezione seguente verifica.
-
-Notevole l'inversione rispetto a CartPole sulla varianza: qui \`e \textbf{SARSA} ad
-essere drasticamente pi\`u stabile ($\pm 3.2$ contro $\pm 27.8$). La stabilit\`a relativa
-dei due algoritmi non \`e una loro propriet\`a intrinseca ma dipende dall'ambiente; la
-Sez.~\ref{sec:discussion} riprende il punto.
 
 \begin{figure}[htbp]
 \centering
@@ -206,8 +199,7 @@ Sez.~\ref{sec:discussion} riprende il punto.
 \subsection{Acrobot --- risoluzione della discretizzazione}
 \label{sec:res-acrobot-bins}
 
-\textbf{\`E l'esperimento che ha smentito la mia ipotesi di partenza}, ed \`e il
-risultato pi\`u istruttivo del progetto. L'ipotesi: aumentare i bin \emph{peggiora}
+L'ipotesi: aumentare i bin \emph{peggiora}
 l'apprendimento, perch\'e lo spazio cresce come $\text{bin}^6$ e a 10 bin ($10^6$ stati)
 la tabella diventa irrimediabilmente sparsa --- la curse of dimensionality da manuale.
 
@@ -216,14 +208,10 @@ I dati dicono l'\textbf{opposto}, in modo monotono e non ambiguo
 migliore} ($\approx -280$) e \textbf{4 bin la peggiore} ($\approx -430$), con 8 e 6
 ordinatamente in mezzo.
 
-Avevo confrontato il costo sbagliato. Le dinamiche di Acrobot richiedono
-\emph{precisione angolare}: con 4 bin per dimensione, configurazioni del pendolo che
-richiedono coppie \emph{opposte} finiscono nello \emph{stesso} stato discreto. La
+Con bassa dimensionalit\`a la
 Q-table non pu\`o rappresentare politiche diverse per stati che non sa distinguere, e
 nessun numero di episodi lo ripara --- infatti la curva a 4 bin resta piatta e rumorosa
-fino in fondo. Questo costo di \emph{aliasing} domina quello della sparsit\`a: la curse
-of dimensionality \`e reale in principio, ma a questo budget non \`e ancora il vincolo
-attivo. \`E anche la giustificazione empirica del passaggio al DQN: per avere insieme
+fino in fondo. Questo costo di \emph{aliasing} domina quello della sparsit\`a ed è anche la giustificazione empirica del passaggio al DQN, poiché per avere insieme
 precisione e generalizzazione serve un approssimatore di funzione.
 
 \begin{figure}[htbp]
