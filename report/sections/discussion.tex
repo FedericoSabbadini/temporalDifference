@@ -5,97 +5,103 @@ Questa sezione raccoglie le letture \emph{trasversali}, che nessun singolo esper
 mostra da solo.
 
 \subsection{SARSA vs Q-Learning: la teoria non predice il vincitore}
-Il confronto ha dato esiti \emph{opposti} nei due ambienti, ed \`e istruttivo proprio
-per questo. Su \textbf{CartPole} SARSA vince su entrambi i fronti (return $258$ vs
-$224$, std $\pm 31$ vs $\pm 49$). Su \textbf{Acrobot} Q\hbox{-}Learning ottiene un
-return leggermente migliore ($-341$ vs $-349$) ma SARSA \`e quasi dieci volte pi\`u
-stabile tra i seed ($\pm 3.2$ vs $\pm 27.8$).
+Il confronto ha prodotto esiti \emph{opposti} nei due ambienti, ed \`e istruttivo
+proprio per questo. Su \textbf{CartPole} SARSA prevale su entrambi i fronti (return
+$258$ vs $224$, deviazione standard $\pm 31$ vs $\pm 49$), mentre su \textbf{Acrobot}
+Q\hbox{-}Learning ottiene un return leggermente migliore ($-341$ vs $-349$) ma SARSA
+risulta quasi dieci volte pi\`u stabile tra i seed ($\pm 3.2$ vs $\pm 27.8$).
 
-La differenza teorica \`e sempre la stessa --- il target di Q\hbox{-}Learning usa il
-$\max$ e ignora l'esplorazione, quello di SARSA usa l'azione realmente scelta e la
-include --- ma le \emph{conseguenze} dipendono dall'ambiente. Dove l'esplorazione \`e
-costosa (CartPole: una mossa casuale pu\`o far cadere l'asta), SARSA guadagna perch\'e
-apprende una policy robusta al proprio rumore. Dove il reward \`e sparso (Acrobot), il
-$\max$ amplifica le rare traiettorie fortunate che raggiungono l'obiettivo: quali
-siano dipende dal seed, da cui i picchi migliori ma la varianza altissima di
-Q\hbox{-}Learning. Concluderne che ``off-policy \`e meglio'' non ha valore predittivo:
-conta come il rischio dell'esplorazione interagisce con la struttura del reward.
+La differenza teorica \`e sempre la medesima: il target di Q\hbox{-}Learning impiega il
+$\max$ e ignora l'esplorazione, quello di SARSA impiega l'azione realmente scelta e la
+include. Le \emph{conseguenze}, tuttavia, dipendono dall'ambiente. L\`a dove
+l'esplorazione \`e rischiosa (CartPole: una mossa casuale pu\`o far cadere l'asta),
+SARSA guadagna perch\'e apprende una policy robusta al proprio rumore esplorativo. L\`a
+dove il reward \`e sparso (Acrobot), il $\max$ di Q\hbox{-}Learning amplifica le rare
+traiettorie fortunate che raggiungono l'obiettivo: quali siano dipende dal seed, il che
+spiega i picchi pi\`u elevati ma anche la varianza molto superiore. Concludere che
+``off-policy \`e meglio'' non ha pertanto valore predittivo: ci\`o che conta \`e come il
+rischio dell'esplorazione interagisce con la struttura del reward.
 
 \subsection{Perch\'e le curve non convergono mai davvero}
-Nessuna curva tabellare si appiattisce del tutto, e non deve: con $\varepsilon$ e
+Nessuna curva tabellare si appiattisce del tutto, e non deve farlo: con $\varepsilon$ e
 $\alpha$ \emph{costanti} l'agente continua a esplorare e pesa le esperienze recenti in
-modo esponenziale (media a pesi mobili, non media esatta), quindi la fluttuazione
-asintotica \`e attesa (S\&B \S2.5). Che l'annealing di $\varepsilon$ riduca
-sensibilmente la varianza tra seed su entrambi gli ambienti \`e la conferma sperimentale
-di questa lettura.
+modo esponenziale (media a pesi mobili, non media esatta), e dunque la fluttuazione
+asintotica \`e un comportamento atteso (S\&B \S2.5). Il fatto che l'annealing di
+$\varepsilon$ riduca sensibilmente la varianza tra seed su entrambi gli ambienti ne
+costituisce la conferma sperimentale.
 
-\subsection{Due ipotesi smentite, e perch\'e le ho tenute}
-I risultati sui bin e su $\varepsilon$ in Acrobot contraddicono entrambi la mia
-previsione iniziale. Non ho ritoccato n\'e gli esperimenti n\'e le ipotesi: sono
-riproducibili sui 3 seed, \emph{monotoni} nel parametro (quindi non sono rumore) e
-hanno una spiegazione meccanicistica coerente.
+\subsection{Due ipotesi smentite, e perch\'e sono state mantenute}
+I risultati sui bin e su $\varepsilon$ in Acrobot contraddicono entrambi la previsione
+iniziale. Non ho ritoccato n\'e gli esperimenti n\'e le ipotesi: i risultati sono
+riproducibili sui 3 seed, \emph{monotoni} nel parametro (il che esclude che siano
+rumore) e ammettono una spiegazione meccanicistica coerente.
 
-Il punto interessante \`e che le due ``regole'' che ho smentito sono vere
-\emph{in astratto}: la curse of dimensionality esiste, e un reward sparso richiede
-davvero pi\`u esplorazione. Sono per\`o affermazioni \emph{asintotiche}, mentre un
-esperimento avviene a budget finito e su un ambiente specifico --- il tipo di errore che
-solo la verifica sperimentale intercetta.
+Il punto interessante \`e che le due ``regole'' smentite sono vere \emph{in astratto}:
+la curse of dimensionality esiste, e un reward sparso richiede effettivamente pi\`u
+esplorazione. Si tratta per\`o di affermazioni \emph{asintotiche}, mentre un esperimento
+si svolge a budget finito e su un ambiente specifico: esattamente il tipo di errore che
+solo la verifica sperimentale \`e in grado di intercettare.
 
-\subsection{Limiti metodologici che riconosco}
+\subsection{Limiti metodologici riconosciuti}
 \begin{itemize}
   \item \textbf{Predizione: misura locale.} Il confronto MC vs TD(0) traccia
         $V(s_{\text{ref}})$ di \emph{un} singolo stato; una misura globale (RMSE di $V$
         su tutti gli stati, come nel \emph{random walk} del corso) richiederebbe un $V$
-        di riferimento che qui non ho. L'attenuante \`e che valutare \emph{due} policy
-        diverse mi ha comunque permesso di isolare \emph{da cosa} dipende il bias.
+        di riferimento che in questi ambienti non \`e disponibile. L'attenuante \`e che
+        valutare \emph{due} policy diverse ha comunque permesso di isolare \emph{da cosa}
+        dipende il bias di TD(0).
   \item \textbf{Asse x in ``episodi'' nell'ablazione Pong.} A parit\`a di 200k step le
-        configurazioni producono numeri diversi di episodi, quindi confrontarle allo
-        stesso indice non \`e un confronto a parit\`a esatta di calcolo. Un asse in step
-        ambiente sarebbe pi\`u corretto; la conclusione qualitativa non cambia, dato che
-        le curve senza replay restano piatte per l'intera durata.
-  \item \textbf{Persistenza parziale dei dati grezzi.} Controllo, annealing, predizione e
-        ablazione Pong sono salvati in \code{.npz}; le sweep di sensibilit\`a e i
-        fallimenti producono solo figure, quindi le tabelle usano solo dati persistiti.
-  \item \textbf{Bande assenti nelle figure di sensibilit\`a}, per leggibilit\`a
-        (Sez.~\ref{sec:experiments-reading}).
-  \item \textbf{Il DQN \`e valutato durante il training}, con $\varepsilon > 0$: \`e
-        una stima leggermente \emph{pessimistica} della policy greedy. I checkpoint
-        sono salvati, quindi una valutazione greedy separata sarebbe fattibile senza
-        riaddestrare.
+        diverse configurazioni producono numeri diversi di episodi, per cui confrontarle
+        allo stesso indice non costituisce un confronto a perfetta parit\`a di calcolo. Un
+        asse in step ambiente sarebbe pi\`u rigoroso; la conclusione qualitativa non
+        cambia, dal momento che le curve senza replay restano piatte per l'intera durata.
+  \item \textbf{Persistenza parziale dei dati grezzi.} Controllo, annealing, predizione
+        e ablazione Pong sono salvati in \code{.npz}; le sweep di sensibilit\`a e i
+        fallimenti producono solo figure, e pertanto le tabelle utilizzano unicamente dati
+        persistiti.
+  \item \textbf{Bande assenti nelle figure di sensibilit\`a}, per ragioni di
+        leggibilit\`a (Sez.~\ref{sec:experiments-reading}).
+  \item \textbf{Il DQN \`e valutato durante il training}, con $\varepsilon > 0$: si
+        tratta di una stima leggermente \emph{pessimistica} della policy greedy. I
+        checkpoint sono salvati, e una valutazione greedy separata sarebbe fattibile senza
+        necessit\`a di riaddestrare.
 \end{itemize}
 
 \subsection{Problemi implementativi incontrati}
-Distinti dai limiti intrinseci dell'RL, questi sono ostacoli reali che ho dovuto
-risolvere:
+Distinti dai limiti intrinseci del RL, questi sono ostacoli concreti che \`e stato
+necessario risolvere:
 \begin{itemize}
   \item \textbf{GPU Blackwell (RTX 5060)}: richiede la build PyTorch CUDA 12.8; con
-        build precedenti la GPU non viene rilevata e il training cade silenziosamente
+        build precedenti la GPU non viene rilevata e il training ricade silenziosamente
         su CPU.
-  \item \textbf{Pipeline Atari, tre trappole}: (i) l'ambiente \code{-v5} ha gi\`a un
-        frame-skip interno che, combinato con \code{AtariPreprocessing}, darebbe uno
-        skip effettivo di 16 frame, quindi va forzato \code{frameskip=1}; (ii) in
-        Gymnasium 1.x \code{FrameStack} si chiama \code{FrameStackObservation};
-        (iii) i frame impilati sono gi\`a channel-first \code{(4,84,84)} e non vanno
-        trasposti. Sbagliare uno dei tre produce un crash oppure --- peggio --- input
-        silenziosamente malformati.
-  \item \textbf{Memoria del replay buffer}: 1M di transizioni Atari sarebbero
-        $\approx 28$\,GB, quindi ho limitato il buffer a 100k tenendo i frame in
-        \code{uint8}.
+  \item \textbf{Pipeline Atari, tre insidie}: (i) l'ambiente \code{-v5} possiede gi\`a
+        un frame-skip interno che, combinato con \code{AtariPreprocessing}, produrrebbe
+        uno skip effettivo di 16 frame, rendendo necessario forzare
+        \code{frameskip=1}; (ii) in Gymnasium 1.x \code{FrameStack} si chiama
+        \code{FrameStackObservation}; (iii) i frame impilati sono gi\`a in formato
+        channel-first \code{(4,84,84)} e non devono essere trasposti. Un errore su uno
+        qualsiasi dei tre produce un crash oppure, peggio ancora, input silenziosamente
+        malformati.
+  \item \textbf{Memoria del replay buffer}: 1M di transizioni Atari
+        richiederebbero $\approx 28$\,GB, pertanto il buffer \`e stato limitato a 100k
+        transizioni mantenendo i frame in formato \code{uint8}.
   \item \textbf{DQN non riproducibile per un RNG nascosto.} Run che avrebbero dovuto
-        essere identiche divergevano: l'azione esplorativa viene da
-        \code{env.action\_space.sample()}, e lo spazio delle azioni ha un \emph{RNG
-        separato} che n\'e \code{set\_seed} n\'e \code{reset(seed=)} inizializzano.
-        All'inizio ($\varepsilon\!\approx\!1$) quasi tutta l'esperienza nasceva da quel
-        RNG non seminato. Aggiunto \code{env.action\_space.seed(seed)}; i risultati Pong
-        riportati sono di questo run corretto e riproducibile.
-  \item \textbf{Episodio troncato contato come completo.} Quando il budget di step
-        finiva a met\`a partita, il return parziale (troppo ottimistico) veniva
-        registrato come episodio, con uno spurio picco verso l'alto sul bordo destro di
-        ogni curva. Corretto scartando l'episodio non terminato.
+        essere identiche divergevano: l'azione esplorativa viene estratta da
+        \code{env.action\_space.sample()}, e lo spazio delle azioni dispone di un
+        \emph{RNG separato} che n\'e \code{set\_seed} n\'e \code{reset(seed=)}
+        inizializzano. Nelle fasi iniziali ($\varepsilon\!\approx\!1$) quasi tutta
+        l'esperienza proveniva da quel RNG non seminato. Aggiunto
+        \code{env.action\_space.seed(seed)}; i risultati Pong riportati provengono da
+        questo run corretto e riproducibile.
+  \item \textbf{Episodio troncato contato come completo.} Quando il budget di step si
+        esauriva a met\`a partita, il return parziale (troppo ottimistico) veniva
+        registrato come episodio completo, producendo un picco spurio verso l'alto sul
+        bordo destro di ogni curva. Corretto scartando l'episodio non terminato.
   \item \textbf{Stato di riferimento impossibile} (Sez.~\ref{sec:met-prediction}): il
-        grafico piatto a zero era corretto, era la domanda ad essere mal posta.
+        grafico piatto a zero era formalmente corretto; era la domanda a essere mal posta.
 \end{itemize}
 
 Nel complesso i risultati mostrano apprendimento, confronti corretti e fallimenti
-analizzati, e in questo sono adeguati agli obiettivi della consegna; non sono per\`o
-``research-grade'', e i divari li dichiaro apertamente nelle conclusioni.
+analizzati, e in questo sono adeguati agli obiettivi della consegna. Non si tratta
+tuttavia di risultati ``research-grade'', e i relativi divari sono dichiarati
+apertamente nelle conclusioni.

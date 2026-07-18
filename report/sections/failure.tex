@@ -1,46 +1,50 @@
 \section{Failure analysis}
 \label{sec:failure}
 
-La consegna chiede almeno un caso di fallimento: ne riporto \textbf{tre}, ottenuti
-portando all'estremo un iperparametro alla volta su CartPole con Q\hbox{-}Learning
-(Fig.~\ref{fig:cp-fail}). Sono scelti perch\'e ciascuno rompe un ingranaggio
-\emph{diverso}: il passo di aggiornamento, l'esplorazione, l'assegnazione del credito.
-In tutti e tre il codice gira senza errori --- ed \`e esattamente il punto: la
-correttezza dell'implementazione non garantisce l'apprendimento.
+La consegna chiede almeno un caso di fallimento: ne vengono riportati \textbf{tre},
+ottenuti portando all'estremo un iperparametro alla volta su CartPole con
+Q\hbox{-}Learning (Fig.~\ref{fig:cp-fail}). Ciascuno \`e scelto perch\'e rompe un
+meccanismo \emph{diverso}: il passo di aggiornamento, l'esplorazione e l'assegnazione
+del credito. In tutti e tre i casi il codice gira senza errori, ed \`e esattamente
+questo il punto: la correttezza dell'implementazione non garantisce l'apprendimento.
 
 \paragraph{1. $\alpha = 1.0$ --- instabilit\`a (mancata convergenza).}
 L'aggiornamento \emph{sostituisce} completamente la stima ad ogni passo
-($q(S_t,A_t) \leftarrow R_{t+1} + \gamma \max_{a'} q(S_{t+1},a')$): la media incrementale scompare, quindi
-$Q$ non pu\`o mediare sulla stocasticit\`a delle transizioni e insegue l'ultimo campione
-visto. L'agente si blocca a $\approx 65$ per 6000 episodi.
+($q(S_t,A_t) \leftarrow R_{t+1} + \gamma \max_{a'} q(S_{t+1},a')$): la media
+incrementale scompare e $Q$ non pu\`o mediare sulla stocasticit\`a delle transizioni,
+finendo per inseguire l'ultimo campione osservato. L'agente si blocca a $\approx 65$
+per l'intera durata dei 6\,000 episodi.
 
-La lettura importante \`e per\`o un'altra: il fallimento \`e specifico del valore
-\emph{estremo}, non dell'``$\alpha$ alto''. Nella stessa figura $\alpha = 0.5$ non solo
-non fallisce, ma \`e la curva \emph{migliore} ($\approx 210$, sopra $\alpha=0.1$). Se
-avessi testato solo $\{0.1, 1.0\}$ avrei concluso, sbagliando, che ``$\alpha$ grande
-destabilizza'': la transizione non \`e graduale, c'\`e una soglia e sta tra $0.5$ e $1.0$.
+La lettura pi\`u importante riguarda per\`o un aspetto diverso: il fallimento \`e specifico
+del valore \emph{estremo}, non dell'``$\alpha$ alto'' in generale. Nella stessa figura
+$\alpha = 0.5$ non solo non fallisce, ma risulta la curva \emph{migliore}
+($\approx 210$, superiore ad $\alpha=0.1$). Se avessi testato soltanto $\{0.1, 1.0\}$
+avrei concluso, erroneamente, che ``$\alpha$ grande destabilizza'': la transizione non
+\`e graduale e la soglia di instabilit\`a si colloca tra $0.5$ e $1.0$.
 
 \paragraph{2. $\varepsilon = 0$ --- comportamento subottimale.}
-L'agente \`e greedy dal primo istante su una Q-table inizializzata a zero: si aggrappa
-alla prima azione che sembra funzionare e non prova mai le alternative. La curva resta
-piatta a $\approx 40$, mentre $\varepsilon = 0.1$ arriva a $\approx 170$. Notevole il
-caso intermedio $\varepsilon = 0.01$: non fallisce del tutto, ma resta bloccato per
-$\approx 2500$ episodi prima di sbloccarsi e arrivare a $\approx 100$. L'esplorazione
-insufficiente non impedisce l'apprendimento, lo rende estremamente inefficiente
-(S\&B \S2.1).
+L'agente opera in modo greedy fin dal primo istante su una Q-table inizializzata a zero:
+si fissa sulla prima azione che sembra funzionare senza mai provare le alternative. La
+curva resta piatta a $\approx 40$, mentre con $\varepsilon = 0.1$ si raggiunge
+$\approx 170$. Degno di nota il caso intermedio $\varepsilon = 0.01$, che non fallisce
+del tutto ma resta bloccato per $\approx 2\,500$ episodi prima di sbloccarsi e arrivare
+a $\approx 100$. Un'esplorazione insufficiente non impedisce l'apprendimento in senso
+assoluto, ma lo rende estremamente inefficiente (S\&B \S2.1).
 
 \paragraph{3. $\gamma = 0$ --- miopia (fallimento del credit assignment).}
-\`E il pi\`u interessante dei tre, perch\'e non \`e ``lento'' ma \emph{strutturalmente
-impossibile}. Con $\gamma = 0$ il target si riduce al reward immediato; ma su CartPole il
-reward immediato \`e $+1$ ad \emph{ogni} passo non terminale, \emph{qualunque} azione si
-scelga. Tutte le coppie stato-azione collassano sullo stesso valore, la policy greedy non
-ha modo di preferire un'azione all'altra e degenera in una policy casuale: la curva resta
-piatta a $\approx 22$, cio\`e \emph{sotto} il punto di partenza degli altri.
+Si tratta del caso pi\`u interessante, poich\'e il fallimento non \`e dovuto a lentezza
+ma \`e \emph{strutturalmente impossibile} da superare. Con $\gamma = 0$ il target si
+riduce al reward immediato; tuttavia, su CartPole il reward immediato \`e $+1$ ad
+\emph{ogni} passo non terminale, \emph{qualunque} azione venga scelta. Tutte le coppie
+stato-azione collassano pertanto sullo stesso valore, la policy greedy non ha modo di
+preferire un'azione all'altra e degenera in una policy casuale: la curva resta piatta a
+$\approx 22$, vale a dire \emph{al di sotto} del punto di partenza delle altre
+configurazioni.
 
-Il caso mostra concretamente \emph{a cosa serve} il discount factor: non a ``pesare meno
-il futuro'', ma a creare il canale attraverso cui l'informazione sulla caduta futura
-risale fino alle azioni che l'hanno causata. Senza $\gamma > 0$ quel canale non esiste, e
-nessun numero di episodi pu\`o rimediare.
+Questo caso mostra concretamente \emph{a cosa serve} il discount factor: non
+semplicemente a ``pesare meno il futuro'', ma a creare il canale attraverso cui
+l'informazione sulla caduta futura risale fino alle azioni che l'hanno causata. Senza
+$\gamma > 0$ quel canale non esiste, e nessun numero di episodi pu\`o rimediare.
 
 \begin{figure}[htbp]
 \centering
@@ -57,19 +61,19 @@ nessun numero di episodi pu\`o rimediare.
   \caption{$\gamma=0$: miopia.}
 \end{subfigure}
 \caption{CartPole, i tre casi di fallimento (Q\hbox{-}Learning, media su 3 seed).
-(a) $\alpha=1.0$ (verde) si blocca a $\approx 65$, ma $\alpha=0.5$ (arancio) \`e la curva
-migliore: la soglia di instabilit\`a sta tra i due, non ``in alto''. (b) $\varepsilon=0$
-(blu) resta piatto a $\approx 40$; $\varepsilon=0.01$ (arancio) apprende, ma con $2500$
-episodi di ritardo. (c) $\gamma=0$ (blu) \`e piatto a $\approx 22$: con reward $+1$
-ovunque tutte le azioni valgono uguale e la policy greedy \`e indistinguibile da una
-casuale.}
+(a) $\alpha=1.0$ (verde) si blocca a $\approx 65$, mentre $\alpha=0.5$ (arancio) \`e la
+curva migliore: la soglia di instabilit\`a si colloca tra i due valori, non
+genericamente ``in alto''. (b) $\varepsilon=0$ (blu) resta piatto a $\approx 40$, mentre
+$\varepsilon=0.01$ (arancio) apprende con $\approx 2\,500$ episodi di ritardo.
+(c) $\gamma=0$ (blu) \`e piatto a $\approx 22$: con reward $+1$ ad ogni passo tutte le
+azioni risultano equivalenti e la policy greedy \`e indistinguibile da una casuale.}
 \label{fig:cp-fail}
 \end{figure}
 
 \paragraph{Un fallimento non provocato: il tetto di Acrobot.}
-Ai tre fallimenti indotti va aggiunto quello \emph{spontaneo} di
-Sez.~\ref{sec:res-acrobot-control}: su Acrobot le curve si fermano a $\approx -345$ e non
-migliorano per 15\,000 episodi. Non \`e un bug n\'e un iperparametro sbagliato, \`e il
-limite rappresentativo della Q-table discretizzata --- e la
-Sez.~\ref{sec:res-acrobot-bins} lo dimostra facendo variare l'unica cosa che lo sposta
-davvero: il numero di bin.
+Ai tre fallimenti indotti va aggiunto quello \emph{spontaneo} della
+Sez.~\ref{sec:res-acrobot-control}: su Acrobot le curve si arrestano a
+$\approx -345$ senza ulteriori miglioramenti per 15\,000 episodi. Non si tratta di un
+bug n\'e di un iperparametro mal configurato, bens\`i del limite rappresentativo della
+Q-table discretizzata; la Sez.~\ref{sec:res-acrobot-bins} lo dimostra facendo variare
+l'unica variabile in grado di spostarlo: il numero di bin.
