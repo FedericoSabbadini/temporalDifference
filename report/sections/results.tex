@@ -139,31 +139,29 @@ $\pm1\sigma$ visibilmente pi\`u stretta.}
 Il return non \`e in grado di distinguere i due stimatori (Fig.~\ref{fig:cp-pred}a): le
 curve risultano \emph{identiche per costruzione}, poich\'e MC e TD(0) valutano la
 \emph{stessa} policy greedy fissa e generano quindi i medesimi episodi (return
-$\approx 330$). La curva di MC \`e letteralmente nascosta sotto quella di TD, a conferma
-che la differenza tra i due metodi non risiede nel return ma nelle stime $v(s)$. Per
-inciso, quei $\approx 330$ passi sono ottenuti dalla policy greedy \emph{senza}
-esplorazione, rispetto ai $\approx 224$ della curva di training: gran parte del divario
-dal massimo \`e il costo di $\varepsilon$, non un'incapacit\`a della policy.
+$\approx 197$). La curva di MC \`e letteralmente nascosta sotto quella di TD, a conferma
+che la differenza tra i due metodi non risiede nel return ma nelle stime $v(s)$.
 
-La differenza emerge chiaramente nelle stime di $V(s_{\text{ref}})$
+La differenza emerge invece nelle stime di $V(s_{\text{ref}})$
 (Fig.~\ref{fig:cp-pred}b), che riproducono il quadro classico di S\&B \S6.2.
-\textbf{MC} raggiunge il valore corretto ($81.07 \pm 0.17$) in poche decine di episodi
-ma con un picco iniziale violento: la stima \`e \emph{non distorta} e ad \emph{alta
-varianza}, poich\'e ogni aggiornamento impiega il return completo di una traiettoria di
-$\approx 330$ passi. \textbf{TD(0)} parte da 0 e sale lentamente con estrema
-regolarit\`a, arrestandosi a $70.50 \pm 0.28$ dopo 6\,000 episodi, ancora il $13\%$ al
-di sotto di MC: la stima \`e \emph{distorta} (a causa del bootstrap su una stima ancora
-inaccurata) ma a \emph{bassa varianza}.
+\textbf{MC} raggiunge subito il valore corretto ($87.34 \pm 0.31$, coerente con il return
+scontato di una traiettoria di $\approx 197$ passi), ma con un picco iniziale violento
+: \`e uno stimatore \emph{non distorto} e ad \emph{alta
+varianza}, perch\'e usa il return completo dell'intera traiettoria e lo step size
+costante $\alpha=0.1$ non ne media mai definitivamente le fluttuazioni. \textbf{TD(0)}, al
+contrario, parte da 0 e sale lentamente con estrema regolarit\`a, fermandosi a
+$79.21 \pm 0.44$ dopo 6\,000 episodi --- ancora il $\approx 9\%$ sotto MC: \`e
+\emph{distorto} (il bootstrap poggia su una stima ancora inaccurata) ma a \emph{bassa
+varianza}.
 
-Il bias di TD(0) non \`e tuttavia una costante, bens\`i dipende dalla policy valutata, ed
-\`e questo il risultato che giustifica l'aver valutato anche la policy casuale
-(Fig.~\ref{fig:cp-pred-random}). Con episodi di soli $\approx 22$ passi, lo stato di
-riferimento \`e molto vicino alla terminazione e TD(0) \emph{raggiunge} MC entro
-$\approx 5\,000$ episodi ($17.04$ contro $17.43$), facendo essenzialmente scomparire il
-bias. Con la policy appresa, invece, gli episodi sono quindici volte pi\`u lunghi e il
-bootstrap deve propagare il valore un passo alla volta: la distorsione di TD(0) risulta
-quindi una funzione della \emph{distanza temporale} tra lo stato e il reward, e non un
-difetto intrinseco dell'algoritmo.
+Il bias di TD(0) non \`e per\`o una costante: dipende dalla policy valutata, ed \`e questo
+che giustifica l'aver valutato anche una policy casuale (Fig.~\ref{fig:cp-pred-random}). I
+suoi episodi durano appena $\approx 22$ passi, cos\`i lo stato di riferimento \`e vicino
+alla terminazione e TD(0), salendo fino a $17.04 \pm 0.07$, arriva a \emph{sfiorare} la
+banda di MC ($19.34 \pm 0.95$): lo scarto si riduce a poco pi\`u di due punti, contro gli
+otto della policy appresa. Il bias di TD(0) \`e dunque funzione della \emph{distanza
+temporale} tra stato e reward, non un difetto intrinseco, e si riassorbe tanto prima
+quanto pi\`u gli episodi sono corti.
 
 \begin{figure}[htbp]
 \centering
@@ -177,9 +175,10 @@ difetto intrinseco dell'algoritmo.
 \end{subfigure}
 \caption{CartPole, MC vs TD(0) sulla \textbf{policy appresa}. (a) Poich\'e la policy \`e la
 stessa, gli episodi sono identici e il return non pu\`o fornire informazioni sugli
-stimatori. (b) Le stime rivelano invece il compromesso bias/varianza: MC (blu) \`e non
-distorto ma con alta varianza iniziale, TD(0) (arancio) \`e regolare ma distorto verso
-l'inizializzazione e non ancora convergente dopo 6\,000 episodi.}
+stimatori. (b) Le stime rivelano invece il compromesso bias/varianza: MC (blu) raggiunge
+subito $\approx 87$ ma non distorto e rumoroso, TD(0) (arancio) \`e regolare ma distorto
+verso l'inizializzazione, fermo a $\approx 79$ e non ancora convergente dopo 6\,000
+episodi.}
 \label{fig:cp-pred}
 \end{figure}
 
@@ -187,9 +186,10 @@ l'inizializzazione e non ancora convergente dopo 6\,000 episodi.}
 \centering
 \includegraphics[width=0.47\linewidth]{cartpole_prediction_random_value.png}
 \caption{CartPole, MC vs TD(0) sulla \textbf{policy casuale}. Con episodi corti
-($\approx 22$ passi) il bootstrap propaga rapidamente e TD(0) \emph{raggiunge} MC: il
-bias dipende dalla distanza tra lo stato e la terminazione. Da confrontare con la
-Fig.~\ref{fig:cp-pred}b.}
+($\approx 22$ passi) il bootstrap propaga in fretta e TD(0) sale fino a \emph{sfiorare} la
+banda di MC ($17.0$ contro $\approx 19.3$): il bias si riduce con la distanza tra stato e
+terminazione. Si noti la varianza asintotica di MC, molto pi\`u ampia di quella di TD(0):
+\`e l'effetto dello step size costante. Da confrontare con la Fig.~\ref{fig:cp-pred}b.}
 \label{fig:cp-pred-random}
 \end{figure}
 
@@ -316,18 +316,21 @@ impiegata.}
 
 Su Acrobot il bias di TD(0) \`e ancora pi\`u marcato che su CartPole
 (Fig.~\ref{fig:ac-pred}), confermando l'interpretazione precedente. MC converge quasi
-immediatamente a $-91.17 \pm 0.27$, mentre TD(0) parte da 0, \emph{scende lentamente}
-e dopo 6\,000 episodi si trova ancora a $-62.00 \pm 0.03$. Lo stato di riferimento
-dista $\approx 90$ passi dall'obiettivo e TD propaga il valore un passo per volta: per
-uno stato cos\`i distante dal reward il bootstrap risulta estremamente lento e la stima
-resta ancorata all'inizializzazione.
+immediatamente a $-84.99 \pm 1.57$, mentre TD(0) parte da 0, \emph{scende lentamente}
+e dopo 6\,000 episodi si trova ancora a $-53.25 \pm 0.45$, oltre 30 punti sopra la stima
+di MC. Lo stato di riferimento \`e a molte decine di passi dall'obiettivo e TD propaga il
+valore un passo per volta: per uno stato cos\`i distante dal reward il bootstrap risulta
+estremamente lento e la stima resta ancorata all'inizializzazione. Si noti inoltre che la
+banda di MC ($\pm 1.57$) \`e sensibilmente pi\`u ampia di quella di TD(0) ($\pm 0.45$):
+lo step size costante lascia a MC una varianza asintotica visibile, mentre TD resta molto
+preciso pur nel fornire una risposta ancora sbagliata.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.49\linewidth]{acrobot_prediction_value.png}
 \caption{Acrobot, MC vs TD(0): stima $V(s_{\text{ref}})$ della policy appresa. MC (blu)
-converge rapidamente a $\approx -91$, mentre TD(0) (arancio) scende da 0 con estrema
-regolarit\`a ma dopo 6\,000 episodi si trova ancora a $\approx -62$.}
+converge rapidamente a $\approx -85$ con banda visibile, mentre TD(0) (arancio) scende da
+0 con estrema regolarit\`a ma dopo 6\,000 episodi si trova ancora a $\approx -53$.}
 \label{fig:ac-pred}
 \end{figure}
 
@@ -384,12 +387,11 @@ solo seed sale a $\sim\!-18$ mentre gli altri due restano piatti a $\sim\!-21$. 
 risiede nel ``bersaglio mobile'' portato all'estremo dal budget ridotto: ogni passo di
 gradiente sposta anche il target, ponendo l'addestramento in un equilibrio instabile il
 cui esito \`e determinato dalle condizioni iniziali controllate dal seed (pesi della rete
-e prime esperienze esplorative). La lettura corretta non \`e dunque ``replay necessario,
-target utile'', bens\`i: \emph{il replay rende l'apprendimento possibile, la target
-network lo rende affidabile}; solo con entrambi il DQN apprende su tutti e 3 i seed. A
-conferma, un segnale indiretto: il DQN completo gioca \emph{meno} episodi ($137$ contro
-$\approx 240$), poich\'e apprendere allunga gli scambi e a parit\`a di step le partite
-risultano meno numerose.
+e prime esperienze esplorative). Si noti, come segnale indiretto, che il numero di
+episodi giocati \`e \emph{inversamente} legato alla qualit\`a dell'apprendimento: il DQN
+completo gioca \emph{meno} episodi ($137$ contro i $\approx 240$ delle configurazioni che
+non imparano), poich\'e apprendere allunga gli scambi e a parit\`a di step le partite
+giocate risultano meno numerose.
 
 Il \textbf{Double DQN} non supera il DQN base, anzi ne peggiora leggermente la
 performance ($-17.6$ contro $-13.5$, con un seed che non converge). L'algoritmo

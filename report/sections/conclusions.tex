@@ -41,9 +41,9 @@ Si risponde esplicitamente alle tre domande richieste dalla consegna.
         l'esplorazione attiva}, e SARSA \`e l'unico dei due algoritmi che ne tiene
         esplicitamente conto nel target.
   \item \textbf{Il bias di TD(0) non \`e una costante}: sulla policy casuale (episodi
-        corti) TD raggiunge MC, mentre su quella appresa ($\approx 330$ passi) resta
-        indietro del $13\%$. La distorsione dipende dalla distanza temporale dal reward,
-        un aspetto che il \emph{random walk} del corso non rende visibile.
+        corti) TD arriva a sfiorare MC, mentre su quella appresa ($\approx 197$ passi)
+        resta indietro del $\approx 9\%$. La distorsione dipende dalla distanza temporale
+        dal reward, un aspetto che il \emph{random walk} del corso non rende visibile.
   \item \textbf{Senza target network l'apprendimento diventa una lotteria}: l'aspettativa
         era di osservare un agente ``pi\`u lento'', mentre nella realt\`a 2 seed su 3 non
         decollano affatto e solo uno apprende. La media ($-20$) nasconde il fenomeno,
