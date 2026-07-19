@@ -1,8 +1,3 @@
-"""Action-selection policies for tabular RL (S&B §2.1).
-
-Origin: ADAPTED from the course exercises (Esercitazione_RL / control.py).
-"""
-
 import numpy as np
 
 

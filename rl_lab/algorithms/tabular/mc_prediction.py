@@ -1,12 +1,3 @@
-"""Monte Carlo prediction of V(s) for a fixed policy (S&B §5.1).
-
-Origin: ADAPTED from the course Esercitazione_RL / prediction.py (random_walk).
-
-MC is PREDICTION, not control: it never changes the policy, it only estimates V^pi.
-It averages the actual returns G_t observed after each state, so it is unbiased but
-high-variance, and it can only update once the episode has ended.
-"""
-
 from collections import defaultdict
 
 

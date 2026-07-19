@@ -1,9 +1,3 @@
-"""Reproducibility: one seed call for numpy and torch.
-
-Origin: NEW. Combined with env.reset(seed=...) in the runner, this is what makes the
-experiments repeatable, as the assignment requires.
-"""
-
 import numpy as np
 import torch
 

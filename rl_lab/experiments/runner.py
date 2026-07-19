@@ -1,14 +1,3 @@
-"""Multi-seed experiment runner.
-
-Origin: ADAPTED by the run_bias_experiment pattern from the course exercises,
-generalized to any algorithm.
-
-This is where the assignment's "media su 3 seed + deviazione standard" is enforced:
-every experiment goes through here, so no result can accidentally be single-seed.
-`run_multi_seed` serves the tabular algorithms; `run_dqn_multi_seed` is its step-based
-counterpart for the DQN, which cannot reuse the same code (see its docstring).
-"""
-
 import os
 import numpy as np
 from rl_lab.utils.seeding import set_seed

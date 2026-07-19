@@ -8,7 +8,7 @@ Si risponde esplicitamente alle tre domande richieste dalla consegna.
   \item \textbf{Acrobot non decolla}: il plateau a $\approx -345$, contro un ottimo di
         $\approx -100$, persiste senza miglioramenti per 15\,000 episodi. Raddoppiare
         il budget non produce effetti, poich\'e il limite risiede nella risoluzione della
-        Q-table (Sez.~\ref{sec:res-acrobot-control}).
+        Q-table (Sez.~\ref{sec:res-acrobot-control}) e nel numero di bin scelti.
   \item \textbf{CartPole non raggiunge 500}: con $10^4$ stati il tetto in 10\,000
         episodi si colloca a circa met\`a del massimo. Anche in questo caso il vincolo
         \`e di natura rappresentativa, non algoritmica.
@@ -18,14 +18,6 @@ Si risponde esplicitamente alle tre domande richieste dalla consegna.
   \item \textbf{Double DQN non supera il DQN base} a 200k step, producendo anzi un lieve
         peggioramento: il maximization bias che dovrebbe correggere non ha ancora avuto
         il tempo di accumularsi (Sez.~\ref{sec:res-pong}).
-  \item \textbf{Il DQN non era inizialmente riproducibile}: lo spazio delle azioni
-        dispone di un RNG separato che n\'e \code{set\_seed} n\'e \code{reset(seed=)}
-        toccano, e da cui proviene ogni azione esplorativa; due run con lo stesso seed
-        divergevano. Scoperto e corretto (Sez.~\ref{sec:discussion}).
-  \item \textbf{Il primo confronto MC vs TD(0) non misurava nulla}: graficava il return
-        della policy condivisa, identico per costruzione tra i due stimatori: formalmente
-        corretto ma privo di qualsiasi contenuto informativo
-        (Sez.~\ref{sec:res-cartpole-pred}).
 \end{itemize}
 
 \subsection{Cosa mi ha sorpreso}
@@ -47,30 +39,48 @@ Si risponde esplicitamente alle tre domande richieste dalla consegna.
   \item \textbf{Senza target network l'apprendimento diventa una lotteria}: l'aspettativa
         era di osservare un agente ``pi\`u lento'', mentre nella realt\`a 2 seed su 3 non
         decollano affatto e solo uno apprende. La media ($-20$) nasconde il fenomeno,
-        che l'analisi per-seed rivela: la target network non si limita ad accelerare
-        l'apprendimento, lo rende \emph{affidabile} (Sez.~\ref{sec:res-pong}).
+        che l'analisi per-seed rivela (Sez.~\ref{sec:res-pong}).
 \end{itemize}
 
 \subsection{Limiti degli algoritmi}
 \begin{itemize}
-  \item \textbf{Discretizzazione}: rappresenta il collo di bottiglia dominante, con due
-        aspetti contrapposti. Pochi bin non riescono a distinguere stati che richiedono
-        azioni diverse, mentre troppi bin fanno esplodere lo spazio degli stati. Nessuna
-        scelta del numero di bin risolve entrambi i problemi simultaneamente: \`e
-        necessario un approssimatore di funzione, il che costituisce la motivazione
-        empirica del DQN.
-  \item \textbf{Efficienza campionaria e convergenza}: migliaia di episodi per risultati
-        modesti (in assenza di generalizzazione tra stati simili), e con $\alpha$ ed
-        $\varepsilon$ costanti la stima fluttua senza mai convergere in modo definitivo.
-  \item \textbf{Sparsit\`a del reward}: su Acrobot il segnale ($-1$ per passo) non indica
-        \emph{quale} azione fosse sbagliata; il credit assignment su 500 passi
-        costituisce il problema reale, e nessuno dei quattro algoritmi tabellari lo
-        affronta in modo diretto.
-  \item \textbf{Sensibilit\`a agli iperparametri}: marcata, e con modalit\`a che cambiano
-        da ambiente ad ambiente e persino da algoritmo ad algoritmo (un $\alpha$ elevato
-        danneggia SARSA ma non Q\hbox{-}Learning).
-  \item \textbf{Costo del Deep RL}: il DQN risolve il problema della rappresentazione,
-        ma 200k step corrispondono allo $0.4\%$ del budget del paper Nature. \`E per
-        questo che Pong si arresta a $\approx -13$ e che senza target network met\`a dei
-        seed non decolla.
+  \item \textbf{Discretizzazione e budget (CartPole, Acrobot)}: la Q-table \`e il collo di
+        bottiglia dominante degli ambienti tabellari, con due aspetti contrapposti --- pochi
+        bin non distinguono stati che richiedono azioni diverse, troppi bin fanno esplodere
+        lo spazio --- e nessuna scelta li risolve entrambi. Le conseguenze sul divario
+        dall'ottimo sono per\`o diverse nei due ambienti. Su \textbf{CartPole} il return
+        finale ($\approx 224$--$258$ contro il massimo di $500$, circa met\`a) \`e limitato
+        dal \emph{budget}: con $10^4$ stati 10\,000 episodi non bastano a riempire la
+        tabella e le curve sono ancora in salita, quindi non \`e un tetto algoritmico. Su
+        \textbf{Acrobot} il limite \`e invece \emph{strutturale}: il plateau a
+        $\approx -345$ (contro l'ottimo $\approx -100$ e il casuale $\approx -500$) non si
+        sposta raddoppiando il budget, perch\'e a 6 bin l'aliasing impedisce di
+        rappresentare una politica migliore. In entrambi i casi la via d'uscita \`e un
+        approssimatore di funzione: \`e la motivazione empirica del DQN.
+  \item \textbf{Sparsit\`a del reward (Acrobot)}: \`e la \emph{seconda} causa dello stesso
+        plateau. Il segnale ($-1$ per passo) non indica \emph{quale} azione fosse
+        sbagliata, quindi l'agente non riceve alcun indizio sull'errore e deve dedurlo
+        indirettamente e lentamente.
+  \item \textbf{Costo del Deep RL e assunzioni rispetto all'originale (Pong)}: il DQN
+        risolve il problema della rappresentazione, ma per rientrare nel budget di calcolo
+        l'implementazione adotta alcune semplificazioni \emph{esplicite} rispetto al paper
+        Nature (Mnih et al.\ 2015):
+        \begin{itemize}
+          \item \textbf{budget di training}: 200k step invece di 50M (lo $0.4\%$), la
+                scelta che pesa di pi\`u sul risultato finale;
+          \item \textbf{replay buffer}: 100k transizioni invece di 1M --- 1M in
+                \code{uint8} richiederebbe $\approx 28$\,GB, oltre la RAM disponibile;
+          \item \textbf{target network}: aggiornata ogni 1000 step invece di 10k,
+                riscalata in proporzione al budget ridotto;
+          \item \textbf{numero di run}: media su 3 seed, mentre il paper riporta molte
+                pi\`u run; su 3 soli seed la deviazione standard \`e essa stessa rumorosa
+                (Sez.~\ref{sec:res-pong}).
+        \end{itemize}
+        Restano invariati il batch (32) e l'architettura Nature-CNN. Il divario dall'ottimo
+        riflette proprio queste scelte: Pong chiude a $\approx -13$ contro il massimo di
+        $+21$ (baseline casuale $\approx -20$) --- l'agente ha imparato in modo netto
+        rispetto al casuale ma resta in perdita, perch\'e il divario \`e \emph{tempo di
+        training}, non incapacit\`a del metodo; ed \`e sempre il budget ridotto a rendere
+        l'apprendimento una lotteria senza target network, con met\`a dei seed che non
+        decolla.
 \end{itemize}

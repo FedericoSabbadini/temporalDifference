@@ -23,42 +23,24 @@ spiega i picchi pi\`u elevati ma anche la varianza molto superiore. Concludere c
 rischio dell'esplorazione interagisce con la struttura del reward.
 
 \subsection{Perch\'e le curve non convergono mai davvero}
-Nessuna curva tabellare si appiattisce del tutto, e non deve farlo: con $\varepsilon$ e
-$\alpha$ \emph{costanti} l'agente continua a esplorare e pesa le esperienze recenti in
-modo esponenziale (media a pesi mobili, non media esatta), e dunque la fluttuazione
+Nessuna curva tabellare si appiattisce del tutto, in lincea con le previsioni: con $\varepsilon$ e
+$\alpha$ \emph{costanti} l'agente continua a esplorare e dunque la fluttuazione
 asintotica \`e un comportamento atteso (S\&B \S2.5). Il fatto che l'annealing di
 $\varepsilon$ riduca sensibilmente la varianza tra seed su entrambi gli ambienti ne
-costituisce la conferma sperimentale.
-
-\subsection{Due ipotesi smentite, e perch\'e sono state mantenute}
-I risultati sui bin e su $\varepsilon$ in Acrobot contraddicono entrambi la previsione
-iniziale. Non ho ritoccato n\'e gli esperimenti n\'e le ipotesi: i risultati sono
-riproducibili sui 3 seed, \emph{monotoni} nel parametro (il che esclude che siano
-rumore) e ammettono una spiegazione meccanicistica coerente.
-
-Il punto interessante \`e che le due ``regole'' smentite sono vere \emph{in astratto}:
-la curse of dimensionality esiste, e un reward sparso richiede effettivamente pi\`u
-esplorazione. Si tratta per\`o di affermazioni \emph{asintotiche}, mentre un esperimento
-si svolge a budget finito e su un ambiente specifico: esattamente il tipo di errore che
-solo la verifica sperimentale \`e in grado di intercettare.
+costituisce la conferma sperimentale (almeno funo a quanto il valore di $\varepsilon$ non si fissa nuovamente).
 
 \subsection{Limiti metodologici riconosciuti}
 \begin{itemize}
   \item \textbf{Predizione: misura locale.} Il confronto MC vs TD(0) traccia
         $V(s_{\text{ref}})$ di \emph{un} singolo stato; una misura globale (RMSE di $V$
         su tutti gli stati, come nel \emph{random walk} del corso) richiederebbe un $V$
-        di riferimento che in questi ambienti non \`e disponibile. L'attenuante \`e che
-        valutare \emph{due} policy diverse ha comunque permesso di isolare \emph{da cosa}
-        dipende il bias di TD(0).
+        di riferimento (il ground truth) che in questi ambienti non \`e disponibile a causa della struttura
+        del problema, con un numero finito di stati da valutare.
   \item \textbf{Asse x in ``episodi'' nell'ablazione Pong.} A parit\`a di 200k step le
         diverse configurazioni producono numeri diversi di episodi, per cui confrontarle
         allo stesso indice non costituisce un confronto a perfetta parit\`a di calcolo. Un
         asse in step ambiente sarebbe pi\`u rigoroso; la conclusione qualitativa non
         cambia, dal momento che le curve senza replay restano piatte per l'intera durata.
-  \item \textbf{Persistenza parziale dei dati grezzi.} Controllo, annealing, predizione
-        e ablazione Pong sono salvati in \code{.npz}; le sweep di sensibilit\`a e i
-        fallimenti producono solo figure, e pertanto le tabelle utilizzano unicamente dati
-        persistiti.
   \item \textbf{Bande assenti nelle figure di sensibilit\`a}, per ragioni di
         leggibilit\`a (Sez.~\ref{sec:experiments-reading}).
   \item \textbf{Il DQN \`e valutato durante il training}, con $\varepsilon > 0$: si
@@ -93,15 +75,8 @@ necessario risolvere:
         l'esperienza proveniva da quel RNG non seminato. Aggiunto
         \code{env.action\_space.seed(seed)}; i risultati Pong riportati provengono da
         questo run corretto e riproducibile.
-  \item \textbf{Episodio troncato contato come completo.} Quando il budget di step si
+  \item \textbf{Episodio troncato contato come completo.} In DQN, quando il budget di step si
         esauriva a met\`a partita, il return parziale (troppo ottimistico) veniva
         registrato come episodio completo, producendo un picco spurio verso l'alto sul
         bordo destro di ogni curva. Corretto scartando l'episodio non terminato.
-  \item \textbf{Stato di riferimento impossibile} (Sez.~\ref{sec:met-prediction}): il
-        grafico piatto a zero era formalmente corretto; era la domanda a essere mal posta.
 \end{itemize}
-
-Nel complesso i risultati mostrano apprendimento, confronti corretti e fallimenti
-analizzati, e in questo sono adeguati agli obiettivi della consegna. Non si tratta
-tuttavia di risultati ``research-grade'', e i relativi divari sono dichiarati
-apertamente nelle conclusioni.

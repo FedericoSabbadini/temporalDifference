@@ -1,9 +1,3 @@
-"""Q-network for DQN.
-
-Origin: NEW (Standard architecture). Layer sizes replicate Mnih et al. 2015, Table 1;
-the PyTorch implementation is my own.
-"""
-
 import torch.nn as nn
 import torch.nn.functional as F
 

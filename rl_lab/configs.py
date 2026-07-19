@@ -1,11 +1,3 @@
-"""Environment configurations: bins, clip ranges, seeds.
-
-Origin: NEW. Plain Python dicts, no YAML.
-"""
-
-# The discretizer clips each observation dimension to [clip_low, clip_high] and then
-# bins it. Clipping is what makes unbounded dimensions (the velocities) usable at all.
-
 CARTPOLE = {
     "env_name": "CartPole-v1",
     # Obs: [cart_pos, cart_vel, pole_angle, pole_ang_vel]. 10 bins/dim -> 10^4 states.

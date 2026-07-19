@@ -1,17 +1,3 @@
-#!/usr/bin/env python3
-"""Pong DQN experiments - Env 3 (Atari / Deep RL).
-
-Origin: NEW. The ablation is exactly the one the assignment asks for (DQN with vs
-without target network, with vs without experience replay), plus the worst case with
-neither and the Double DQN bonus. Five configurations, 3 seeds each.
-
-The bar is deliberately low: "non e' richiesto ottenere performance elevate, e'
-sufficiente mostrare apprendimento rispetto a policy casuale". So I train for 200k
-steps (the Nature paper uses 50M) and compare against a random baseline.
-
-Figures -> figures/pong/, checkpoints and raw arrays -> results/pong/.
-"""
-
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

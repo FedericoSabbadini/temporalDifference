@@ -1,24 +1,3 @@
-"""DQN training loop, written from scratch in PyTorch (Mnih et al. 2015).
-
-Origin: NEW. This is the most original part of the project: the course only ever
-provided an SB3-based DQN, which the assignment forbids for the core.
-
-Two stabilisers, each behind an ablation flag so the assignment's "con vs senza"
-comparison is a one-line change:
-  - experience replay: random mini-batches instead of the correlated live stream;
-  - target network: a frozen copy supplies the TD target, so a gradient step does not
-    move prediction and target at the same time.
-
-Double DQN (bonus, van Hasselt et al. 2016) changes only the target:
-    DQN:        y = R + gamma * max_a' Q_target(S', a')
-    Double DQN: y = R + gamma * Q_target(S', argmax_a' Q_online(S', a'))
-Selection (online) is split from evaluation (target), which curbs the maximization
-bias of taking a max over noisy estimates (S&B §6.7).
-
-The loop is STEP-based, not episode-based: on Atari the budget that matters is
-environment steps, and episodes simply start and end inside it.
-"""
-
 import copy
 import numpy as np
 import torch

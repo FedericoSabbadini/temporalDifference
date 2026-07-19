@@ -1,16 +1,3 @@
-"""Off-policy TD control: Q-Learning (S&B §6.5).
-
-Origin: ADAPTED from the course Esercitazione_RL / control.py. Same update rule,
-adapted to the Gymnasium API (terminated/truncated), to discretized tuple states and
-to returning per-episode statistics.
-
-    Q(S,A) += alpha * [ R + gamma * max_a Q(S',a) - Q(S,A) ]
-
-The target maxes over the next state's actions regardless of what the epsilon-greedy
-behaviour policy actually does: this is what makes it off-policy. It learns the value
-of the greedy policy while behaving exploratorily.
-"""
-
 import numpy as np
 from collections import defaultdict
 

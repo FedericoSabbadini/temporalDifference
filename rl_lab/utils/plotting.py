@@ -1,12 +1,3 @@
-"""Learning-curve and sensitivity plots.
-
-Origin: moving_average is ADAPTED from the course exercises; the multi-seed mean+band
-plots are NEW (the course plotted single runs).
-
-House style for every figure: moving-average smoothing, mean line over the 3 seeds,
-shaded +/-1 sigma band, labelled axes, legend, grid.
-"""
-
 import os
 import numpy as np
 import matplotlib

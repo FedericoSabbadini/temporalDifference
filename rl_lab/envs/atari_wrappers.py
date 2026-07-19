@@ -1,15 +1,3 @@
-"""Atari preprocessing pipeline from the Nature DQN paper (Mnih et al. 2015).
-
-Origin: ADAPTED from the professor's Gymnasium tutorial. Only built-in Gymnasium
-wrappers are used, never Stable-Baselines3 ones, as the assignment requires.
-
-Pipeline: random no-ops on reset (so the game does not always start identically),
-frame-skip 4 with a pixel-wise max over the last two frames (Atari flickers sprites,
-so the Pong ball can vanish on alternate frames), grayscale + 84x84 resize, and a
-stack of the 4 most recent frames so the CNN can infer motion. Frames stay uint8 to
-keep the replay buffer ~4x smaller; normalization happens in dqn.py.
-"""
-
 import gymnasium as gym
 import ale_py
 import rl_lab.configs as conf

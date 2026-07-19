@@ -1,14 +1,3 @@
-"""Dimension-agnostic state discretizer for tabular RL on continuous envs.
-
-Origin: NEW. The course exercises used already-discrete gridworlds; CartPole and
-Acrobot are continuous, so a Q-table needs a finite, hashable state key.
-
-This is state aggregation (S&B §9.4): nearby continuous states collapse into the same
-bin. The resolution is a trade-off, and one I measure rather than assume (see the bin
-experiment on Acrobot): too few bins cannot tell distinct states apart, too many blow
-the state space up exponentially (bins^dim).
-"""
-
 import numpy as np
 import gymnasium as gym
 

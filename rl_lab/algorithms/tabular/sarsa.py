@@ -1,14 +1,3 @@
-"""On-policy TD control: SARSA (S&B §6.4).
-
-Origin: ADAPTED from the course Esercitazione_RL / control.py.
-
-    Q(S,A) += alpha * [ R + gamma * Q(S',A') - Q(S,A) ]
-
-The target uses A', the action epsilon-greedy actually picked, not the max. SARSA
-therefore evaluates the policy it is really following, exploration noise included,
-which is why it learns "safer" policies (the CliffWalking result, S&B Fig. 6.5).
-"""
-
 import numpy as np
 from collections import defaultdict
 
